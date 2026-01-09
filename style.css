@@ -25,7 +25,7 @@ h1 {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-form select, form input[type="checkbox"], form button {
+form select, form input[type="checkbox"], form input[type="file"], form textarea, form button {
     margin-top: 10px;
 }
 
@@ -41,4 +41,16 @@ form select, form input[type="checkbox"], form button {
     border: 1px solid #ddd;
     padding: 20px;
     background-color: #fafafa;
+}
+
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.gallery-image {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
 }

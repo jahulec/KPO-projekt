@@ -35,6 +35,27 @@
             <option value="elegant">Elegancki</option>
         </select>
 
+        <h2>Wprowadź linki do mediów społecznościowych</h2>
+        <div>
+            <label>Instagram: <input type="text" id="instagram"></label>
+            <label>Facebook: <input type="text" id="facebook"></label>
+            <label>Twitter: <input type="text" id="twitter"></label>
+        </div>
+
+        <h2>Dodaj zdjęcia do galerii</h2>
+        <input type="file" id="gallery" accept="image/*" multiple>
+
+        <h2>Dodaj muzykę</h2>
+        <input type="file" id="music" accept="audio/*">
+
+        <h2>Kontakt</h2>
+        <form id="contact-form">
+            <label>Imię: <input type="text" id="name"></label>
+            <label>Email: <input type="email" id="email"></label>
+            <label>Wiadomość: <textarea id="message"></textarea></label>
+            <button type="submit">Wyślij</button>
+        </form>
+
         <button id="generate">Generuj podgląd</button>
     </section>
 
