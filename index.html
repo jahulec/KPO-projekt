@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Portfolio Artysty</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Generator Portfolio Artysty</h1>
+        <p>Wybierz swój typ artysty i sekcje do strony</p>
+    </header>
+
+    <section class="form-section">
+        <h2>Wybierz rolę</h2>
+        <select id="role">
+            <option value="muzyk">Muzyk</option>
+            <option value="grafik">Grafik</option>
+            <option value="inny-artysta">Inny Artysta</option>
+        </select>
+
+        <h2>Wybierz sekcje do strony</h2>
+        <div>
+            <label><input type="checkbox" id="portfolio"> Portfolio</label>
+            <label><input type="checkbox" id="concerts"> Kalendarz koncertów</label>
+            <label><input type="checkbox" id="shop"> Sklep</label>
+            <label><input type="checkbox" id="bio"> Biografia</label>
+        </div>
+
+        <h2>Wybierz styl</h2>
+        <select id="style">
+            <option value="minimalist">Minimalistyczny</option>
+            <option value="modern">Nowoczesny</option>
+            <option value="elegant">Elegancki</option>
+        </select>
+
+        <button id="generate">Generuj podgląd</button>
+    </section>
+
+    <section id="preview">
+        <h2>Podgląd strony</h2>
+        <div id="preview-container"></div>
+    </section>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
