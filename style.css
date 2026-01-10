@@ -1,22 +1,33 @@
+/* Globalne style */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background-color: #fafafa;
     color: #333;
     margin: 0;
     padding: 0;
+    line-height: 1.6;
 }
 
-header {
+header, footer {
     background-color: #333;
     color: white;
     text-align: center;
     padding: 20px;
 }
 
-h1 {
+h1, h2 {
     margin: 0;
 }
 
+h1 {
+    font-size: 2.5rem;
+}
+
+h2 {
+    font-size: 2rem;
+}
+
+/* Formularz sekcji */
 .form-section {
     padding: 20px;
     margin: 20px;
@@ -27,30 +38,118 @@ h1 {
 
 form select, form input[type="checkbox"], form input[type="file"], form textarea, form button {
     margin-top: 10px;
+    padding: 10px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
-#preview {
-    margin: 20px;
-    padding: 20px;
+button {
+    background-color: #333;
+    color: white;
+    cursor: pointer;
+    border: none;
+    margin-top: 10px;
+    padding: 10px 15px;
+}
+
+button:hover {
+    background-color: #555;
+}
+
+/* Preview container */
+#preview-container {
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-#preview-container {
-    border: 1px solid #ddd;
     padding: 20px;
-    background-color: #fafafa;
+    margin-top: 20px;
 }
 
+/* Style dla sekcji */
+h3 {
+    font-size: 1.6rem;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+/* Media społecznościowe */
+ul.social-media {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul.social-media li {
+    margin-bottom: 10px;
+}
+
+ul.social-media a {
+    text-decoration: none;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+ul.social-media a:hover {
+    color: #007bff;
+}
+
+/* Galeria zdjęć */
 .gallery {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 10px;
+    margin-top: 20px;
 }
 
-.gallery-image {
+.gallery img {
     width: 100%;
     height: auto;
     border-radius: 8px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.gallery img:hover {
+    transform: scale(1.05);
+}
+
+/* Odtwarzacz muzyki */
+audio {
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Kontakt */
+form#contact-form {
+    margin-top: 20px;
+}
+
+form#contact-form input,
+form#contact-form textarea {
+    margin-bottom: 15px;
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+form#contact-form button {
+    width: 100%;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+form#contact-form button:hover {
+    background-color: #0056b3;
+}
+
+/* Stopka */
+footer {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    position: relative;
+    bottom: 0;
+    width: 100%;
 }
