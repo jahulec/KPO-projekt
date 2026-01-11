@@ -1,155 +1,176 @@
-/* Globalne style */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #fafafa;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    line-height: 1.6;
-}
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generator strony artysty</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="panel">
+      <div class="panel__head">
+        <div class="brandRow">
+          <div class="brandMark" aria-hidden="true"></div>
+          <div>
+            <h1>Generator strony artysty</h1>
+            <p>Edytujesz po lewej → podgląd po prawej. Szkic zapisuje się lokalnie.</p>
+          </div>
+        </div>
 
-header, footer {
-    background-color: #333;
-    color: white;
-    text-align: center;
-    padding: 20px;
-}
+        <div class="statusRow">
+          <span class="pill" id="saveStatus">Zapis: —</span>
+          <span class="pill" id="snapshotStatus">Snapshot: brak</span>
+          <span class="pill" id="liveStatus">LIVE: ON</span>
+        </div>
+      </div>
 
-h1, h2 {
-    margin: 0;
-}
+      <section class="panel__section">
+        <h2>Ustawienia</h2>
 
-h1 {
-    font-size: 2.5rem;
-}
+        <div class="grid2">
+          <label class="field">
+            <span>Tryb generowania</span>
+            <select id="exportMode">
+              <option value="single" selected>Jedna strona (sekcje)</option>
+              <option value="zip">ZIP (podstrony)</option>
+            </select>
+          </label>
 
-h2 {
-    font-size: 2rem;
-}
+          <label class="field">
+            <span>Podgląd LIVE</span>
+            <div class="toggleRow">
+              <input id="livePreview" type="checkbox" checked />
+              <span class="toggleText">Aktualizuj w czasie rzeczywistym</span>
+            </div>
+          </label>
+        </div>
 
-/* Formularz sekcji */
-.form-section {
-    padding: 20px;
-    margin: 20px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
+        <div class="grid2">
+          <label class="field">
+            <span>Kategoria artysty</span>
+            <select id="role">
+              <option value="musician" selected>Muzyk / zespół</option>
+              <option value="dj">DJ / producent</option>
+              <option value="photographer">Fotograf</option>
+              <option value="visual">Artysta wizualny</option>
+              <option value="designer">Grafik / designer</option>
+              <option value="filmmaker">Filmowiec / twórca wideo</option>
+              <option value="writer">Pisarz / poeta</option>
+              <option value="performer">Taniec / performance</option>
+            </select>
+          </label>
 
-form select, form input[type="checkbox"], form input[type="file"], form textarea, form button {
-    margin-top: 10px;
-    padding: 10px;
-    width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
+          <label class="field">
+            <span>Motyw</span>
+            <select id="theme">
+              <option value="minimalist" selected>Jasny</option>
+              <option value="modern">Ciemny</option>
+              <option value="elegant">Elegant</option>
+            </select>
+          </label>
+        </div>
 
-button {
-    background-color: #333;
-    color: white;
-    cursor: pointer;
-    border: none;
-    margin-top: 10px;
-    padding: 10px 15px;
-}
+        <div class="grid2">
+          <label class="field">
+            <span>Szablon (układ + styl)</span>
+            <select id="template">
+              <option value="rounded" selected>Rounded (karty)</option>
+              <option value="sharp">Sharp (panelowy)</option>
+              <option value="editorial">Editorial (magazyn)</option>
+              <option value="neon">Neon (glow + futurystyczny)</option>
+              <option value="soft">Soft (miękki, airy)</option>
+            </select>
+          </label>
 
-button:hover {
-    background-color: #555;
-}
+          <label class="field">
+            <span>Kolor akcentu</span>
+            <input id="accent" type="color" value="#6d28d9" />
+          </label>
+        </div>
 
-/* Preview container */
-#preview-container {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin-top: 20px;
-}
+        <div class="grid2">
+          <label class="field">
+            <span>Nagłówki sekcji (globalnie)</span>
+            <select id="sectionHeadersAlign">
+              <option value="left" selected>Wszystkie z lewej</option>
+              <option value="center">Wszystkie po środku</option>
+            </select>
+          </label>
 
-/* Style dla sekcji */
-h3 {
-    font-size: 1.6rem;
-    color: #333;
-    margin-bottom: 15px;
-}
+          <label class="field">
+            <span>Nazwa / pseudonim</span>
+            <input id="siteName" type="text" placeholder="np. Tabula Rasa" value="Moje Portfolio" />
+          </label>
+        </div>
 
-/* Media społecznościowe */
-ul.social-media {
-    list-style-type: none;
-    padding: 0;
-}
+        <div class="hint">
+          Zmiana typu artysty automatycznie przełącza zestaw bloków pod branżowy standard.
+        </div>
+      </section>
 
-ul.social-media li {
-    margin-bottom: 10px;
-}
+      <section class="panel__section">
+        <h2>Bloki strony</h2>
 
-ul.social-media a {
-    text-decoration: none;
-    color: #333;
-    font-size: 1.2rem;
-}
+        <label class="field" style="margin:0;">
+          <span>Dodaj blok</span>
+          <div class="addRow">
+            <select id="addBlockSelect"></select>
+            <button class="btn btn--ghost" id="addBlockBtn" type="button">Dodaj</button>
+          </div>
+        </label>
 
-ul.social-media a:hover {
-    color: #007bff;
-}
+        <div id="blocksList" class="blocksList"></div>
 
-/* Galeria zdjęć */
-.gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-    margin-top: 20px;
-}
+        <div class="hint">
+          Strzałki = góra/dół. HERO jest zawsze na górze.
+        </div>
+      </section>
 
-.gallery img {
-    width: 100%;
-    height: auto;
-    border-radius: 8px;
-    transition: transform 0.3s ease-in-out;
-}
+      <section class="panel__section">
+        <h2>Edycja bloku</h2>
+        <div id="blockEditor" class="blockEditor">
+          <div class="emptyEditor">Wybierz blok z listy powyżej.</div>
+        </div>
+      </section>
 
-.gallery img:hover {
-    transform: scale(1.05);
-}
+      <section class="panel__section">
+        <h2>Akcje</h2>
+        <div class="panel__actions">
+          <button id="btnSaveSnapshot" class="btn" type="button">Zapisz</button>
+          <button id="btnLoadSnapshot" class="btn" type="button">Wczytaj</button>
+        </div>
+        <div class="panel__actions">
+          <button id="btnDownload" class="btn btn--primary" type="button">Pobierz</button>
+          <button id="btnManualRefresh" class="btn" type="button">Odśwież podgląd</button>
+        </div>
+        <div class="panel__actions">
+          <button id="btnReset" class="btn" type="button">Reset szkicu</button>
+          <button id="btnClearSnapshot" class="btn" type="button">Usuń zapis</button>
+        </div>
+      </section>
+    </aside>
 
-/* Odtwarzacz muzyki */
-audio {
-    width: 100%;
-    margin-top: 20px;
-}
+    <main class="preview">
+      <div class="preview__bar">
+        <div class="preview__title">
+          <strong>Podgląd</strong>
+          <span id="previewSubtitle">LIVE</span>
+          <span id="previewPageLabel" class="pill" style="margin-left:8px;">index.html</span>
+        </div>
+      </div>
 
-/* Kontakt */
-form#contact-form {
-    margin-top: 20px;
-}
+      <div class="preview__frameWrap">
+        <iframe
+          id="previewFrame"
+          title="Podgląd strony"
+          sandbox="allow-scripts allow-forms allow-same-origin"
+        ></iframe>
+      </div>
+    </main>
+  </div>
 
-form#contact-form input,
-form#contact-form textarea {
-    margin-bottom: 15px;
-    width: 100%;
-    padding: 10px;
-    border-radius: 4px;
-}
-
-form#contact-form button {
-    width: 100%;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 4px;
-}
-
-form#contact-form button:hover {
-    background-color: #0056b3;
-}
-
-/* Stopka */
-footer {
-    background-color: #333;
-    color: white;
-    padding: 10px;
-    position: relative;
-    bottom: 0;
-    width: 100%;
-}
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="scripts.js"></script>
+</body>
+</html>

@@ -1,69 +1,176 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator Portfolio Artysty</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generator strony artysty</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <header>
-        <h1>Generator Portfolio Artysty</h1>
-        <p>Wybierz swój typ artysty i sekcje do strony</p>
-    </header>
-
-    <section class="form-section">
-        <h2>Wybierz rolę</h2>
-        <select id="role">
-            <option value="muzyk">Muzyk</option>
-            <option value="grafik">Grafik</option>
-            <option value="inny-artysta">Inny Artysta</option>
-        </select>
-
-        <h2>Wybierz sekcje do strony</h2>
-        <div>
-            <label><input type="checkbox" id="portfolio"> Portfolio</label>
-            <label><input type="checkbox" id="concerts"> Kalendarz koncertów</label>
-            <label><input type="checkbox" id="shop"> Sklep</label>
-            <label><input type="checkbox" id="bio"> Biografia</label>
+  <div class="app">
+    <aside class="panel">
+      <div class="panel__head">
+        <div class="brandRow">
+          <div class="brandMark" aria-hidden="true"></div>
+          <div>
+            <h1>Generator strony artysty</h1>
+            <p>Edytujesz po lewej → podgląd po prawej. Szkic zapisuje się lokalnie.</p>
+          </div>
         </div>
 
-        <h2>Wybierz styl</h2>
-        <select id="style">
-            <option value="minimalist">Minimalistyczny</option>
-            <option value="modern">Nowoczesny</option>
-            <option value="elegant">Elegancki</option>
-        </select>
+        <div class="statusRow">
+          <span class="pill" id="saveStatus">Zapis: —</span>
+          <span class="pill" id="snapshotStatus">Snapshot: brak</span>
+          <span class="pill" id="liveStatus">LIVE: ON</span>
+        </div>
+      </div>
 
-        <h2>Wprowadź linki do mediów społecznościowych</h2>
-        <div>
-            <label>Instagram: <input type="text" id="instagram"></label>
-            <label>Facebook: <input type="text" id="facebook"></label>
-            <label>Twitter: <input type="text" id="twitter"></label>
+      <section class="panel__section">
+        <h2>Ustawienia</h2>
+
+        <div class="grid2">
+          <label class="field">
+            <span>Tryb generowania</span>
+            <select id="exportMode">
+              <option value="single" selected>Jedna strona (sekcje)</option>
+              <option value="zip">ZIP (podstrony)</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Podgląd LIVE</span>
+            <div class="toggleRow">
+              <input id="livePreview" type="checkbox" checked />
+              <span class="toggleText">Aktualizuj w czasie rzeczywistym</span>
+            </div>
+          </label>
         </div>
 
-        <h2>Dodaj zdjęcia do galerii</h2>
-        <input type="file" id="gallery" accept="image/*" multiple>
+        <div class="grid2">
+          <label class="field">
+            <span>Kategoria artysty</span>
+            <select id="role">
+              <option value="musician" selected>Muzyk / zespół</option>
+              <option value="dj">DJ / producent</option>
+              <option value="photographer">Fotograf</option>
+              <option value="visual">Artysta wizualny</option>
+              <option value="designer">Grafik / designer</option>
+              <option value="filmmaker">Filmowiec / twórca wideo</option>
+              <option value="writer">Pisarz / poeta</option>
+              <option value="performer">Taniec / performance</option>
+            </select>
+          </label>
 
-        <h2>Dodaj muzykę</h2>
-        <input type="file" id="music" accept="audio/*">
+          <label class="field">
+            <span>Motyw</span>
+            <select id="theme">
+              <option value="minimalist" selected>Jasny</option>
+              <option value="modern">Ciemny</option>
+              <option value="elegant">Elegant</option>
+            </select>
+          </label>
+        </div>
 
-        <h2>Kontakt</h2>
-        <form id="contact-form">
-            <label>Imię: <input type="text" id="name"></label>
-            <label>Email: <input type="email" id="email"></label>
-            <label>Wiadomość: <textarea id="message"></textarea></label>
-            <button type="submit">Wyślij</button>
-        </form>
+        <div class="grid2">
+          <label class="field">
+            <span>Szablon (układ + styl)</span>
+            <select id="template">
+              <option value="rounded" selected>Rounded (karty)</option>
+              <option value="sharp">Sharp (panelowy)</option>
+              <option value="editorial">Editorial (magazyn)</option>
+              <option value="neon">Neon (glow + futurystyczny)</option>
+              <option value="soft">Soft (miękki, airy)</option>
+            </select>
+          </label>
 
-        <button id="generate">Generuj podgląd</button>
-    </section>
+          <label class="field">
+            <span>Kolor akcentu</span>
+            <input id="accent" type="color" value="#6d28d9" />
+          </label>
+        </div>
 
-    <section id="preview">
-        <h2>Podgląd strony</h2>
-        <div id="preview-container"></div>
-    </section>
+        <div class="grid2">
+          <label class="field">
+            <span>Nagłówki sekcji (globalnie)</span>
+            <select id="sectionHeadersAlign">
+              <option value="left" selected>Wszystkie z lewej</option>
+              <option value="center">Wszystkie po środku</option>
+            </select>
+          </label>
 
-    <script src="scripts.js"></script>
+          <label class="field">
+            <span>Nazwa / pseudonim</span>
+            <input id="siteName" type="text" placeholder="np. Tabula Rasa" value="Moje Portfolio" />
+          </label>
+        </div>
+
+        <div class="hint">
+          Zmiana typu artysty automatycznie przełącza zestaw bloków pod branżowy standard.
+        </div>
+      </section>
+
+      <section class="panel__section">
+        <h2>Bloki strony</h2>
+
+        <label class="field" style="margin:0;">
+          <span>Dodaj blok</span>
+          <div class="addRow">
+            <select id="addBlockSelect"></select>
+            <button class="btn btn--ghost" id="addBlockBtn" type="button">Dodaj</button>
+          </div>
+        </label>
+
+        <div id="blocksList" class="blocksList"></div>
+
+        <div class="hint">
+          Strzałki = góra/dół. HERO jest zawsze na górze.
+        </div>
+      </section>
+
+      <section class="panel__section">
+        <h2>Edycja bloku</h2>
+        <div id="blockEditor" class="blockEditor">
+          <div class="emptyEditor">Wybierz blok z listy powyżej.</div>
+        </div>
+      </section>
+
+      <section class="panel__section">
+        <h2>Akcje</h2>
+        <div class="panel__actions">
+          <button id="btnSaveSnapshot" class="btn" type="button">Zapisz</button>
+          <button id="btnLoadSnapshot" class="btn" type="button">Wczytaj</button>
+        </div>
+        <div class="panel__actions">
+          <button id="btnDownload" class="btn btn--primary" type="button">Pobierz</button>
+          <button id="btnManualRefresh" class="btn" type="button">Odśwież podgląd</button>
+        </div>
+        <div class="panel__actions">
+          <button id="btnReset" class="btn" type="button">Reset szkicu</button>
+          <button id="btnClearSnapshot" class="btn" type="button">Usuń zapis</button>
+        </div>
+      </section>
+    </aside>
+
+    <main class="preview">
+      <div class="preview__bar">
+        <div class="preview__title">
+          <strong>Podgląd</strong>
+          <span id="previewSubtitle">LIVE</span>
+          <span id="previewPageLabel" class="pill" style="margin-left:8px;">index.html</span>
+        </div>
+      </div>
+
+      <div class="preview__frameWrap">
+        <iframe
+          id="previewFrame"
+          title="Podgląd strony"
+          sandbox="allow-scripts allow-forms allow-same-origin"
+        ></iframe>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="scripts.js"></script>
 </body>
 </html>
