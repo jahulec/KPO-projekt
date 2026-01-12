@@ -35,6 +35,17 @@ function setLiveStatus() {
 }
 function setPreviewPageLabel(label) { $("previewPageLabel").textContent = label; }
 
+function setPreviewDevice(device) {
+  const d = (device || "desktop").toLowerCase();
+  state.previewDevice = (d === "tablet" || d === "mobile") ? d : "desktop";
+  const wrap = document.querySelector(".preview__frameWrap");
+  if (wrap) wrap.setAttribute("data-device", state.previewDevice);
+
+  document.querySelectorAll("[data-device]").forEach((btn) => {
+    btn.classList.toggle("isActive", btn.getAttribute("data-device") === state.previewDevice);
+  });
+}
+
 function setPanelCollapsed(collapsed, persist = true) {
   const app = document.querySelector(".app");
   if (!app) return;
@@ -115,6 +126,75 @@ const ROLE_PRESETS = {
 
 const OPTIONAL_BLOCKS = Object.keys(BLOCKS).filter(id => id !== "hero");
 
+// Block instance helpers (allow duplicates via suffix like "youtube__2")
+function baseBlockId(blockId) {
+  return String(blockId || "").split("__")[0];
+}
+
+function blockSuffix(blockId) {
+  const p = String(blockId || "").split("__");
+  return p.length > 1 ? p.slice(1).join("__") : "";
+}
+
+function getBlockDef(blockId) {
+  return BLOCKS[baseBlockId(blockId)] || { label: baseBlockId(blockId) || "Blok", editor: "text" };
+}
+
+function isLockedBlock(blockId) {
+  return !!getBlockDef(blockId)?.locked;
+}
+
+const NON_DUPLICABLE_BASE = new Set(["hero", "gallery", "epk"]);
+
+function canDuplicateBlock(blockId) {
+  if (isLockedBlock(blockId)) return false;
+  return !NON_DUPLICABLE_BASE.has(baseBlockId(blockId));
+}
+
+function duplicateBlock(blockId) {
+  if (!canDuplicateBlock(blockId)) return;
+  const base = baseBlockId(blockId);
+  const newId = makeUniqueId(base);
+  const src = state.blocks?.[blockId] || { enabled: true, title: "", data: {} };
+  try {
+    state.blocks[newId] = JSON.parse(JSON.stringify(src));
+  } catch {
+    state.blocks[newId] = { enabled: true, title: src.title || "", data: { ...(src.data || {}) } };
+  }
+  state.blocks[newId].enabled = true;
+
+  const i = state.order.indexOf(blockId);
+  if (i >= 0) state.order.splice(i + 1, 0, newId);
+  else state.order.push(newId);
+
+  state.activeBlockId = newId;
+  structureChanged(true);
+}
+
+function getBlockDisplayName(blockId) {
+  const cfg = state.blocks?.[blockId];
+  if (cfg?.title) return cfg.title;
+  const def = getBlockDef(blockId);
+  const suf = blockSuffix(blockId);
+  return def.label + (suf ? ` (${suf})` : "");
+}
+
+function makeUniqueId(base) {
+  const b = String(base || "").trim();
+  if (!b) return "";
+  if (b === "hero") return "hero";
+  if (!state.blocks[b]) return b;
+  let max = 1;
+  Object.keys(state.blocks || {}).forEach((k) => {
+    if (baseBlockId(k) !== b) return;
+    const suf = blockSuffix(k);
+    const n = Number(suf);
+    if (Number.isFinite(n) && n > max) max = n;
+    if (!suf) max = Math.max(max, 1);
+  });
+  return `${b}__${max + 1}`;
+}
+
 /* ==========================
    State
 ========================== */
@@ -131,6 +211,10 @@ const state = {
   sectionHeadersAlign: "left",
   siteName: "Moje Portfolio",
 
+  metaTitle: "",
+  metaDescription: "",
+  previewDevice: "desktop",
+
   order: [],
   blocks: {},
   activeBlockId: null,
@@ -138,15 +222,107 @@ const state = {
 
 /* assets (not stored in localStorage) */
 const assets = {
-  heroImages: [],          // dataURL[]
-  galleryImages: [],       // dataURL[]
-  epkPressPhotos: [],      // dataURL[]
+  heroImages: [],          // {dataUrl, alt}[]
+  galleryImages: [],       // {dataUrl, alt}[]
+  epkPressPhotos: [],      // {dataUrl, alt}[]
   epkFiles: [],            // {name, dataUrl, mime}
+
+  favicon: null,           // {dataUrl, mime} | null
+  ogImage: null,           // {dataUrl, mime} | null
 };
+
+function imgObj(x) {
+  if (!x) return { dataUrl: "", alt: "" };
+  if (typeof x === "string") return { dataUrl: x, alt: "" };
+  if (typeof x === "object") {
+    return {
+      dataUrl: String(x.dataUrl || x.url || ""),
+      alt: String(x.alt || ""),
+    };
+  }
+  return { dataUrl: String(x), alt: "" };
+}
+
+function normalizeAssets() {
+  assets.heroImages = (Array.isArray(assets.heroImages) ? assets.heroImages : []).map(imgObj).filter(i => i.dataUrl);
+  assets.galleryImages = (Array.isArray(assets.galleryImages) ? assets.galleryImages : []).map(imgObj).filter(i => i.dataUrl);
+  assets.epkPressPhotos = (Array.isArray(assets.epkPressPhotos) ? assets.epkPressPhotos : []).map(imgObj).filter(i => i.dataUrl);
+}
 
 /* preview (zip) cache */
 let zipPreviewFiles = null;     // preview pages (inline css/js)
 let zipPreviewCurrent = "index.html";
+
+/* ==========================
+   History (undo/redo)
+========================== */
+
+let undoStack = [];
+let redoStack = [];
+let historySuppressed = false;
+const HISTORY_LIMIT = 40;
+
+function snapshotStateForHistory() {
+  // draft payload data is small; we avoid storing binary assets here.
+  return JSON.stringify(buildPayload().data);
+}
+
+function updateUndoRedoUi() {
+  const u = $("btnUndo");
+  const r = $("btnRedo");
+  if (u) u.disabled = undoStack.length <= 1;
+  if (r) r.disabled = redoStack.length === 0;
+}
+
+function pushHistory() {
+  if (historySuppressed) return;
+  const snap = snapshotStateForHistory();
+  if (undoStack.length && undoStack[undoStack.length - 1] === snap) return;
+  undoStack.push(snap);
+  if (undoStack.length > HISTORY_LIMIT) undoStack.splice(0, undoStack.length - HISTORY_LIMIT);
+  redoStack = [];
+  updateUndoRedoUi();
+}
+
+const pushHistoryDebounced = debounce(pushHistory, 220);
+
+function undo() {
+  if (undoStack.length <= 1) return;
+  const current = undoStack.pop();
+  redoStack.push(current);
+  const prev = undoStack[undoStack.length - 1];
+  historySuppressed = true;
+  try {
+    applyPayload({ data: JSON.parse(prev), savedAt: new Date().toISOString() }, false);
+    zipPreviewCurrent = "index.html";
+    structureChanged(true);
+  } catch (e) {
+    // if something goes wrong, restore stacks
+    undoStack.push(current);
+    redoStack.pop();
+  } finally {
+    historySuppressed = false;
+    updateUndoRedoUi();
+  }
+}
+
+function redo() {
+  if (!redoStack.length) return;
+  const next = redoStack.pop();
+  undoStack.push(next);
+  historySuppressed = true;
+  try {
+    applyPayload({ data: JSON.parse(next), savedAt: new Date().toISOString() }, false);
+    zipPreviewCurrent = "index.html";
+    structureChanged(true);
+  } catch (e) {
+    // revert
+    redoStack.push(undoStack.pop());
+  } finally {
+    historySuppressed = false;
+    updateUndoRedoUi();
+  }
+}
 
 /* ==========================
    Storage (draft + snapshot)
@@ -162,6 +338,10 @@ function buildPayload() {
     accent: state.accent,
     sectionHeadersAlign: state.sectionHeadersAlign,
     siteName: state.siteName,
+
+    metaTitle: state.metaTitle,
+    metaDescription: state.metaDescription,
+    previewDevice: state.previewDevice,
     order: state.order,
     blocks: state.blocks,
     activeBlockId: state.activeBlockId,
@@ -182,6 +362,10 @@ function applyPayload(payload, setStatusText = true) {
   state.sectionHeadersAlign = d.sectionHeadersAlign ?? state.sectionHeadersAlign;
   state.siteName = d.siteName ?? state.siteName;
 
+  state.metaTitle = d.metaTitle ?? state.metaTitle;
+  state.metaDescription = d.metaDescription ?? state.metaDescription;
+  state.previewDevice = d.previewDevice ?? state.previewDevice;
+
   state.order = Array.isArray(d.order) ? d.order : state.order;
   state.blocks = d.blocks ?? state.blocks;
   state.activeBlockId = d.activeBlockId ?? state.activeBlockId;
@@ -194,6 +378,11 @@ function applyPayload(payload, setStatusText = true) {
   $("accent").value = state.accent;
   $("sectionHeadersAlign").value = state.sectionHeadersAlign;
   $("siteName").value = state.siteName;
+
+  if ($("metaTitle")) $("metaTitle").value = state.metaTitle;
+  if ($("metaDescription")) $("metaDescription").value = state.metaDescription;
+
+  setPreviewDevice(state.previewDevice || "desktop");
 
   hardLockHeroFirst();
   setLiveStatus();
@@ -230,9 +419,10 @@ function hasSnapshot() {
 }
 
 function updateSnapshotPill() {
-  $("btnLoadSnapshot").disabled = !hasSnapshot();
-  $("btnClearSnapshot").disabled = !hasSnapshot();
-  setSnapshotStatus(hasSnapshot() ? "Snapshot: jest" : "Snapshot: brak");
+  const has = hasSnapshot();
+  const btnLoad = $("btnLoadSnapshot");
+  if (btnLoad) btnLoad.disabled = !has;
+  setSnapshotStatus(has ? "Snapshot: jest" : "Snapshot: brak");
 }
 
 function saveSnapshot() {
@@ -265,13 +455,278 @@ function clearSnapshot() {
   setSnapshotStatus("Snapshot: usunięty");
 }
 
+// Generate example content (for client preview)
+function _svgPlaceholderDataUrl(label, w = 1400, h = 900) {
+  const accent = String(state.accent || "#6d28d9");
+  const t = escapeHtml(label || "Obraz");
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${accent}" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#111" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#g)"/>
+  <rect x="40" y="40" width="${w-80}" height="${h-80}" fill="rgba(0,0,0,0.35)" stroke="rgba(255,255,255,0.25)"/>
+  <text x="70" y="120" fill="#fff" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="46" font-weight="900">${t}</text>
+  <text x="70" y="170" fill="rgba(255,255,255,0.82)" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="22" font-weight="700">Przykładowy obraz — podmień na własny</text>
+</svg>`;
+
+  // base64 (so ZIP export can pack it to /assets)
+  const utf8 = encodeURIComponent(svg).replace(/%([0-9A-F]{2})/g, (_, p) => String.fromCharCode(parseInt(p, 16)));
+  return `data:image/svg+xml;base64,${btoa(utf8)}`;
+}
+
+function generateSampleData() {
+  const ok = confirm("Wygenerować przykładowe dane? Nadpisze bieżący szkic (snapshot zostaje).");
+  if (!ok) return;
+
+  const role = ($("role")?.value || state.role || "musician");
+  const preset = (ROLE_PRESETS[role] || ROLE_PRESETS.musician).slice();
+
+  // dla czytelnego demo dokładamy galerię (po 'about' jeśli istnieje)
+  if (!preset.includes("gallery")) {
+    const idx = preset.indexOf("about");
+    if (idx >= 0) preset.splice(idx + 1, 0, "gallery");
+    else preset.splice(1, 0, "gallery");
+  }
+
+  // unique + HERO first
+  const seen = new Set();
+  const order = [];
+  for (const id of preset) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    order.push(id);
+  }
+  const finalOrder = order.filter(x => x !== "hero");
+  finalOrder.unshift("hero");
+
+  const siteName = "Przykładowy Artysta";
+
+  const blocks = {};
+  const setBlock = (id, title, data = {}) => {
+    blocks[id] = { enabled: true, title: title || (BLOCKS[id]?.label || id), data };
+  };
+
+  // HERO
+  setBlock("hero", BLOCKS.hero.label, {
+    headline: siteName,
+    subheadline: "Nowoczesny rock / alternatywa. Single, klipy, koncerty.",
+    primaryCtaText: "Zobacz więcej",
+    primaryCtaTarget: "auto",
+    primaryCtaUrl: "",
+  });
+
+  // CONTENT
+  for (const id of finalOrder) {
+    if (id === "hero") continue;
+
+    const ed = BLOCKS[id]?.editor;
+
+    if (ed === "text") {
+      setBlock(id, id === "about" ? "O nas" : (BLOCKS[id]?.label || id), {
+        text: "Krótko: prawdziwe granie, bez udawania.\n\nTu wstaw 2–3 zdania o sobie: styl, inspiracje, osiągnięcia.\n\nNa dole zostawiliśmy kontakt i social media."
+      });
+      continue;
+    }
+
+    if (ed === "gallery") {
+      setBlock(id, "Galeria", { layout: "grid" });
+      continue;
+    }
+
+    if (ed === "embed_spotify") {
+      setBlock(id, "Muzyka", {
+        items: [
+          { url: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M" },
+          { url: "https://open.spotify.com/playlist/37i9dQZF1DX0XUsuxWHRQd" }
+        ]
+      });
+      continue;
+    }
+
+    if (ed === "embed_youtube") {
+      setBlock(id, "Wideo", {
+        items: [
+          { url: "https://youtu.be/dQw4w9WgXcQ" },
+          { url: "https://youtu.be/9bZkp7q19f0" }
+        ]
+      });
+      continue;
+    }
+
+    if (ed === "events") {
+      setBlock(id, id === "exhibitions" ? "Występy" : "Wydarzenia", {
+        items: [
+          { date: "17.01.2026", city: "Gdańsk", place: "Bramie Nizinnej", link: "https://example.com" },
+          { date: "24.01.2026", city: "Warszawa", place: "Klub (przykład)", link: "https://example.com" },
+          { date: "01.02.2026", city: "Kraków", place: "Scena (przykład)", link: "https://example.com" }
+        ]
+      });
+      continue;
+    }
+
+    if (ed === "projects") {
+      setBlock(id, id === "caseStudies" ? "Case studies" : "Projekty", {
+        items: [
+          { title: "Single: 'Przebudzenie'", desc: "Opis w 2 zdaniach. Co to za projekt i co jest w nim mocne.", tags: "single • 2026", link: "https://example.com" },
+          { title: "Teledysk", desc: "Klip, klimat, reżyseria.\nDodaj link do YouTube.", tags: "video", link: "https://example.com" },
+          { title: "Sesja zdjęciowa", desc: "3–4 zdjęcia promocyjne do pobrania w EPK.", tags: "press", link: "https://example.com" }
+        ]
+      });
+      continue;
+    }
+
+    if (ed === "services") {
+      setBlock(id, "Usługi", {
+        items: [
+          { name: "Koncert klubowy", price: "od 2000 zł", desc: "Czas, skład, wymagania techniczne." },
+          { name: "Event firmowy", price: "wycena", desc: "Dopasowanie setu i czasu trwania." },
+          { name: "Współpraca", price: "", desc: "Feat, support, gościnny udział." }
+        ]
+      });
+      continue;
+    }
+
+    if (ed === "simpleList") {
+      const title = id === "clients" ? "Klienci" : (id === "awards" ? "Nagrody" : (BLOCKS[id]?.label || id));
+      setBlock(id, title, {
+        items: [
+          { text: "Przykładowa pozycja #1", link: "https://example.com" },
+          { text: "Przykładowa pozycja #2", link: "https://example.com" },
+          { text: "Przykładowa pozycja #3", link: "https://example.com" }
+        ]
+      });
+      continue;
+    }
+
+    if (ed === "publications") {
+      setBlock(id, "Publikacje", {
+        items: [
+          { title: "Wywiad", where: "Portal muzyczny", year: "2026", url: "https://example.com" },
+          { title: "Recenzja koncertu", where: "Magazyn", year: "2026", url: "https://example.com" }
+        ]
+      });
+      continue;
+    }
+
+    if (ed === "testimonials") {
+      setBlock(id, "Opinie", {
+        items: [
+          { quote: "Świetna energia na żywo i bardzo dobry kontakt z publiką.", who: "Organizator", link: "https://example.com" },
+          { quote: "Nowocześnie, głośno i z emocją — tak ma być.", who: "Słuchacz", link: "https://example.com" }
+        ]
+      });
+      continue;
+    }
+
+    if (ed === "epk") {
+      setBlock(id, "EPK / Press kit", {
+        shortBio: "Krótka notka (5–7 zdań): skład, gatunek, najważniejsze osiągnięcia, trasa.",
+        pressLinks: [
+          { name: "Recenzja", url: "https://example.com" },
+          { name: "Wywiad", url: "https://example.com" }
+        ],
+        downloadLinks: [
+          { name: "Stage plot (PDF)", url: "https://example.com" },
+          { name: "Rider techniczny", url: "https://example.com" }
+        ]
+      });
+      continue;
+    }
+
+    if (ed === "newsletter") {
+      setBlock(id, "Newsletter", {
+        title: "Bądź na bieżąco",
+        desc: "Nowe utwory, koncerty i materiały zza kulis.",
+        btn: "Zapisz się",
+        url: "https://example.com"
+      });
+      continue;
+    }
+
+    if (ed === "contact") {
+      setBlock(id, "Kontakt", {
+        email: "kontakt@przyklad.pl",
+        phone: "+48 600 000 000",
+        city: "Kraków",
+        cta: "Napisz maila"
+      });
+      continue;
+    }
+
+    if (ed === "social") {
+      setBlock(id, "Social media", {
+        items: [
+          { name: "Instagram", url: "https://instagram.com" },
+          { name: "YouTube", url: "https://youtube.com" },
+          { name: "Spotify", url: "https://open.spotify.com" }
+        ]
+      });
+      continue;
+    }
+
+    // fallback
+    setBlock(id, BLOCKS[id]?.label || id, {});
+  }
+
+  // assets (demo)
+  assets.heroImages = [
+    { dataUrl: _svgPlaceholderDataUrl("HERO — tło", 1600, 1000), alt: "HERO — tło" },
+    { dataUrl: _svgPlaceholderDataUrl("HERO — zdjęcie 1", 900, 900), alt: "HERO — zdjęcie 1" },
+    { dataUrl: _svgPlaceholderDataUrl("HERO — zdjęcie 2", 900, 900), alt: "HERO — zdjęcie 2" },
+  ];
+
+  assets.galleryImages = preset.includes('gallery') ? [
+    { dataUrl: _svgPlaceholderDataUrl("Galeria 01", 900, 900), alt: "Galeria 01" },
+    { dataUrl: _svgPlaceholderDataUrl("Galeria 02", 900, 900), alt: "Galeria 02" },
+    { dataUrl: _svgPlaceholderDataUrl("Galeria 03", 900, 900), alt: "Galeria 03" },
+    { dataUrl: _svgPlaceholderDataUrl("Galeria 04", 900, 900), alt: "Galeria 04" },
+    { dataUrl: _svgPlaceholderDataUrl("Galeria 05", 900, 900), alt: "Galeria 05" },
+    { dataUrl: _svgPlaceholderDataUrl("Galeria 06", 900, 900), alt: "Galeria 06" },
+    { dataUrl: _svgPlaceholderDataUrl("Galeria 07", 900, 900), alt: "Galeria 07" },
+    { dataUrl: _svgPlaceholderDataUrl("Galeria 08", 900, 900), alt: "Galeria 08" },
+  ] : [];
+
+  assets.epkPressPhotos = preset.includes('epk') ? [
+    { dataUrl: _svgPlaceholderDataUrl("Press photo 01", 1200, 800), alt: "Press photo 01" },
+    { dataUrl: _svgPlaceholderDataUrl("Press photo 02", 1200, 800), alt: "Press photo 02" },
+    { dataUrl: _svgPlaceholderDataUrl("Press photo 03", 1200, 800), alt: "Press photo 03" },
+  ] : [];
+
+  assets.epkFiles = [];
+
+  const payload = {
+    data: {
+      exportMode: $("exportMode")?.value || state.exportMode,
+      livePreview: true,
+      role,
+      theme: $("theme")?.value || state.theme,
+      template: $("template")?.value || state.template,
+      accent: $("accent")?.value || state.accent,
+      sectionHeadersAlign: $("sectionHeadersAlign")?.value || state.sectionHeadersAlign,
+      siteName,
+      order: finalOrder,
+      blocks,
+      activeBlockId: "hero",
+    },
+    savedAt: new Date().toISOString()
+  };
+
+  applyPayload(payload, true);
+  zipPreviewCurrent = "index.html";
+  structureChanged(true);
+}
+
 /* ==========================
    Defaults + role switching
 ========================== */
 
 function ensureBlock(blockId) {
   if (!state.blocks[blockId]) {
-    state.blocks[blockId] = { enabled: true, title: BLOCKS[blockId]?.label || blockId, data: {} };
+    state.blocks[blockId] = { enabled: true, title: "", data: {} };
   }
   return state.blocks[blockId];
 }
@@ -285,10 +740,10 @@ function hardLockHeroFirst() {
 function applyRolePreset(role) {
   const preset = ROLE_PRESETS[role] || ROLE_PRESETS.musician;
 
+  // enable only the preset base blocks (no duplicates)
   preset.forEach(id => ensureBlock(id).enabled = true);
-
   Object.keys(state.blocks).forEach((id) => {
-    if (!preset.includes(id)) state.blocks[id].enabled = false;
+    state.blocks[id].enabled = preset.includes(id);
   });
 
   state.role = role;
@@ -319,11 +774,119 @@ function syncStateFromSettingsInputs() {
   state.sectionHeadersAlign = $("sectionHeadersAlign").value;
   state.siteName = $("siteName").value;
 
+  if ($("metaTitle")) state.metaTitle = $("metaTitle").value;
+  if ($("metaDescription")) state.metaDescription = $("metaDescription").value;
+
   setLiveStatus();
 }
 
+function collectIssues() {
+  const issues = [];
+
+  // SEO (soft warnings)
+  if (!String(state.metaTitle || "").trim()) issues.push("SEO: brak tytułu (meta title).");
+  if (!String(state.metaDescription || "").trim()) issues.push("SEO: brak opisu (meta description).");
+
+  // Contact
+  for (const id of enabledBlocksInOrder()) {
+    if (baseBlockId(id) !== "contact") continue;
+    const c = state.blocks[id]?.data || {};
+    const email = String(c.email || "").trim();
+    const phone = String(c.phone || "").trim();
+    if (!email && !phone) issues.push("Kontakt: brak email i telefonu.");
+  }
+
+  // Embeds
+  for (const id of enabledBlocksInOrder()) {
+    const t = baseBlockId(id);
+    const d = state.blocks[id]?.data || {};
+    if (t === "spotify") {
+      const items = Array.isArray(d.items) ? d.items : [];
+      for (const it of items) {
+        const u = String(it.url || "").trim();
+        if (u && !normalizeSpotify(u)) issues.push("Spotify: nie rozpoznaję jednego z linków (wklej pełny link lub iframe)." );
+      }
+    }
+    if (t === "youtube") {
+      const items = Array.isArray(d.items) ? d.items : [];
+      for (const it of items) {
+        const u = String(it.url || "").trim();
+        if (u && !normalizeYouTube(u)) issues.push("YouTube: nie rozpoznaję jednego z linków (wklej pełny link lub iframe)." );
+      }
+    }
+  }
+
+  return issues;
+}
+
+function updateIssuesPill() {
+  const el = $("issuesPill");
+  if (!el) return;
+  const issues = collectIssues();
+  el.textContent = `Problemy: ${issues.length}`;
+  el.dataset.count = String(issues.length);
+}
+
+let _issuesModalEl = null;
+
+function ensureIssuesModal() {
+  if (_issuesModalEl) return _issuesModalEl;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'issuesModal';
+  wrap.innerHTML = `
+    <div class="issuesModal__backdrop" data-issues-close="1"></div>
+    <div class="issuesModal__card" role="dialog" aria-modal="true" aria-label="Problemy i ostrzeżenia">
+      <div class="issuesModal__head">
+        <strong>Problemy i ostrzeżenia</strong>
+        <button type="button" class="iconBtn" data-issues-close="1" aria-label="Zamknij">✕</button>
+      </div>
+      <div class="issuesModal__body">
+        <div class="issuesModal__hint">To są podpowiedzi — strona może działać mimo ostrzeżeń.</div>
+        <ul class="issuesModal__list" id="issuesModalList"></ul>
+      </div>
+    </div>
+  `;
+
+  wrap.addEventListener('click', (e) => {
+    const close = e.target.closest('[data-issues-close]');
+    if (close) closeIssuesModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!_issuesModalEl || !_issuesModalEl.classList.contains('isOpen')) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeIssuesModal();
+    }
+  }, true);
+
+  document.body.appendChild(wrap);
+  _issuesModalEl = wrap;
+  return wrap;
+}
+
+function openIssuesModal() {
+  const modal = ensureIssuesModal();
+  const list = modal.querySelector('#issuesModalList');
+  const issues = collectIssues();
+
+  list.innerHTML = issues.length
+    ? issues.map((t) => `<li>${escapeHtml(t)}</li>`).join('')
+    : `<li>Brak problemów 🎉</li>`;
+
+  modal.classList.add('isOpen');
+}
+
+function closeIssuesModal() {
+  if (!_issuesModalEl) return;
+  _issuesModalEl.classList.remove('isOpen');
+}
+
 const contentChanged = debounce(() => {
+  pushHistoryDebounced();
   saveDraft();
+  updateIssuesPill();
   if (state.livePreview) rebuildPreview(true);
 }, 120);
 
@@ -333,7 +896,9 @@ function structureChanged(forcePreview = false) {
   renderBlocksList();
   renderAddBlockSelect();
   renderBlockEditor();
+  pushHistory();
   saveDraft();
+  updateIssuesPill();
 
   if (state.livePreview || forcePreview) rebuildPreview(true);
 }
@@ -343,7 +908,7 @@ function structureChanged(forcePreview = false) {
 ========================== */
 
 function moveBlock(blockId, dir) {
-  if (BLOCKS[blockId]?.locked) return;
+  if (isLockedBlock(blockId)) return;
   const idx = state.order.indexOf(blockId);
   if (idx < 0) return;
   const newIdx = idx + dir;
@@ -389,37 +954,227 @@ function extractIframeSrc(input) {
   return m ? m[1] : "";
 }
 
-function normalizeSpotify(input) {
+function clampNum(n, min, max) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return min;
+  return Math.min(max, Math.max(min, x));
+}
+
+function tryParseUrl(input) {
+  const s = String(input || "").trim();
+  if (!s) return null;
+  // If user pasted something like "youtube.com/watch?v=..." without protocol
+  // try adding https://.
+  try { return new URL(s); } catch (e) {}
+  try { return new URL(`https://${s.replace(/^\/\//, "")}`); } catch (e) {}
+  return null;
+}
+
+function pad2(n) {
+  const x = String(n || "");
+  return x.length === 1 ? `0${x}` : x;
+}
+
+function toIsoDateLoose(input) {
   const s = String(input || "").trim();
   if (!s) return "";
-  if (s.includes("<iframe")) {
-    const src = extractIframeSrc(s);
-    return src ? normalizeSpotify(src) : "";
+  // yyyy-mm-dd
+  const m1 = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m1) return `${m1[1]}-${m1[2]}-${m1[3]}`;
+  // dd.mm.yyyy or dd/mm/yyyy or dd-mm-yyyy
+  const m2 = s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+  if (m2) {
+    const d = pad2(m2[1]);
+    const mo = pad2(m2[2]);
+    const y = m2[3];
+    return `${y}-${mo}-${d}`;
   }
-  if (s.includes("open.spotify.com/")) return s.replace("open.spotify.com/", "open.spotify.com/embed/");
-  if (s.includes("spotify.com/embed/")) return s;
-  return s;
+  // yyyy.mm.dd
+  const m3 = s.match(/^(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})$/);
+  if (m3) {
+    const y = m3[1];
+    const mo = pad2(m3[2]);
+    const d = pad2(m3[3]);
+    return `${y}-${mo}-${d}`;
+  }
+  return "";
+}
+
+function formatDatePL(input) {
+  const iso = toIsoDateLoose(input);
+  if (!iso) return String(input || "").trim();
+  const parts = iso.split("-");
+  if (parts.length !== 3) return String(input || "").trim();
+  return `${parts[2]}.${parts[1]}.${parts[0]}`;
+}
+
+
+function parseYouTubeTimeToSeconds(t) {
+  const raw = String(t || "").trim();
+  if (!raw) return 0;
+  if (/^\d+$/.test(raw)) return Number(raw);
+  const s = raw.replace(/^\?t=/, "").replace(/\s+/g, "");
+  // Formats: 90s, 1m30s, 1h2m3s
+  const m = s.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/i);
+  if (m && (m[1] || m[2] || m[3])) {
+    const h = Number(m[1] || 0);
+    const mm = Number(m[2] || 0);
+    const ss = Number(m[3] || 0);
+    return h * 3600 + mm * 60 + ss;
+  }
+  // Fallback: sometimes "1m30" (no trailing s)
+  const m2 = s.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+))$/i);
+  if (m2 && (m2[1] || m2[2] || m2[3])) {
+    const h = Number(m2[1] || 0);
+    const mm = Number(m2[2] || 0);
+    const ss = Number(m2[3] || 0);
+    return h * 3600 + mm * 60 + ss;
+  }
+  return 0;
+}
+
+function parseYouTube(input) {
+  const s0 = String(input || "").trim();
+  if (!s0) return { embedUrl: "", openUrl: "", kind: "" };
+
+  // iframe pasted
+  if (s0.includes("<iframe")) {
+    const src = extractIframeSrc(s0);
+    return src ? parseYouTube(src) : { embedUrl: "", openUrl: "", kind: "" };
+  }
+
+  const u = tryParseUrl(s0);
+  // If it's not a URL at all, give up.
+  if (!u) return { embedUrl: "", openUrl: "", kind: "" };
+
+  const host = (u.hostname || "").toLowerCase();
+  const path = u.pathname || "";
+  const params = u.searchParams;
+
+  const listId = params.get("list") || "";
+  const vParam = params.get("v") || "";
+
+  let videoId = "";
+  let kind = "";
+
+  if (host === "youtu.be") {
+    // /ID
+    const seg = path.split("/").filter(Boolean)[0] || "";
+    videoId = seg;
+    kind = "video";
+  } else if (host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com")) {
+    if (path.startsWith("/watch")) {
+      if (vParam) { videoId = vParam; kind = "video"; }
+    } else if (path.startsWith("/shorts/")) {
+      videoId = path.split("/")[2] || "";
+      kind = "video";
+    } else if (path.startsWith("/live/")) {
+      videoId = path.split("/")[2] || "";
+      kind = "video";
+    } else if (path.startsWith("/embed/")) {
+      videoId = path.split("/")[2] || "";
+      kind = (videoId === "videoseries") ? "playlist" : "video";
+    } else if (path.startsWith("/v/")) {
+      videoId = path.split("/")[2] || "";
+      kind = "video";
+    } else if (path.startsWith("/playlist")) {
+      kind = "playlist";
+    }
+
+    // If there is a list but no video id, treat as playlist.
+    if (!videoId && listId) kind = "playlist";
+  }
+
+  // sanitize id shapes a bit (avoid injecting garbage into src)
+  const safeId = (x) => String(x || "").match(/^[a-zA-Z0-9_-]{6,}$/) ? String(x) : "";
+  videoId = safeId(videoId);
+  const safeList = safeId(listId);
+
+  const start = parseYouTubeTimeToSeconds(params.get("t") || params.get("start") || "");
+
+  if (kind === "playlist" && safeList) {
+    const openUrl = `https://www.youtube.com/playlist?list=${safeList}`;
+    let embedUrl = `https://www.youtube-nocookie.com/embed/videoseries?list=${safeList}`;
+    if (start > 0) embedUrl += `&start=${start}`;
+    return { embedUrl, openUrl, kind: "playlist" };
+  }
+
+  if (videoId) {
+    const openUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    let embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
+    const qs = [];
+    if (safeList) qs.push(`list=${safeList}`);
+    if (start > 0) qs.push(`start=${start}`);
+    if (qs.length) embedUrl += `?${qs.join("&")}`;
+    return { embedUrl, openUrl, kind: "video" };
+  }
+
+  // Could be channel / handle / search etc. Not embeddable.
+  return { embedUrl: "", openUrl: u.toString(), kind: "link" };
+}
+
+function parseSpotify(input) {
+  const s0 = String(input || "").trim();
+  if (!s0) return { embedUrl: "", openUrl: "", kind: "" };
+
+  if (s0.includes("<iframe")) {
+    const src = extractIframeSrc(s0);
+    return src ? parseSpotify(src) : { embedUrl: "", openUrl: "", kind: "" };
+  }
+
+  // spotify URI: spotify:track:ID etc
+  if (s0.startsWith("spotify:")) {
+    const parts = s0.split(":").filter(Boolean);
+    const type = parts[1] || "";
+    const id = parts[2] || "";
+    if (type && id) {
+      const embedUrl = `https://open.spotify.com/embed/${type}/${id}`;
+      const openUrl = `https://open.spotify.com/${type}/${id}`;
+      return { embedUrl, openUrl, kind: type };
+    }
+  }
+
+  const u = tryParseUrl(s0);
+  if (!u) return { embedUrl: "", openUrl: "", kind: "" };
+  const host = (u.hostname || "").toLowerCase();
+  const path = u.pathname || "";
+
+  // Short links like spoti.fi usually require a redirect we can't reliably follow in pure front-end (CORS).
+  if (host === "spoti.fi") {
+    return { embedUrl: "", openUrl: u.toString(), kind: "short" };
+  }
+
+  if (host.endsWith("spotify.com")) {
+    // Already embed
+    if (path.startsWith("/embed/")) {
+      const embedUrl = `https://open.spotify.com${path}`;
+      const openUrl = `https://open.spotify.com${path.replace("/embed/", "/")}`;
+      return { embedUrl, openUrl, kind: "embed" };
+    }
+
+    // Normal open.spotify.com/{type}/{id}
+    const segs = path.split("/").filter(Boolean);
+    const type = segs[0] || "";
+    const id = segs[1] || "";
+    const safe = (x) => String(x || "").match(/^[a-zA-Z0-9]+$/) ? String(x) : "";
+    if (type && id && safe(id)) {
+      const embedUrl = `https://open.spotify.com/embed/${type}/${id}`;
+      const openUrl = `https://open.spotify.com/${type}/${id}`;
+      return { embedUrl, openUrl, kind: type };
+    }
+
+    return { embedUrl: "", openUrl: u.toString(), kind: "link" };
+  }
+
+  return { embedUrl: "", openUrl: u.toString(), kind: "link" };
+}
+
+function normalizeSpotify(input) {
+  return parseSpotify(input).embedUrl || "";
 }
 
 function normalizeYouTube(input) {
-  const s = String(input || "").trim();
-  if (!s) return "";
-  if (s.includes("<iframe")) {
-    const src = extractIframeSrc(s);
-    return src ? normalizeYouTube(src) : "";
-  }
-
-  const listMatch = s.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-  if (listMatch) return `https://www.youtube.com/embed/videoseries?list=${listMatch[1]}`;
-
-  const short = s.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
-  if (short) return `https://www.youtube.com/embed/${short[1]}`;
-
-  const watch = s.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-  if (watch) return `https://www.youtube.com/embed/${watch[1]}`;
-
-  if (s.includes("youtube.com/embed/")) return s;
-  return s;
+  return parseYouTube(input).embedUrl || "";
 }
 
 /* ==========================
@@ -438,12 +1193,17 @@ function readFileAsDataUrl(file) {
 
 async function readMultipleImages(fileList) {
   const files = Array.from(fileList || []);
-  const urls = [];
+  const out = [];
   for (const f of files) {
-    const u = await readFileAsDataUrl(f);
-    if (u) urls.push(u);
+    const dataUrl = await readFileAsDataUrl(f);
+    if (!dataUrl) continue;
+    const alt = String(f?.name || "")
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[\-_]+/g, " ")
+      .trim();
+    out.push({ dataUrl, alt });
   }
-  return urls;
+  return out;
 }
 
 function parseDataUrl(dataUrl) {
@@ -475,6 +1235,8 @@ function enabledBlocksInOrder() {
   return state.order.filter(id => state.blocks[id]?.enabled);
 }
 
+
+
 function renderBlocksList() {
   const host = $("blocksList");
   host.innerHTML = "";
@@ -483,7 +1245,11 @@ function renderBlocksList() {
     ensureBlock(id);
     const cfg = state.blocks[id];
     const isActive = state.activeBlockId === id;
-    const locked = !!BLOCKS[id]?.locked;
+    const def = getBlockDef(id);
+    const locked = isLockedBlock(id);
+    const suf = blockSuffix(id);
+    const label = `${def.label}${suf ? ` (${suf})` : ""}`;
+    const canDup = canDuplicateBlock(id);
 
     const el = document.createElement("div");
     el.className = `blockItem ${isActive ? "blockItem--active" : ""}`;
@@ -496,7 +1262,7 @@ function renderBlocksList() {
       <div class="blockLabel" data-select="${id}">
         ${checkboxHtml}
         <div>
-          <strong>${escapeHtml(BLOCKS[id]?.label || id)}</strong><br/>
+          <strong>${escapeHtml(label)}</strong><br/>
           <small data-small="${id}">${escapeHtml(cfg.title || "")}</small>
         </div>
       </div>
@@ -504,6 +1270,7 @@ function renderBlocksList() {
       <div class="blockActions">
         <button class="iconBtn" data-up="${id}" ${locked || idx <= 1 ? "disabled" : ""} title="Góra">↑</button>
         <button class="iconBtn" data-down="${id}" ${locked || idx === state.order.length - 1 ? "disabled" : ""} title="Dół">↓</button>
+        <button class="iconBtn" data-dup="${id}" ${!canDup ? "disabled" : ""} title="Duplikuj">⧉</button>
         <button class="iconBtn" data-remove="${id}" ${locked ? "disabled" : ""} title="Usuń z układu">✕</button>
       </div>
     `;
@@ -538,6 +1305,13 @@ function renderBlocksList() {
     b.addEventListener("click", () => {
       moveBlock(b.getAttribute("data-down"), +1);
       structureChanged();
+    });
+  });
+
+  host.querySelectorAll("[data-dup]").forEach(b => {
+    b.addEventListener("click", () => {
+      const id = b.getAttribute("data-dup");
+      duplicateBlock(id);
     });
   });
 
@@ -648,7 +1422,7 @@ function renderBlockEditor() {
   }
 
   const cfg = ensureBlock(id);
-  const def = BLOCKS[id];
+  const def = getBlockDef(id);
 
   const common = fieldRow(
     "Tytuł sekcji",
@@ -663,12 +1437,16 @@ function renderBlockEditor() {
     const heroInfo = assets.heroImages.length
       ? `<div class="hint">HERO zdjęcia: ${assets.heroImages.length} (pierwsze = tło)</div>
          <div class="itemList">
-           ${assets.heroImages.map((_, i) => `
+           ${assets.heroImages.map((img, i) => `
              <div class="itemCard">
                <div class="itemCardTop">
                  <strong>Zdjęcie #${i+1}</strong>
                  <button class="btnSmall" type="button" data-remove-heroimg="${i}">Usuń</button>
                </div>
+               <label class="field" style="margin:10px 0 0 0;">
+                 <span>Alt</span>
+                 <input type="text" data-hero-alt="${i}" value="${escapeHtml(imgObj(img).alt || "")}" placeholder="Opis zdjęcia (alt)" />
+               </label>
              </div>
            `).join("")}
          </div>`
@@ -704,15 +1482,22 @@ function renderBlockEditor() {
 
   if (def.editor === "gallery") {
     const layout = cfg.data.layout ?? "grid";
+    cfg.data.cols = clampNum(cfg.data.cols ?? 4, 2, 6);
+    cfg.data.masonryCols = clampNum(cfg.data.masonryCols ?? 3, 2, 6);
+
     const thumbs = assets.galleryImages.length
       ? `<div class="hint">Wgrane zdjęcia: ${assets.galleryImages.length}</div>
          <div class="itemList">
-            ${assets.galleryImages.map((_, i) => `
+            ${assets.galleryImages.map((img, i) => `
               <div class="itemCard">
                 <div class="itemCardTop">
                   <strong>Zdjęcie #${i+1}</strong>
                   <button class="btnSmall" type="button" data-remove-gallery="${i}">Usuń</button>
                 </div>
+                <label class="field" style="margin:10px 0 0 0;">
+                  <span>Alt</span>
+                  <input type="text" data-gallery-alt="${i}" value="${escapeHtml(imgObj(img).alt || "")}" placeholder="Opis zdjęcia (alt)" />
+                </label>
               </div>
             `).join("")}
          </div>`
@@ -725,6 +1510,23 @@ function renderBlockEditor() {
           <option value="masonry" ${layout==="masonry"?"selected":""}>Masonry</option>
         </select>
       `)}
+
+      <div class="grid2">
+        ${fieldRow("Kolumny (siatka)", `
+          <div class="rangeRow">
+            <input id="ed_gallery_cols" type="range" min="2" max="6" step="1" value="${cfg.data.cols}" />
+            <div class="pill"><output id="ed_gallery_cols_out">${cfg.data.cols}</output></div>
+          </div>
+        `, "Działa w układzie: Siatka.")}
+
+        ${fieldRow("Kolumny (masonry)", `
+          <div class="rangeRow">
+            <input id="ed_gallery_mcols" type="range" min="2" max="6" step="1" value="${cfg.data.masonryCols}" />
+            <div class="pill"><output id="ed_gallery_mcols_out">${cfg.data.masonryCols}</output></div>
+          </div>
+        `, "Działa w układzie: Masonry.")}
+      </div>
+
       ${fieldRow("Wgraj zdjęcia", `<input id="ed_gallery_upload" type="file" accept="image/*" multiple />`)}
       ${thumbs}
     `;
@@ -732,16 +1534,34 @@ function renderBlockEditor() {
 
   if (def.editor === "embed_spotify") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    specific = listEditor(cfg.data.items, "items", "Link", [
-      { key: "url", label: "Link Spotify", type: "url", placeholder: "https://open.spotify.com/..." }
-    ]) + `<div class="hint">Wklej link (lub iframe) → generator zrobi embed automatycznie.</div>`;
+    const sz = clampNum(cfg.data.embedSize ?? 100, 60, 100);
+    specific =
+      fieldRow("Rozmiar okna", `
+        <div class="rangeRow">
+          <input id="ed_spotify_size" type="range" min="60" max="100" step="5" value="${sz}" data-path="embedSize" />
+          <div class="pill"><output id="ed_spotify_size_out">${sz}%</output></div>
+        </div>
+      `)
+      + listEditor(cfg.data.items, "items", "Link", [
+          { key: "url", label: "Link Spotify", type: "url", placeholder: "https://open.spotify.com/..." }
+        ])
+      + `<div class="hint">Najpewniej działa pełny link <strong>open.spotify.com</strong> (skróty typu <strong>spoti.fi</strong> mogą nie osadzić).</div>`;
   }
 
   if (def.editor === "embed_youtube") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    specific = listEditor(cfg.data.items, "items", "Link", [
-      { key: "url", label: "Link YouTube", type: "url", placeholder: "https://youtube.com/watch?v=... lub playlist" }
-    ]) + `<div class="hint">Wklej link (lub iframe) → generator zrobi embed automatycznie.</div>`;
+    const sz = clampNum(cfg.data.embedSize ?? 100, 60, 100);
+    specific =
+      fieldRow("Rozmiar okna", `
+        <div class="rangeRow">
+          <input id="ed_youtube_size" type="range" min="60" max="100" step="5" value="${sz}" data-path="embedSize" />
+          <div class="pill"><output id="ed_youtube_size_out">${sz}%</output></div>
+        </div>
+      `)
+      + listEditor(cfg.data.items, "items", "Link", [
+          { key: "url", label: "Link YouTube", type: "url", placeholder: "https://youtube.com/watch?v=... / shorts / live / playlist" }
+        ])
+      + `<div class="hint">Generator przerabia link na embed automatycznie. Jeśli autor zablokował osadzanie, zostanie przycisk „Otwórz”.</div>`;
   }
 
   if (def.editor === "events") {
@@ -824,12 +1644,16 @@ function renderBlockEditor() {
     const photosInfo = assets.epkPressPhotos.length
       ? `<div class="hint">Zdjęcia prasowe: ${assets.epkPressPhotos.length}</div>
          <div class="itemList">
-            ${assets.epkPressPhotos.map((_, i) => `
+            ${assets.epkPressPhotos.map((img, i) => `
               <div class="itemCard">
                 <div class="itemCardTop">
                   <strong>Press photo #${i+1}</strong>
                   <button class="btnSmall" type="button" data-remove-epkphoto="${i}">Usuń</button>
                 </div>
+                <label class="field" style="margin:10px 0 0 0;">
+                  <span>Alt</span>
+                  <input type="text" data-epkphoto-alt="${i}" value="${escapeHtml(imgObj(img).alt || "")}" placeholder="Opis zdjęcia (alt)" />
+                </label>
               </div>
             `).join("")}
          </div>`
@@ -903,7 +1727,7 @@ function renderBlockEditor() {
 
 function bindEditorHandlers(host, blockId) {
   const cfg = ensureBlock(blockId);
-  const def = BLOCKS[blockId];
+  const def = getBlockDef(blockId);
 
   // title (update small label without rerender)
   const titleEl = host.querySelector("#ed_title");
@@ -1104,6 +1928,18 @@ function bindEditorHandlers(host, blockId) {
     if (city) city.addEventListener("input", () => { cfg.data.city = city.value; contentChanged(); });
     if (cta) cta.addEventListener("input", () => { cfg.data.cta = cta.value; contentChanged(); });
   }
+
+  // Embed size sliders (UI-only output label)
+  if (def.editor === "embed_spotify") {
+    const r = host.querySelector("#ed_spotify_size");
+    const o = host.querySelector("#ed_spotify_size_out");
+    if (r && o) r.addEventListener("input", () => { o.textContent = `${r.value}%`; });
+  }
+  if (def.editor === "embed_youtube") {
+    const r = host.querySelector("#ed_youtube_size");
+    const o = host.querySelector("#ed_youtube_size_out");
+    if (r && o) r.addEventListener("input", () => { o.textContent = `${r.value}%`; });
+  }
 }
 
 /* ==========================
@@ -1114,15 +1950,27 @@ function blockToFile(id) { return `${id}.html`; }
 
 function getNavItemsZip() {
   const items = [{ label: "Home", href: "index.html", id: "home" }];
+  const seen = new Set();
   for (const id of enabledBlocksInOrder()) {
     if (id === "hero") continue;
-    items.push({ label: state.blocks[id].title || BLOCKS[id].label, href: blockToFile(id), id });
+    const base = baseBlockId(id);
+    if (seen.has(base)) continue; // hide duplicates in menu
+    seen.add(base);
+    items.push({ label: getBlockDisplayName(id), href: blockToFile(id), id });
   }
   return items;
 }
 
 function getNavItemsSingle() {
-  return enabledBlocksInOrder().map(id => ({ label: state.blocks[id].title || BLOCKS[id].label, href: `#${id}`, id }));
+  const items = [];
+  const seen = new Set();
+  for (const id of enabledBlocksInOrder()) {
+    const base = baseBlockId(id);
+    if (seen.has(base)) continue; // hide duplicates in menu
+    seen.add(base);
+    items.push({ label: getBlockDisplayName(id), href: `#${id}`, id });
+  }
+  return items;
 }
 
 function buildSiteCss() {
@@ -1283,24 +2131,44 @@ body.theme-elegant{
 /* gallery */
 .galleryGrid{
   display:grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(var(--gcols, 4), 1fr);
   gap: 14px;
 }
-@media (max-width: 900px){ .galleryGrid{ grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 900px){ .galleryGrid{ grid-template-columns: repeat(var(--gcols-m, 2),1fr); } }
 .galleryGrid img{ width:100%; height:auto; display:block; }
 
 .masonry{
-  column-count: 3;
+  column-count: var(--mcols, 3);
   column-gap: 14px;
 }
-@media (max-width: 900px){ .masonry{ column-count: 2; } }
+@media (max-width: 900px){ .masonry{ column-count: var(--mcols-m, 2); } }
 .masonryItem{ break-inside: avoid; margin:0 0 14px 0; }
 .masonryItem img{ width:100%; height:auto; display:block; }
 
 .embed{ width:100%; aspect-ratio: 16/9; border:0; }
 .embed.tall{ aspect-ratio: 16/10; }
 
+.embedGrid{ --embed-max: 100%; }
+.embedWrap{ width: var(--embed-max); max-width: 100%; margin-inline:auto; }
+@media (max-width: 700px){ .embedWrap{ width: 100%; } }
+.embedMeta{ display:flex; justify-content:flex-end; margin-top:8px; }
+.embedMeta .btn{ padding: 8px 12px; font-size: 12px; }
+.embedCard{ border:1px solid rgba(127,127,127,.18); padding:12px; border-radius: var(--radius); }
+body.theme-modern .embedCard{ border-color: rgba(255,255,255,.14); }
+
 .footer{ margin-top: 36px; opacity:.7; font-size: 12px; text-align:center; }
+
+/* lightbox */
+.lbOverlay{ position:fixed; inset:0; background: rgba(0,0,0,.86); display:none; align-items:center; justify-content:center; padding: 18px; z-index: 9999; }
+.lbOverlay.isOpen{ display:flex; }
+.lbBox{ width: min(1120px, 94vw); max-height: 92vh; display:grid; gap: 10px; }
+.lbImg{ width:100%; max-height: 78vh; object-fit: contain; background:#000; border-radius: var(--radius); box-shadow: 0 20px 70px rgba(0,0,0,.55); }
+.lbBar{ display:flex; align-items:center; justify-content:space-between; gap: 10px; color:#fff; font-size: 12px; opacity:.92; }
+.lbCaption{ overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lbControls{ display:flex; gap: 8px; align-items:center; }
+.lbBtn{ border:1px solid rgba(255,255,255,.22); background: rgba(0,0,0,.35); color:#fff; padding: 8px 10px; border-radius: 12px; font-weight: 900; cursor:pointer; }
+.lbBtn:hover{ background: rgba(255,255,255,.08); }
+
 
 /* TEMPLATE: Square Grid (minimal like your ref #2) */
 body.tpl-square{
@@ -1368,52 +2236,265 @@ body.tpl-soft .hero::after{
 }
 
 function buildSiteScript() {
-  // Works in srcdoc preview: intercept .html links -> parent postMessage
+  // Works for both single + ZIP pages. In preview, intercept internal navigation.
   return `
 (function(){
-  // This flag is injected only for iframe srcdoc preview (never for exported files)
-  const IN_PREVIEW = !!(document.documentElement && document.documentElement.hasAttribute("data-kpo-preview"));
-  function send(msg){ try{ parent.postMessage(msg, "*"); }catch(e){} }
+  const IN_PREVIEW = document.documentElement.hasAttribute('data-kpo-preview');
 
-  document.addEventListener("click", function(e){
-    const a = e.target.closest("a");
+  function send(msg){
+    try { parent.postMessage(msg, '*'); } catch (e) {}
+  }
+
+  // Preview: navigate between ZIP pages inside the generator iframe.
+  document.addEventListener('click', function(e){
+    const a = e.target.closest('a');
     if(!a) return;
-    const href = a.getAttribute("href") || "";
-    if(!href) return;
+    const href = a.getAttribute('href') || '';
 
-    if(href.startsWith("#")){
-      if(href.length <= 1) return; // allow bare "#" to behave normally
+    // Let lightbox handle itself.
+    if (a.hasAttribute('data-lightbox')) return;
+
+    // Hash links always ok.
+    if(href.startsWith('#')) return;
+
+    // External
+    if(href.startsWith('http:') || href.startsWith('https:') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('data:')) return;
+
+    if(IN_PREVIEW && href.endsWith('.html')){
       e.preventDefault();
-      const el = document.getElementById(href.slice(1)) || document.querySelector(href);
-      if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
-      return;
+      send({ type: 'NAVIGATE', page: href });
     }
+  });
 
-    if(IN_PREVIEW){
-      // ZIP preview: switch between inlined pages instead of real navigation
-      const raw = String(href || "").trim();
-      const lower = raw.toLowerCase();
-      // don't hijack external/protocol links
-      if(
-        lower.startsWith("http:") ||
-        lower.startsWith("https:") ||
-        lower.startsWith("mailto:") ||
-        lower.startsWith("tel:") ||
-        lower.startsWith("sms:") ||
-        lower.startsWith("data:") ||
-        lower.startsWith("blob:")
-      ) return;
-
-      let clean = raw;
-      if(clean.startsWith("./")) clean = clean.slice(2);
-      if(clean.startsWith("/")) clean = clean.slice(1);
-      clean = clean.split("#")[0].split("?")[0];
-
-      if(clean.endsWith(".html")){
+  // smooth scroll (single page)
+  document.addEventListener('click', function(e){
+    const a = e.target.closest('a');
+    if(!a) return;
+    const href = a.getAttribute('href') || '';
+    if(href.startsWith('#')){
+      const el = document.querySelector(href);
+      if(el){
         e.preventDefault();
-        send({type:"NAVIGATE", page: clean});
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
+  });
+
+  function parseIso(iso){
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return null;
+    const y = Number(m[1]);
+    const mo = Number(m[2]) - 1;
+    const d = Number(m[3]);
+    if(!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return null;
+    return new Date(y, mo, d, 0, 0, 0, 0);
+  }
+
+  function todayMidnight(){
+    const n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 0, 0, 0, 0);
+  }
+
+  function initEventsArchive(){
+    const t0 = todayMidnight().getTime();
+
+    document.querySelectorAll('[data-events-upcoming]').forEach((up) => {
+      const section = up.closest('section') || up.parentElement;
+      if(!section) return;
+
+      const archiveWrap = section.querySelector('[data-events-archive-wrap]');
+      const archive = section.querySelector('[data-events-archive]');
+      if(!archiveWrap || !archive) return;
+
+      const rows = Array.from(up.querySelectorAll('.eventRow'));
+      if(!rows.length) return;
+
+      rows.sort((a,b) => {
+        const da = parseIso(a.getAttribute('data-date') || '');
+        const db = parseIso(b.getAttribute('data-date') || '');
+        const ta = da ? da.getTime() : Infinity;
+        const tb = db ? db.getTime() : Infinity;
+        if(ta !== tb) return ta - tb;
+        return 0;
+      });
+
+      up.innerHTML = '';
+      archive.innerHTML = '';
+
+      for(const row of rows){
+        const d = parseIso(row.getAttribute('data-date') || '');
+        const ts = d ? d.getTime() : Infinity;
+        if(d && ts < t0) archive.appendChild(row);
+        else up.appendChild(row);
+      }
+
+      const hasArchive = archive.children.length > 0;
+      archiveWrap.style.display = hasArchive ? '' : 'none';
+
+      if(!up.children.length && hasArchive){
+        const note = document.createElement('div');
+        note.className = 'muted';
+        note.style.padding = '10px 0';
+        note.textContent = 'Brak nadchodzących wydarzeń.';
+        up.appendChild(note);
+      }
+    });
+  }
+
+  function setupLightbox(){
+    const links = Array.from(document.querySelectorAll('a[data-lightbox]'));
+    if(!links.length) return;
+
+    const groups = new Map();
+
+    for(const a of links){
+      const groupName = a.getAttribute('data-lightbox') || 'default';
+      const href = a.getAttribute('href') || '';
+      if(!href) continue;
+
+      const img = a.querySelector('img');
+      const caption = (img && img.getAttribute('alt')) || a.getAttribute('title') || '';
+
+      if(!groups.has(groupName)) groups.set(groupName, { items: [], index: new WeakMap() });
+      const g = groups.get(groupName);
+      const idx = g.items.length;
+      g.items.push({ href, caption });
+      g.index.set(a, idx);
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'lbOverlay';
+const box = document.createElement('div');
+box.className = 'lbBox';
+box.setAttribute('role','dialog');
+box.setAttribute('aria-modal','true');
+
+const imgNode = document.createElement('img');
+imgNode.className = 'lbImg';
+imgNode.alt = '';
+
+const bar = document.createElement('div');
+bar.className = 'lbBar';
+
+const capNode = document.createElement('div');
+capNode.className = 'lbCaption';
+
+const controls = document.createElement('div');
+controls.className = 'lbControls';
+
+const btnPrev = document.createElement('button');
+btnPrev.type = 'button';
+btnPrev.className = 'lbBtn';
+btnPrev.setAttribute('data-lb','prev');
+btnPrev.setAttribute('aria-label','Poprzednie');
+btnPrev.textContent = '←';
+
+const btnNext = document.createElement('button');
+btnNext.type = 'button';
+btnNext.className = 'lbBtn';
+btnNext.setAttribute('data-lb','next');
+btnNext.setAttribute('aria-label','Następne');
+btnNext.textContent = '→';
+
+const btnClose = document.createElement('button');
+btnClose.type = 'button';
+btnClose.className = 'lbBtn';
+btnClose.setAttribute('data-lb','close');
+btnClose.setAttribute('aria-label','Zamknij');
+btnClose.textContent = '✕';
+
+controls.append(btnPrev, btnNext, btnClose);
+bar.append(capNode, controls);
+box.append(imgNode, bar);
+overlay.appendChild(box);
+
+    document.body.appendChild(overlay);
+
+    const imgEl = overlay.querySelector('.lbImg');
+    const capEl = overlay.querySelector('.lbCaption');
+
+    let curGroup = null;
+    let curIndex = 0;
+
+    function open(groupName, index){
+      const g = groups.get(groupName);
+      if(!g || !g.items.length) return;
+      curGroup = groupName;
+      curIndex = Math.max(0, Math.min(index || 0, g.items.length - 1));
+      render();
+    }
+
+    function render(){
+      const g = groups.get(curGroup);
+      if(!g) return;
+      const item = g.items[curIndex];
+      if(!item) return;
+      imgEl.src = item.href;
+      imgEl.alt = item.caption || 'Zdjęcie';
+      capEl.textContent = item.caption || '';
+      overlay.classList.add('isOpen');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function close(){
+      overlay.classList.remove('isOpen');
+      imgEl.src = '';
+      document.body.style.overflow = '';
+      curGroup = null;
+    }
+
+    function prev(){
+      const g = groups.get(curGroup);
+      if(!g) return;
+      curIndex = (curIndex - 1 + g.items.length) % g.items.length;
+      render();
+    }
+
+    function next(){
+      const g = groups.get(curGroup);
+      if(!g) return;
+      curIndex = (curIndex + 1) % g.items.length;
+      render();
+    }
+
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[data-lightbox]');
+      if(a){
+        e.preventDefault();
+        const groupName = a.getAttribute('data-lightbox') || 'default';
+        const g = groups.get(groupName);
+        if(!g) return;
+        const idx = g.index.get(a);
+        if(typeof idx !== 'number') return;
+        open(groupName, idx);
+        return;
+      }
+
+      if(e.target === overlay){
+        close();
+        return;
+      }
+
+      const btn = e.target.closest('[data-lb]');
+      if(btn && overlay.classList.contains('isOpen')){
+        const act = btn.getAttribute('data-lb');
+        if(act === 'close') close();
+        if(act === 'prev') prev();
+        if(act === 'next') next();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if(!overlay.classList.contains('isOpen')) return;
+      if(e.key === 'Escape'){ e.preventDefault(); close(); }
+      if(e.key === 'ArrowLeft'){ e.preventDefault(); prev(); }
+      if(e.key === 'ArrowRight'){ e.preventDefault(); next(); }
+    }, true);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initEventsArchive();
+    setupLightbox();
   });
 })();
 `;
@@ -1444,6 +2525,9 @@ function renderHeroSection(mode) {
   const target = h.primaryCtaTarget || "auto";
   const customUrl = String(h.primaryCtaUrl || "").trim();
 
+  normalizeAssets();
+  const heroImgs = assets.heroImages;
+
   const enabled = enabledBlocksInOrder().filter(id => id !== "hero");
   const contactEnabled = enabledBlocksInOrder().includes("contact");
 
@@ -1458,15 +2542,21 @@ function renderHeroSection(mode) {
     else ctaHref = enabled[0] ? `${enabled[0]}.html` : "index.html";
   }
 
-  const bg = assets.heroImages[0] ? `url('${cssUrl(assets.heroImages[0])}')` : `linear-gradient(135deg, var(--accent), #111)`;
 
-  const heroGallery = assets.heroImages.length > 1
-    ? `<div class="heroGallery">
-        ${assets.heroImages.map((u, i) => `
-          <a href="${u}" target="_blank" rel="noopener" title="HERO #${i+1}">
-            <img src="${u}" alt="HERO ${i+1}"/>
-          </a>
-        `).join("")}
+  const bg = heroImgs[0]?.dataUrl
+    ? `url('${cssUrl(heroImgs[0].dataUrl)}')`
+    : `linear-gradient(135deg, var(--accent), #111)`;
+
+  const heroGallery = heroImgs.length > 1
+    ? `<div class="heroGallery js-lightbox-group">
+        ${heroImgs.map((img, i) => {
+          const u = img.dataUrl;
+          const alt = escapeHtml(img.alt || `HERO ${i+1}`);
+          return `
+          <a href="${u}" data-lightbox="hero" title="HERO #${i+1}">
+            <img src="${u}" alt="${alt}"/>
+          </a>`;
+        }).join("")}
       </div>`
     : "";
 
@@ -1487,9 +2577,11 @@ function renderHeroSection(mode) {
 }
 
 function renderBlockSection(id, mode) {
+  normalizeAssets();
   const cfg = ensureBlock(id);
-  const title = escapeHtml(cfg.title || BLOCKS[id].label);
-  const editor = BLOCKS[id].editor;
+  const def = getBlockDef(id);
+  const title = escapeHtml(cfg.title || def.label);
+  const editor = def.editor;
 
   if (id === "hero") return renderHeroSection(mode);
 
@@ -1514,12 +2606,24 @@ function renderBlockSection(id, mode) {
 </section>`;
     }
 
+    const cols = clampNum(cfg.data.cols ?? 4, 2, 6);
+    const mcols = clampNum(cfg.data.masonryCols ?? 3, 2, 6);
+    const fallbackAltBase = String(cfg.title || def.label || "Zdjęcie").trim() || "Zdjęcie";
+
     const body = layout === "masonry"
-      ? `<div class="masonry">
-          ${items.map(u => `<div class="masonryItem"><img src="${u}" alt=""/></div>`).join("")}
+      ? `<div class="masonry js-lightbox-group" style="--mcols:${mcols};">
+          ${items.map((img, i) => {
+            const u = imgObj(img).dataUrl;
+            const alt = escapeHtml(imgObj(img).alt || `${fallbackAltBase} ${i+1}`);
+            return `<div class="masonryItem"><a href="${u}" data-lightbox="gallery"><img src="${u}" alt="${alt}"/></a></div>`;
+          }).join("")}
         </div>`
-      : `<div class="galleryGrid">
-          ${items.map(u => `<img src="${u}" alt=""/>`).join("")}
+      : `<div class="galleryGrid js-lightbox-group" style="--gcols:${cols};">
+          ${items.map((img, i) => {
+            const u = imgObj(img).dataUrl;
+            const alt = escapeHtml(imgObj(img).alt || `${fallbackAltBase} ${i+1}`);
+            return `<a href="${u}" data-lightbox="gallery"><img src="${u}" alt="${alt}"/></a>`;
+          }).join("")}
         </div>`;
 
     return `
@@ -1531,44 +2635,83 @@ function renderBlockSection(id, mode) {
 
   if (editor === "embed_spotify") {
     const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const iframes = items
-      .map(it => normalizeSpotify(it.url || ""))
-      .filter(Boolean)
-      .map(src => `<iframe class="embed tall" src="${src}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`)
-      .join("");
+    const sz = clampNum(cfg.data.embedSize ?? 100, 60, 100);
+    const parts = items.map(it => {
+      const p = parseSpotify(it.url || "");
+      if (p.embedUrl) {
+        const open = escapeHtml(p.openUrl || it.url || "");
+        return `
+<div class="embedWrap">
+  <iframe class="embed tall" src="${escapeHtml(p.embedUrl)}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+  ${open ? `<div class="embedMeta"><a class="btn" href="${open}" target="_blank" rel="noopener">Otwórz</a></div>` : ``}
+</div>`;
+      }
+      if (p.openUrl) {
+        const open = escapeHtml(p.openUrl);
+        return `
+<div class="embedWrap">
+  <div class="embedCard">
+    <div style="font-weight:900;">Spotify</div>
+    <div class="muted" style="margin-top:6px;">Tego linku nie da się osadzić. Wklej pełny link <strong>open.spotify.com</strong>.</div>
+    <div style="margin-top:10px;"><a class="btn primary" href="${open}" target="_blank" rel="noopener">Otwórz</a></div>
+  </div>
+</div>`;
+      }
+      return "";
+    }).filter(Boolean).join("");
 
     return `
 <section id="${id}" class="section">
   <h2 class="sectionTitle">${title}</h2>
-  <div class="grid">${iframes || `<div class="muted">Wklej linki Spotify w generatorze.</div>`}</div>
+  <div class="grid embedGrid" style="--embed-max:${sz}%;">${parts || `<div class="muted">Wklej linki Spotify w generatorze.</div>`}</div>
 </section>`;
   }
 
   if (editor === "embed_youtube") {
     const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const iframes = items
-      .map(it => normalizeYouTube(it.url || ""))
-      .filter(Boolean)
-      .map(src => `<iframe class="embed" src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`)
-      .join("");
+    const sz = clampNum(cfg.data.embedSize ?? 100, 60, 100);
+    const parts = items.map(it => {
+      const p = parseYouTube(it.url || "");
+      if (p.embedUrl) {
+        const open = escapeHtml(p.openUrl || it.url || "");
+        return `
+<div class="embedWrap">
+  <iframe class="embed" src="${escapeHtml(p.embedUrl)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+  ${open ? `<div class="embedMeta"><a class="btn" href="${open}" target="_blank" rel="noopener">Otwórz</a></div>` : ``}
+</div>`;
+      }
+      if (p.openUrl) {
+        const open = escapeHtml(p.openUrl);
+        return `
+<div class="embedWrap">
+  <div class="embedCard">
+    <div style="font-weight:900;">YouTube</div>
+    <div class="muted" style="margin-top:6px;">Tego linku nie da się osadzić jako player. Zostawiamy przycisk.</div>
+    <div style="margin-top:10px;"><a class="btn primary" href="${open}" target="_blank" rel="noopener">Otwórz</a></div>
+  </div>
+</div>`;
+      }
+      return "";
+    }).filter(Boolean).join("");
 
     return `
 <section id="${id}" class="section">
   <h2 class="sectionTitle">${title}</h2>
-  <div class="grid">${iframes || `<div class="muted">Wklej linki YouTube w generatorze.</div>`}</div>
+  <div class="grid embedGrid" style="--embed-max:${sz}%;">${parts || `<div class="muted">Wklej linki YouTube w generatorze.</div>`}</div>
 </section>`;
   }
 
   if (editor === "events") {
     const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     const rows = items.map(it => {
-      const date = escapeHtml(it.date || "");
+      const iso = toIsoDateLoose(it.date || "");
+      const dateLabel = escapeHtml(formatDatePL(it.date || ""));
       const city = escapeHtml(it.city || "");
       const place = escapeHtml(it.place || "");
       const link = (it.link || "").trim();
       return `
-<div style="display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid rgba(127,127,127,.18);">
-  <div><strong>${date || "—"}</strong> • ${city || "—"}<div class="muted">${place || ""}</div></div>
+<div class="eventRow" data-date="${escapeHtml(iso)}" style="display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+  <div><strong>${dateLabel || "—"}</strong> • ${city || "—"}<div class="muted">${place || ""}</div></div>
   ${link ? `<a class="btn" href="${escapeHtml(link)}" target="_blank" rel="noopener">Szczegóły</a>` : ``}
 </div>`;
     }).join("");
@@ -1576,7 +2719,13 @@ function renderBlockSection(id, mode) {
     return `
 <section id="${id}" class="section">
   <h2 class="sectionTitle">${title}</h2>
-  <div>${rows || `<div class="muted">Dodaj wydarzenia w generatorze.</div>`}</div>
+  ${rows ? `
+    <div class="eventsUpcoming" data-events-upcoming>${rows}</div>
+    <details class="eventsArchiveWrap" data-events-archive-wrap style="display:none; margin-top:12px;">
+      <summary>Archiwum</summary>
+      <div class="eventsArchive" data-events-archive style="margin-top:10px;"></div>
+    </details>
+  ` : `<div class="muted">Dodaj wydarzenia w generatorze.</div>`}
 </section>`;
   }
 
@@ -1691,7 +2840,11 @@ function renderBlockSection(id, mode) {
     `).join("");
 
     const photos = assets.epkPressPhotos.length
-      ? `<div class="galleryGrid">${assets.epkPressPhotos.map(u => `<img src="${u}" alt=""/>`).join("")}</div>`
+      ? `<div class="galleryGrid js-lightbox-group">${assets.epkPressPhotos.map((img, i) => {
+          const u = imgObj(img).dataUrl;
+          const alt = escapeHtml(imgObj(img).alt || `Press photo ${i+1}`);
+          return `<a href="${u}" data-lightbox="press"><img src="${u}" alt="${alt}"/></a>`;
+        }).join("")}</div>`
       : `<div class="muted">Brak zdjęć prasowych.</div>`;
 
     const files = assets.epkFiles.length
@@ -1768,16 +2921,57 @@ function renderBlockSection(id, mode) {
 </section>`;
 }
 
-function buildSingleHtml(forPreviewInline = true) {
+function assetHrefForHead(assetObj, inlineAssets, outPathNoExt) {
+  if (!assetObj || !assetObj.dataUrl) return "";
+  if (inlineAssets) return assetObj.dataUrl;
+  const parsed = parseDataUrl(assetObj.dataUrl);
+  const mime = assetObj.mime || (parsed ? parsed.mime : "");
+  const ext = guessExtFromMime(mime);
+  return `${outPathNoExt}.${ext}`;
+}
+
+function buildHeadMetaTags(pageTitle, inlineAssets) {
+  const baseTitle = String(state.metaTitle || "").trim() || String(state.siteName || "").trim() || "Portfolio";
+  const desc = String(state.metaDescription || "").trim();
+
+  const ogTitle = pageTitle || baseTitle;
+  const tags = [];
+
+  if (desc) tags.push(`<meta name="description" content="${escapeHtml(desc)}"/>`);
+
+  tags.push(`<meta property="og:type" content="website"/>`);
+  tags.push(`<meta property="og:title" content="${escapeHtml(ogTitle)}"/>`);
+  if (desc) tags.push(`<meta property="og:description" content="${escapeHtml(desc)}"/>`);
+
+  const fav = assetHrefForHead(assets.favicon, inlineAssets, "assets/favicon");
+  if (fav) tags.push(`<link rel="icon" href="${escapeHtml(fav)}"/>`);
+
+  const og = assetHrefForHead(assets.ogImage, inlineAssets, "assets/og");
+  if (og) {
+    tags.push(`<meta property="og:image" content="${escapeHtml(og)}"/>`);
+    tags.push(`<meta name="twitter:card" content="summary_large_image"/>`);
+  } else {
+    tags.push(`<meta name="twitter:card" content="summary"/>`);
+  }
+
+  return tags.join("\n");
+}
+
+function buildSingleHtml(opts = {}) {
+  const inlineAssets = opts.inlineAssets !== false; // default true
+  const preview = !!opts.preview;
+
   const nav = getNavItemsSingle();
   const css = buildSiteCss();
   const js = buildSiteScript();
   const bodySections = enabledBlocksInOrder().map(id => renderBlockSection(id, "single")).join("");
 
-  const previewAttr = forPreviewInline ? ` data-kpo-preview="1"` : ``;
+  const previewAttr = preview ? ` data-kpo-preview="1"` : ``;
 
-  const headCss = forPreviewInline ? `<style>${css}</style>` : `<link rel="stylesheet" href="style.css"/>`;
-  const footJs = forPreviewInline ? `<script>${js}</script>` : `<script src="site.js"></script>`;
+  const headCss = inlineAssets ? `<style>${css}</style>` : `<link rel="stylesheet" href="style.css"/>`;
+  const footJs = inlineAssets ? `<script>${js}</script>` : `<script src="site.js"></script>`;
+
+  const pageTitle = String(state.metaTitle || "").trim() || String(state.siteName || "").trim() || "Portfolio";
 
   return `
 <!doctype html>
@@ -1785,7 +2979,8 @@ function buildSingleHtml(forPreviewInline = true) {
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${escapeHtml(state.siteName || "Portfolio")}</title>
+<title>${escapeHtml(pageTitle)}</title>
+${buildHeadMetaTags(pageTitle, inlineAssets)}
 ${headCss}
 </head>
 <body class="theme-${escapeHtml(state.theme)} tpl-${escapeHtml(state.template)}">
@@ -1799,27 +2994,32 @@ ${footJs}
 </html>`.trim();
 }
 
-function buildZipFiles(forPreviewInline) {
+function buildZipFiles(opts = {}) {
+  const inlineAssets = !!opts.inlineAssets;
+  const preview = !!opts.preview;
+
   const css = buildSiteCss();
   const js = buildSiteScript();
   const nav = getNavItemsZip();
   const files = {};
 
-  const previewAttr = forPreviewInline ? ` data-kpo-preview="1"` : ``;
+  const previewAttr = preview ? ` data-kpo-preview="1"` : ``;
 
   // export version: separate files + html links
-  if (!forPreviewInline) {
+  if (!inlineAssets) {
     files["style.css"] = css;
     files["site.js"] = js;
   }
 
-  const headCss = forPreviewInline ? `<style>${css}</style>` : `<link rel="stylesheet" href="style.css"/>`;
-  const footJs = forPreviewInline ? `<script>${js}</script>` : `<script src="site.js"></script>`;
+  const headCss = inlineAssets ? `<style>${css}</style>` : `<link rel="stylesheet" href="style.css"/>`;
+  const footJs = inlineAssets ? `<script>${js}</script>` : `<script src="site.js"></script>`;
+
+  const baseTitle = String(state.metaTitle || "").trim() || String(state.siteName || "").trim() || "Portfolio";
 
   // index.html
   const enabled = enabledBlocksInOrder().filter(id => id !== "hero");
   const quick = enabled.slice(0, 6).map(id => {
-    const t = escapeHtml(state.blocks[id].title || BLOCKS[id].label);
+    const t = escapeHtml(getBlockDisplayName(id));
     const href = blockToFile(id);
     return `<a class="btn" href="${href}">${t}</a>`;
   }).join(" ");
@@ -1838,7 +3038,8 @@ function buildZipFiles(forPreviewInline) {
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${escapeHtml(state.siteName || "Portfolio")}</title>
+<title>${escapeHtml(baseTitle)}</title>
+${buildHeadMetaTags(baseTitle, inlineAssets)}
 ${headCss}
 </head>
 <body class="theme-${escapeHtml(state.theme)} tpl-${escapeHtml(state.template)}">
@@ -1854,13 +3055,15 @@ ${footJs}
   // pages per block
   for (const id of enabled) {
     const file = blockToFile(id);
+    const pageTitle = `${baseTitle} • ${getBlockDisplayName(id)}`;
     files[file] = `
 <!doctype html>
 <html lang="pl"${previewAttr}>
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${escapeHtml(state.siteName || "Portfolio")} • ${escapeHtml(state.blocks[id].title || BLOCKS[id].label)}</title>
+<title>${escapeHtml(pageTitle)}</title>
+${buildHeadMetaTags(pageTitle, inlineAssets)}
 ${headCss}
 </head>
 <body class="theme-${escapeHtml(state.theme)} tpl-${escapeHtml(state.template)}">
@@ -1877,6 +3080,7 @@ ${footJs}
   return files;
 }
 
+
 /* ==========================
    Preview rebuild
 ========================== */
@@ -1889,13 +3093,13 @@ function rebuildPreview(force=false) {
   if (state.exportMode === "single") {
     zipPreviewFiles = null;
     zipPreviewCurrent = "index.html";
-    iframe.srcdoc = buildSingleHtml(true);
+    iframe.srcdoc = buildSingleHtml({ inlineAssets: true, preview: true });
     setPreviewPageLabel("index.html");
     return;
   }
 
   // ZIP preview: build inline pages (fixes your broken preview)
-  zipPreviewFiles = buildZipFiles(true);
+  zipPreviewFiles = buildZipFiles({ inlineAssets: true, preview: true });
 
   if (!zipPreviewFiles[zipPreviewCurrent]) zipPreviewCurrent = "index.html";
   iframe.srcdoc = zipPreviewFiles[zipPreviewCurrent] || "";
@@ -1915,7 +3119,7 @@ window.addEventListener("message", (ev) => {
 
   if (state.exportMode !== "zip") return;
 
-  if (!zipPreviewFiles) zipPreviewFiles = buildZipFiles(true);
+  if (!zipPreviewFiles) zipPreviewFiles = buildZipFiles({ inlineAssets: true, preview: true });
 
   if (zipPreviewFiles[page]) {
     zipPreviewCurrent = page;
@@ -1953,8 +3157,8 @@ async function downloadZip(filesMap) {
 
   if (assets.heroImages.length) {
     const h = assetsFolder.folder("hero");
-    assets.heroImages.forEach((u, i) => {
-      const parsed = parseDataUrl(u);
+    assets.heroImages.forEach((img, i) => {
+      const parsed = parseDataUrl(imgObj(img).dataUrl);
       if (!parsed) return;
       const ext = guessExtFromMime(parsed.mime);
       h.file(`hero-${String(i+1).padStart(2,"0")}.${ext}`, parsed.b64, { base64: true });
@@ -1963,8 +3167,8 @@ async function downloadZip(filesMap) {
 
   if (assets.galleryImages.length) {
     const g = assetsFolder.folder("gallery");
-    assets.galleryImages.forEach((u, i) => {
-      const parsed = parseDataUrl(u);
+    assets.galleryImages.forEach((img, i) => {
+      const parsed = parseDataUrl(imgObj(img).dataUrl);
       if (!parsed) return;
       const ext = guessExtFromMime(parsed.mime);
       g.file(`img-${String(i+1).padStart(2,"0")}.${ext}`, parsed.b64, { base64: true });
@@ -1974,8 +3178,8 @@ async function downloadZip(filesMap) {
   if (assets.epkPressPhotos.length || assets.epkFiles.length) {
     const p = assetsFolder.folder("press");
 
-    assets.epkPressPhotos.forEach((u, i) => {
-      const parsed = parseDataUrl(u);
+    assets.epkPressPhotos.forEach((img, i) => {
+      const parsed = parseDataUrl(imgObj(img).dataUrl);
       if (!parsed) return;
       const ext = guessExtFromMime(parsed.mime);
       p.file(`photo-${String(i+1).padStart(2,"0")}.${ext}`, parsed.b64, { base64: true });
@@ -1986,6 +3190,24 @@ async function downloadZip(filesMap) {
       if (!parsed) return;
       p.file(f.name, parsed.b64, { base64: true });
     });
+  }
+
+
+  // SEO assets (favicon / og image)
+  if (assets.favicon && assets.favicon.dataUrl) {
+    const parsed = parseDataUrl(assets.favicon.dataUrl);
+    if (parsed) {
+      const ext = guessExtFromMime(assets.favicon.mime || parsed.mime);
+      assetsFolder.file(`favicon.${ext}`, parsed.b64, { base64: true });
+    }
+  }
+
+  if (assets.ogImage && assets.ogImage.dataUrl) {
+    const parsed = parseDataUrl(assets.ogImage.dataUrl);
+    if (parsed) {
+      const ext = guessExtFromMime(assets.ogImage.mime || parsed.mime);
+      assetsFolder.file(`og.${ext}`, parsed.b64, { base64: true });
+    }
   }
 
   const blob = await zip.generateAsync({ type: "blob" });
@@ -2023,7 +3245,7 @@ function bindSettings() {
   });
 
   // settings that should NOT rerender UI on each key
-  ["theme","template","accent","sectionHeadersAlign","siteName"].forEach(id => {
+  ["theme","template","accent","sectionHeadersAlign","siteName","metaTitle","metaDescription"].forEach(id => {
     $(id).addEventListener("input", () => {
       syncStateFromSettingsInputs();
       contentChanged();
@@ -2049,21 +3271,100 @@ function bindSettings() {
     rebuildPreview(true);
   });
 
+
+  // Preview device buttons (Desktop / Tablet / Mobile)
+  document.querySelectorAll('.segBtn[data-device]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setPreviewDevice(btn.getAttribute('data-device'));
+      saveDraft();
+    });
+  });
+
+  // Undo / Redo
+  if ($("btnUndo")) $("btnUndo").addEventListener("click", () => undo());
+  if ($("btnRedo")) $("btnRedo").addEventListener("click", () => redo());
+
+  // Issues list
+  if ($("issuesPill")) $("issuesPill").addEventListener("click", () => openIssuesModal());
+
+  // SEO assets (favicon / og image)
+  const fav = $("faviconUpload");
+  if (fav) fav.addEventListener("change", async () => {
+    const file = fav.files && fav.files[0];
+    if (!file) return;
+    const dataUrl = await readFileAsDataUrl(file);
+    if (!dataUrl) return;
+    assets.favicon = { dataUrl, mime: file.type || (parseDataUrl(dataUrl)?.mime || '') };
+    contentChanged();
+    if (state.livePreview) rebuildPreview(true);
+  });
+
+  const og = $("ogImageUpload");
+  if (og) og.addEventListener("change", async () => {
+    const file = og.files && og.files[0];
+    if (!file) return;
+    const dataUrl = await readFileAsDataUrl(file);
+    if (!dataUrl) return;
+    assets.ogImage = { dataUrl, mime: file.type || (parseDataUrl(dataUrl)?.mime || '') };
+    contentChanged();
+    if (state.livePreview) rebuildPreview(true);
+  });
+
   $("btnDownload").addEventListener("click", async () => {
     syncStateFromSettingsInputs();
     if (state.exportMode === "single") {
       // export: separate files? -> simplest: one index.html with inline CSS/JS
-      downloadText("index.html", buildSingleHtml(true));
+      downloadText("index.html", buildSingleHtml({ inlineAssets: true, preview: false }));
       return;
     }
-    const files = buildZipFiles(false); // export = external style.css + site.js
+    const files = buildZipFiles({ inlineAssets: false, preview: false }); // export = external style.css + site.js
     await downloadZip(files);
   });
 
-  $("btnReset").addEventListener("click", () => resetDraft());
+  $("btnReset").addEventListener("click", () => {
+    const ok = confirm("Reset? Usunie bieżący szkic (lokalny zapis). Snapshot zostaje.");
+    if (ok) resetDraft();
+  });
   $("btnSaveSnapshot").addEventListener("click", () => saveSnapshot());
-  $("btnLoadSnapshot").addEventListener("click", () => loadSnapshot());
-  $("btnClearSnapshot").addEventListener("click", () => clearSnapshot());
+  $("btnLoadSnapshot").addEventListener("click", () => {
+    const ok = confirm("Wczytać snapshot? Nadpisze bieżący szkic.");
+    if (ok) loadSnapshot();
+  });
+  $("btnSampleData").addEventListener("click", () => generateSampleData());
+}
+
+function bindKeyboardShortcuts() {
+  document.addEventListener("keydown", (e) => {
+    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+    const mod = isMac ? e.metaKey : e.ctrlKey;
+    if (!mod) return;
+
+    const key = String(e.key || "").toLowerCase();
+    const target = e.target;
+    const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
+    const inInput = tag === "input" || tag === "textarea" || (target && target.isContentEditable);
+
+    if (key === "s") {
+      e.preventDefault();
+      saveSnapshot();
+      return;
+    }
+
+    // In inputs, keep native undo/redo.
+    if (inInput) return;
+
+    if (key === "z") {
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+      return;
+    }
+
+    if (key === "y") {
+      e.preventDefault();
+      redo();
+    }
+  }, true);
 }
 
 function init() {
@@ -2087,6 +3388,9 @@ function init() {
   updateSnapshotPill();
   setLiveStatus();
   bindSettings();
+  bindKeyboardShortcuts();
+
+  setPreviewDevice(state.previewDevice || "desktop");
 
   // first render
   syncStateFromSettingsInputs();

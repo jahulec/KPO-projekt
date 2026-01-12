@@ -29,6 +29,7 @@
         <div class="statusRow">
           <span class="pill" id="saveStatus">Zapis: —</span>
           <span class="pill" id="snapshotStatus">Snapshot: brak</span>
+          <button class="pill pillBtn" id="issuesPill" type="button" title="Pokaż listę problemów / ostrzeżeń">Problemy: 0</button>
           <span class="pill" id="liveStatus">LIVE: ON</span>
         </div>
       </div>
@@ -118,6 +119,35 @@
         </div>
       </details>
 
+      <details class="panel__section">
+        <summary>SEO / link podgląd</summary>
+
+        <label class="field">
+          <span>Tytuł (karta przeglądarki)</span>
+          <input id="metaTitle" type="text" placeholder="np. Tabula Rasa — oficjalna strona" />
+        </label>
+
+        <label class="field">
+          <span>Opis (meta description)</span>
+          <textarea id="metaDescription" rows="3" placeholder="Krótki opis do Google i linków (ok. 140–160 znaków)"></textarea>
+        </label>
+
+        <div class="grid2">
+          <label class="field">
+            <span>Favicon (ikona)</span>
+            <input id="faviconUpload" type="file" accept="image/*" />
+          </label>
+          <label class="field">
+            <span>OG image (podgląd linku)</span>
+            <input id="ogImageUpload" type="file" accept="image/*" />
+          </label>
+        </div>
+
+        <div class="hint">
+          To nie jest obowiązkowe, ale robi różnicę w wynikach wyszukiwania i gdy ktoś udostępnia link.
+        </div>
+      </details>
+
       <details class="panel__section" open>
         <summary>Bloki strony</summary>
 
@@ -150,13 +180,14 @@
           <button id="btnLoadSnapshot" class="btn" type="button">Wczytaj</button>
         </div>
         <div class="panel__actions">
-          <button id="btnDownload" class="btn btn--primary" type="button">Pobierz</button>
-          <button id="btnManualRefresh" class="btn" type="button">Odśwież podgląd</button>
+          <button id="btnManualRefresh" class="btn" type="button">Odśwież</button>
+          <button id="btnReset" class="btn" type="button">Reset</button>
         </div>
         <div class="panel__actions">
-          <button id="btnReset" class="btn" type="button">Reset szkicu</button>
-          <button id="btnClearSnapshot" class="btn" type="button">Usuń zapis</button>
+          <button id="btnSampleData" class="btn" type="button">Przykładowe dane</button>
+          <button id="btnDownload" class="btn btn--primary" type="button">Pobierz</button>
         </div>
+
       </details>
     </aside>
 
@@ -167,13 +198,25 @@
           <span id="previewSubtitle">LIVE</span>
           <span id="previewPageLabel" class="pill" style="margin-left:8px;">index.html</span>
         </div>
+
+        <div class="preview__controls" aria-label="Kontrolki podglądu">
+          <div class="seg" role="group" aria-label="Podgląd urządzeń">
+            <button type="button" class="segBtn" data-device="desktop" title="Desktop">Desktop</button>
+            <button type="button" class="segBtn" data-device="tablet" title="Tablet">Tablet</button>
+            <button type="button" class="segBtn" data-device="mobile" title="Mobile">Mobile</button>
+          </div>
+          <div class="seg" role="group" aria-label="Cofnij / ponów">
+            <button type="button" class="segBtn" id="btnUndo" title="Cofnij (Ctrl+Z)">↶</button>
+            <button type="button" class="segBtn" id="btnRedo" title="Ponów (Ctrl+Y)">↷</button>
+          </div>
+        </div>
       </div>
 
       <div class="preview__frameWrap">
         <iframe
           id="previewFrame"
           title="Podgląd strony"
-          sandbox="allow-scripts allow-forms"
+          sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-presentation"
         ></iframe>
       </div>
     </main>
