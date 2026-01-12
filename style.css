@@ -1,176 +1,269 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Generator strony artysty</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="app">
-    <aside class="panel">
-      <div class="panel__head">
-        <div class="brandRow">
-          <div class="brandMark" aria-hidden="true"></div>
-          <div>
-            <h1>Generator strony artysty</h1>
-            <p>Edytujesz po lewej → podgląd po prawej. Szkic zapisuje się lokalnie.</p>
-          </div>
-        </div>
+:root{
+  --bg: #070A0F;
+  --panel: #0d111a;
+  --text: #e9eefc;
+  --muted: rgba(233,238,252,.70);
+  --stroke: rgba(255,255,255,.10);
+  --card: rgba(255,255,255,.06);
+  --shadow: 0 18px 55px rgba(0,0,0,.55);
+  --radius: 18px;
+}
 
-        <div class="statusRow">
-          <span class="pill" id="saveStatus">Zapis: —</span>
-          <span class="pill" id="snapshotStatus">Snapshot: brak</span>
-          <span class="pill" id="liveStatus">LIVE: ON</span>
-        </div>
-      </div>
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  color: var(--text);
+  background:
+    radial-gradient(1100px 700px at 10% 0%, rgba(109,40,217,.40), transparent 60%),
+    radial-gradient(900px 600px at 95% 15%, rgba(59,130,246,.22), transparent 55%),
+    radial-gradient(900px 600px at 50% 110%, rgba(16,185,129,.12), transparent 55%),
+    var(--bg);
+}
 
-      <section class="panel__section">
-        <h2>Ustawienia</h2>
+.app{
+  display:grid;
+  grid-template-columns: 480px 1fr;
+  height:100vh;
+}
 
-        <div class="grid2">
-          <label class="field">
-            <span>Tryb generowania</span>
-            <select id="exportMode">
-              <option value="single" selected>Jedna strona (sekcje)</option>
-              <option value="zip">ZIP (podstrony)</option>
-            </select>
-          </label>
+/* Collapsible left panel */
+.app.isPanelCollapsed{ grid-template-columns: 56px 1fr; }
+.app.isPanelCollapsed .panel{ padding: 12px 8px; overflow:hidden; }
+.app.isPanelCollapsed .panel__section,
+.app.isPanelCollapsed .statusRow{ display:none; }
+.app.isPanelCollapsed .panel__head p,
+.app.isPanelCollapsed .panel__head h1,
+.app.isPanelCollapsed .brandRow > div{ display:none; }
+.app.isPanelCollapsed .brandRow{ flex-direction:column; align-items:center; gap:10px; }
+.app.isPanelCollapsed .brandMark{ width:36px; height:36px; border-radius: 14px; }
+.app.isPanelCollapsed .panelToggle{ width:40px; height:40px; border-radius: 14px; display:grid; place-items:center; }
 
-          <label class="field">
-            <span>Podgląd LIVE</span>
-            <div class="toggleRow">
-              <input id="livePreview" type="checkbox" checked />
-              <span class="toggleText">Aktualizuj w czasie rzeczywistym</span>
-            </div>
-          </label>
-        </div>
+.panel{
+  border-right:1px solid var(--stroke);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), transparent 50%),
+    var(--panel);
+  padding: 18px 16px;
+  overflow:auto;
+}
 
-        <div class="grid2">
-          <label class="field">
-            <span>Kategoria artysty</span>
-            <select id="role">
-              <option value="musician" selected>Muzyk / zespół</option>
-              <option value="dj">DJ / producent</option>
-              <option value="photographer">Fotograf</option>
-              <option value="visual">Artysta wizualny</option>
-              <option value="designer">Grafik / designer</option>
-              <option value="filmmaker">Filmowiec / twórca wideo</option>
-              <option value="writer">Pisarz / poeta</option>
-              <option value="performer">Taniec / performance</option>
-            </select>
-          </label>
+.brandRow{ display:flex; gap:12px; align-items:flex-start; }
+.panelToggle{ margin-left:auto; }
+.brandMark{
+  width:42px; height:42px; border-radius: 16px;
+  background: radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.55), rgba(109,40,217,.95));
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255,255,255,.12);
+}
+.panel__head h1{ margin:0; font-size: 16px; letter-spacing:.2px; }
+.panel__head p{ margin:6px 0 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.4; }
 
-          <label class="field">
-            <span>Motyw</span>
-            <select id="theme">
-              <option value="minimalist" selected>Jasny</option>
-              <option value="modern">Ciemny</option>
-              <option value="elegant">Elegant</option>
-            </select>
-          </label>
-        </div>
+.statusRow{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.05);
+  padding: 6px 10px; border-radius: 999px; font-size: 12px;
+}
+#liveStatus{ font-weight: 900; }
 
-        <div class="grid2">
-          <label class="field">
-            <span>Szablon (układ + styl)</span>
-            <select id="template">
-              <option value="rounded" selected>Rounded (karty)</option>
-              <option value="sharp">Sharp (panelowy)</option>
-              <option value="editorial">Editorial (magazyn)</option>
-              <option value="neon">Neon (glow + futurystyczny)</option>
-              <option value="soft">Soft (miękki, airy)</option>
-            </select>
-          </label>
+/* Collapsible sections */
+.panel__section{
+  margin: 12px 0;
+  padding: 0;
+  border-radius: var(--radius);
+  border: 1px solid var(--stroke);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+}
+.panel__section > summary{
+  cursor:pointer;
+  user-select:none;
+  list-style:none;
+  padding: 14px;
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing:.25px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.panel__section > summary::-webkit-details-marker{ display:none; }
+.panel__section > summary::after{
+  content:"▾";
+  opacity:.7;
+  transition: transform .15s ease;
+}
+.panel__section[open] > summary::after{ transform: rotate(180deg); }
 
-          <label class="field">
-            <span>Kolor akcentu</span>
-            <input id="accent" type="color" value="#6d28d9" />
-          </label>
-        </div>
+.panel__section > summary + *{
+  padding: 0 14px 14px 14px;
+}
 
-        <div class="grid2">
-          <label class="field">
-            <span>Nagłówki sekcji (globalnie)</span>
-            <select id="sectionHeadersAlign">
-              <option value="left" selected>Wszystkie z lewej</option>
-              <option value="center">Wszystkie po środku</option>
-            </select>
-          </label>
+.field{ display:grid; gap:6px; margin: 10px 0; }
+.field span{ color: var(--muted); font-size: 12px; }
 
-          <label class="field">
-            <span>Nazwa / pseudonim</span>
-            <input id="siteName" type="text" placeholder="np. Tabula Rasa" value="Moje Portfolio" />
-          </label>
-        </div>
+input, textarea, select{
+  width:100%;
+  border-radius: 14px;
+  border:1px solid var(--stroke);
+  background: rgba(0,0,0,.25);
+  color: var(--text);
+  padding: 10px 12px;
+  outline:none;
+}
+textarea{ resize: vertical; }
+input:focus, textarea:focus, select:focus{
+  border-color: rgba(109,40,217,.65);
+  box-shadow: 0 0 0 4px rgba(109,40,217,.18);
+}
 
-        <div class="hint">
-          Zmiana typu artysty automatycznie przełącza zestaw bloków pod branżowy standard.
-        </div>
-      </section>
+.grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
 
-      <section class="panel__section">
-        <h2>Bloki strony</h2>
+.toggleRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  border:1px solid var(--stroke);
+  border-radius:14px;
+  padding:10px 12px;
+  background: rgba(0,0,0,.20);
+}
+.toggleRow input{ width:18px; height:18px; }
+.toggleText{ font-size: 12.5px; color: var(--muted); }
 
-        <label class="field" style="margin:0;">
-          <span>Dodaj blok</span>
-          <div class="addRow">
-            <select id="addBlockSelect"></select>
-            <button class="btn btn--ghost" id="addBlockBtn" type="button">Dodaj</button>
-          </div>
-        </label>
+.hint{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius: 14px;
+  border: 1px dashed rgba(255,255,255,.18);
+  color: var(--muted);
+  font-size: 12px;
+  background: rgba(0,0,0,.18);
+}
 
-        <div id="blocksList" class="blocksList"></div>
+.addRow{ display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center; }
+.blocksList{ display:grid; gap:8px; margin-top: 10px; }
 
-        <div class="hint">
-          Strzałki = góra/dół. HERO jest zawsze na górze.
-        </div>
-      </section>
+.blockItem{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: rgba(0,0,0,.18);
+}
+.blockItem--active{
+  border-color: rgba(109,40,217,.55);
+  box-shadow: 0 0 0 4px rgba(109,40,217,.12);
+}
+.blockLabel{
+  display:flex; align-items:center; gap:10px;
+  cursor:pointer;
+  user-select:none;
+}
+.blockLabel strong{ font-size: 13px; }
+.blockLabel small{ color: var(--muted); font-size: 11px; }
 
-      <section class="panel__section">
-        <h2>Edycja bloku</h2>
-        <div id="blockEditor" class="blockEditor">
-          <div class="emptyEditor">Wybierz blok z listy powyżej.</div>
-        </div>
-      </section>
+.tog{ display:flex; align-items:center; gap:8px; color: var(--muted); font-size: 12px; }
+.tog input{ width:16px; height:16px; }
 
-      <section class="panel__section">
-        <h2>Akcje</h2>
-        <div class="panel__actions">
-          <button id="btnSaveSnapshot" class="btn" type="button">Zapisz</button>
-          <button id="btnLoadSnapshot" class="btn" type="button">Wczytaj</button>
-        </div>
-        <div class="panel__actions">
-          <button id="btnDownload" class="btn btn--primary" type="button">Pobierz</button>
-          <button id="btnManualRefresh" class="btn" type="button">Odśwież podgląd</button>
-        </div>
-        <div class="panel__actions">
-          <button id="btnReset" class="btn" type="button">Reset szkicu</button>
-          <button id="btnClearSnapshot" class="btn" type="button">Usuń zapis</button>
-        </div>
-      </section>
-    </aside>
+.blockActions{ display:flex; gap:6px; align-items:center; }
+.iconBtn{
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor:pointer;
+}
+.iconBtn:hover{ background: rgba(255,255,255,.10); }
+.iconBtn:disabled{ opacity:.45; cursor:not-allowed; }
 
-    <main class="preview">
-      <div class="preview__bar">
-        <div class="preview__title">
-          <strong>Podgląd</strong>
-          <span id="previewSubtitle">LIVE</span>
-          <span id="previewPageLabel" class="pill" style="margin-left:8px;">index.html</span>
-        </div>
-      </div>
+.blockEditor .emptyEditor{
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px dashed rgba(255,255,255,.18);
+  color: var(--muted);
+  background: rgba(0,0,0,.14);
+}
 
-      <div class="preview__frameWrap">
-        <iframe
-          id="previewFrame"
-          title="Podgląd strony"
-          sandbox="allow-scripts allow-forms allow-same-origin"
-        ></iframe>
-      </div>
-    </main>
-  </div>
+.itemList{ display:grid; gap:10px; margin-top: 10px; }
+.itemCard{
+  border:1px solid var(--stroke);
+  background: rgba(0,0,0,.18);
+  border-radius: 14px;
+  padding: 10px;
+  display:grid;
+  gap:10px;
+}
+.itemCardTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.itemCardTop strong{ font-size: 12px; color: var(--muted); }
+.itemGrid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+.itemActions{ display:flex; gap:8px; justify-content:flex-end; }
 
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="scripts.js"></script>
-</body>
-</html>
+.panel__actions{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+  margin-top: 10px;
+}
+.btn{
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 10px 12px;
+  cursor:pointer;
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+.btn:hover{ background: rgba(255,255,255,.10); }
+.btn--primary{
+  border-color: rgba(109,40,217,.55);
+  background: linear-gradient(180deg, rgba(109,40,217,.95), rgba(109,40,217,.55));
+}
+.btn--primary:hover{
+  background: linear-gradient(180deg, rgba(109,40,217,1), rgba(109,40,217,.65));
+}
+.btn--ghost{ background: rgba(255,255,255,.04); }
+.btnSmall{
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor:pointer;
+  font-weight: 900;
+}
+.btnSmall:hover{ background: rgba(255,255,255,.10); }
+
+.preview{
+  display:grid;
+  grid-template-rows: auto 1fr;
+  min-width:0;
+}
+.preview__bar{
+  padding:10px 14px;
+  border-bottom:1px solid var(--stroke);
+  background: rgba(0,0,0,.20);
+}
+.preview__title{ display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+.preview__title span{ color: var(--muted); font-size: 12px; }
+
+.preview__frameWrap{ width:100%; height:100%; }
+#previewFrame{ width:100%; height:100%; border:0; background:white; }
+
+@media (max-width: 980px){
+  .app{ grid-template-columns: 1fr; grid-template-rows: auto 60vh; }
+  .app.isPanelCollapsed{ grid-template-columns: 1fr; grid-template-rows: 56px 60vh; }
+  .panel{ border-right:0; border-bottom:1px solid var(--stroke); }
+  .grid2{ grid-template-columns: 1fr; }
+  .panel__actions{ grid-template-columns: 1fr; }
+  .itemGrid2{ grid-template-columns: 1fr; }
+}

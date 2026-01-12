@@ -1,164 +1,15 @@
-// ================== STORAGE ==================
-const STORAGE_KEY = "artist_site_generator_v3";
+/* ==========================
+   Generator strony artysty
+   v6 (zip preview fixed, no focus loss, collapsible sections in HTML, new templates, hero bg + hero gallery)
+========================== */
 
-const PERSIST_IDS = [
-  "exportMode","livePreview",
-  "role","theme","template","accent",
-  "sectionHeadersAlign","siteName",
-];
+const STORAGE_KEY = "artist_site_generator_v6_draft";
+const SNAPSHOT_KEY = "artist_site_generator_v6_snapshot";
+const ZIP_ROOT_FOLDER = "strona-artysta";
+const PANEL_COLLAPSED_KEY = "artist_site_generator_v6_panel_collapsed";
 
-// ================== BLOCK CATALOG ==================
-const BLOCKS = {
-  hero:         { label: "HERO (start)", editor: "hero", locked: true },
-
-  about:        { label: "O mnie", editor: "text" },
-  gallery:      { label: "Galeria", editor: "gallery" },
-
-  spotify:      { label: "Spotify", editor: "spotify" },
-  youtube:      { label: "YouTube", editor: "youtube" },
-
-  events:       { label: "Wydarzenia", editor: "events" },
-  exhibitions:  { label: "Wystawy / występy", editor: "events" },
-
-  projects:     { label: "Projekty", editor: "projects" },
-  caseStudies:  { label: "Case studies", editor: "projects" },
-
-  services:     { label: "Usługi", editor: "services" },
-  clients:      { label: "Klienci", editor: "simpleList" },
-  awards:       { label: "Nagrody / wyróżnienia", editor: "simpleList" },
-
-  publications: { label: "Publikacje", editor: "publications" },
-  testimonials: { label: "Opinie", editor: "testimonials" },
-  shop:         { label: "Sklep / merch", editor: "products" },
-  newsletter:   { label: "Newsletter / mailing list", editor: "newsletter" },
-
-  epk:          { label: "EPK / Press kit", editor: "epk" },
-  contact:      { label: "Kontakt", editor: "contact" },
-  social:       { label: "Social media", editor: "social" },
-};
-
-const OPTIONAL_BLOCKS = Object.keys(BLOCKS).filter(id => id !== "hero");
-
-// ================== ROLE PRESETS (branżowo sensowne) ==================
-const ROLE_PRESETS = {
-  musician: [
-    "hero","about","spotify","youtube","events","epk","contact","social"
-  ],
-  dj: [
-    "hero","about","spotify","youtube","events","epk","contact","social"
-  ],
-  photographer: [
-    "hero","about","gallery","exhibitions","services","clients","contact","social"
-  ],
-  visual: [
-    "hero","about","gallery","exhibitions","awards","contact","social"
-  ],
-  designer: [
-    "hero","about","caseStudies","services","testimonials","clients","contact","social"
-  ],
-  filmmaker: [
-    "hero","about","youtube","projects","services","clients","contact","social"
-  ],
-  writer: [
-    "hero","about","publications","events","epk","newsletter","contact","social"
-  ],
-  performer: [
-    "hero","about","youtube","events","epk","contact","social"
-  ],
-};
-
-// ================== TEMPLATES (szablony) ==================
-const TEMPLATES = {
-  rounded: {
-    name: "Rounded",
-    vars: {
-      "--rad-card": "22px",
-      "--rad-btn": "14px",
-      "--rad-media": "22px",
-      "--pad-card": "16px",
-      "--stroke-w": "1px",
-      "--card-glow": "none",
-    }
-  },
-  sharp: {
-    name: "Sharp",
-    vars: {
-      "--rad-card": "8px",
-      "--rad-btn": "8px",
-      "--rad-media": "8px",
-      "--pad-card": "14px",
-      "--stroke-w": "1px",
-      "--card-glow": "none",
-    }
-  },
-  editorial: {
-    name: "Editorial",
-    vars: {
-      "--rad-card": "14px",
-      "--rad-btn": "12px",
-      "--rad-media": "14px",
-      "--pad-card": "20px",
-      "--stroke-w": "1px",
-      "--card-glow": "none",
-      "--h1-weight": "900",
-      "--h2-weight": "900",
-      "--body-size": "16px",
-    }
-  },
-  neon: {
-    name: "Neon",
-    vars: {
-      "--rad-card": "18px",
-      "--rad-btn": "14px",
-      "--rad-media": "18px",
-      "--pad-card": "16px",
-      "--stroke-w": "1px",
-      "--card-glow": "0 0 0 4px color-mix(in oklab, var(--accent) 18%, transparent), 0 18px 55px rgba(0,0,0,.55)",
-    }
-  },
-  soft: {
-    name: "Soft",
-    vars: {
-      "--rad-card": "28px",
-      "--rad-btn": "18px",
-      "--rad-media": "28px",
-      "--pad-card": "18px",
-      "--stroke-w": "1px",
-      "--card-glow": "none",
-    }
-  }
-};
-
-// ================== STATE ==================
-const state = {
-  exportMode: "single",        // single | zip
-  livePreview: true,           // true | false
-
-  role: "musician",
-  theme: "minimalist",
-  template: "rounded",
-  accent: "#6d28d9",
-
-  sectionHeadersAlign: "left", // left | center
-  siteName: "Moje Portfolio",
-
-  order: [],
-  blocks: {},
-  activeBlockId: null,
-};
-
-// Upload assets in RAM (not persisted)
-const assets = {
-  heroDataUrl: "",
-  galleryImages: [],   // dataURL[]
-  epkImages: [],       // dataURL[]
-  epkFiles: [],        // {name, url, type}
-};
-
-// ================== DOM ==================
 const $ = (id) => document.getElementById(id);
 
-// ================== HELPERS ==================
 function escapeHtml(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
@@ -176,16 +27,404 @@ function debounce(fn, delay = 180) {
   };
 }
 
-function setSaveStatus(msg) {
-  $("saveStatus").textContent = msg;
+function setSaveStatus(msg) { $("saveStatus").textContent = msg; }
+function setSnapshotStatus(msg) { $("snapshotStatus").textContent = msg; }
+function setLiveStatus() {
+  $("liveStatus").textContent = `LIVE: ${state.livePreview ? "ON" : "OFF"}`;
+  $("previewSubtitle").textContent = state.livePreview ? "LIVE" : "PAUSED";
+}
+function setPreviewPageLabel(label) { $("previewPageLabel").textContent = label; }
+
+function setPanelCollapsed(collapsed, persist = true) {
+  const app = document.querySelector(".app");
+  if (!app) return;
+
+  app.classList.toggle("isPanelCollapsed", !!collapsed);
+
+  const btn = $("btnTogglePanel");
+  if (btn) {
+    const isCollapsed = app.classList.contains("isPanelCollapsed");
+    btn.textContent = isCollapsed ? "»" : "«";
+    btn.setAttribute("aria-expanded", String(!isCollapsed));
+    btn.title = isCollapsed ? "Rozwiń panel" : "Zwiń panel";
+  }
+
+  if (persist) {
+    try { localStorage.setItem(PANEL_COLLAPSED_KEY, collapsed ? "1" : "0"); } catch (e) {}
+  }
 }
 
-function setLiveStatus() {
-  const on = !!state.livePreview;
-  $("liveStatus").textContent = `LIVE: ${on ? "ON" : "OFF"}`;
-  $("previewSubtitle").textContent = on ? "LIVE" : "PAUSED";
-  $("previewPaused").style.display = on ? "none" : "grid";
+function bindPanelToggle() {
+  const btn = $("btnTogglePanel");
+  if (!btn) return;
+
+  let initialCollapsed = false;
+  try { initialCollapsed = localStorage.getItem(PANEL_COLLAPSED_KEY) === "1"; } catch (e) {}
+  setPanelCollapsed(initialCollapsed, false);
+
+  btn.addEventListener("click", () => {
+    const app = document.querySelector(".app");
+    const isCollapsed = !!(app && app.classList.contains("isPanelCollapsed"));
+    setPanelCollapsed(!isCollapsed, true);
+  });
 }
+
+/* ==========================
+   Blocks + presets
+========================== */
+
+const BLOCKS = {
+  hero:         { label: "HERO (start)", editor: "hero", locked: true },
+
+  about:        { label: "O mnie", editor: "text" },
+  gallery:      { label: "Galeria", editor: "gallery" },
+
+  spotify:      { label: "Spotify", editor: "embed_spotify" },
+  youtube:      { label: "YouTube", editor: "embed_youtube" },
+
+  events:       { label: "Wydarzenia", editor: "events" },
+  exhibitions:  { label: "Wystawy / występy", editor: "events" },
+
+  projects:     { label: "Projekty", editor: "projects" },
+  caseStudies:  { label: "Case studies", editor: "projects" },
+
+  services:     { label: "Usługi", editor: "services" },
+  clients:      { label: "Klienci", editor: "simpleList" },
+  awards:       { label: "Nagrody / wyróżnienia", editor: "simpleList" },
+
+  publications: { label: "Publikacje", editor: "publications" },
+  testimonials: { label: "Opinie", editor: "testimonials" },
+
+  epk:          { label: "EPK / Press kit", editor: "epk" },
+  newsletter:   { label: "Newsletter / mailing list", editor: "newsletter" },
+
+  contact:      { label: "Kontakt", editor: "contact" },
+  social:       { label: "Social media", editor: "social" },
+};
+
+const ROLE_PRESETS = {
+  musician: ["hero","about","spotify","youtube","events","epk","contact","social"],
+  dj: ["hero","about","spotify","youtube","events","epk","contact","social"],
+  photographer: ["hero","about","gallery","exhibitions","services","clients","contact","social"],
+  visual: ["hero","about","gallery","exhibitions","awards","contact","social"],
+  designer: ["hero","about","caseStudies","services","testimonials","clients","contact","social"],
+  filmmaker: ["hero","about","youtube","projects","services","clients","contact","social"],
+  writer: ["hero","about","publications","events","epk","newsletter","contact","social"],
+  performer: ["hero","about","youtube","events","epk","contact","social"],
+};
+
+const OPTIONAL_BLOCKS = Object.keys(BLOCKS).filter(id => id !== "hero");
+
+/* ==========================
+   State
+========================== */
+
+const state = {
+  exportMode: "single",
+  livePreview: true,
+
+  role: "musician",
+  theme: "minimalist",
+  template: "square",
+  accent: "#6d28d9",
+
+  sectionHeadersAlign: "left",
+  siteName: "Moje Portfolio",
+
+  order: [],
+  blocks: {},
+  activeBlockId: null,
+};
+
+/* assets (not stored in localStorage) */
+const assets = {
+  heroImages: [],          // dataURL[]
+  galleryImages: [],       // dataURL[]
+  epkPressPhotos: [],      // dataURL[]
+  epkFiles: [],            // {name, dataUrl, mime}
+};
+
+/* preview (zip) cache */
+let zipPreviewFiles = null;     // preview pages (inline css/js)
+let zipPreviewCurrent = "index.html";
+
+/* ==========================
+   Storage (draft + snapshot)
+========================== */
+
+function buildPayload() {
+  const data = {
+    exportMode: state.exportMode,
+    livePreview: state.livePreview,
+    role: state.role,
+    theme: state.theme,
+    template: state.template,
+    accent: state.accent,
+    sectionHeadersAlign: state.sectionHeadersAlign,
+    siteName: state.siteName,
+    order: state.order,
+    blocks: state.blocks,
+    activeBlockId: state.activeBlockId,
+  };
+  return { data, savedAt: new Date().toISOString() };
+}
+
+function applyPayload(payload, setStatusText = true) {
+  const d = payload?.data;
+  if (!d) return false;
+
+  state.exportMode = d.exportMode ?? state.exportMode;
+  state.livePreview = d.livePreview ?? state.livePreview;
+  state.role = d.role ?? state.role;
+  state.theme = d.theme ?? state.theme;
+  state.template = d.template ?? state.template;
+  state.accent = d.accent ?? state.accent;
+  state.sectionHeadersAlign = d.sectionHeadersAlign ?? state.sectionHeadersAlign;
+  state.siteName = d.siteName ?? state.siteName;
+
+  state.order = Array.isArray(d.order) ? d.order : state.order;
+  state.blocks = d.blocks ?? state.blocks;
+  state.activeBlockId = d.activeBlockId ?? state.activeBlockId;
+
+  $("exportMode").value = state.exportMode;
+  $("livePreview").checked = !!state.livePreview;
+  $("role").value = state.role;
+  $("theme").value = state.theme;
+  $("template").value = state.template;
+  $("accent").value = state.accent;
+  $("sectionHeadersAlign").value = state.sectionHeadersAlign;
+  $("siteName").value = state.siteName;
+
+  hardLockHeroFirst();
+  setLiveStatus();
+
+  if (setStatusText) {
+    const savedAt = payload?.savedAt ? new Date(payload.savedAt) : null;
+    setSaveStatus(savedAt ? `Zapis: wczytano (${savedAt.toLocaleTimeString()})` : "Zapis: wczytano");
+  }
+  return true;
+}
+
+function saveDraft() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload()));
+    setSaveStatus(`Zapis: ${new Date().toLocaleTimeString()}`);
+  } catch {
+    setSaveStatus("Zapis: błąd (brak miejsca?)");
+  }
+}
+
+function loadDraft() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return false;
+  try { return applyPayload(JSON.parse(raw), true); } catch { return false; }
+}
+
+function resetDraft() {
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+function hasSnapshot() {
+  return !!localStorage.getItem(SNAPSHOT_KEY);
+}
+
+function updateSnapshotPill() {
+  $("btnLoadSnapshot").disabled = !hasSnapshot();
+  $("btnClearSnapshot").disabled = !hasSnapshot();
+  setSnapshotStatus(hasSnapshot() ? "Snapshot: jest" : "Snapshot: brak");
+}
+
+function saveSnapshot() {
+  try {
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(buildPayload()));
+    updateSnapshotPill();
+    setSnapshotStatus("Snapshot: zapisany");
+  } catch {
+    setSnapshotStatus("Snapshot: błąd");
+  }
+}
+
+function loadSnapshot() {
+  const raw = localStorage.getItem(SNAPSHOT_KEY);
+  if (!raw) return;
+  try {
+    applyPayload(JSON.parse(raw), false);
+    zipPreviewCurrent = "index.html";
+    structureChanged(true);
+    setSnapshotStatus("Snapshot: wczytany");
+    updateSnapshotPill();
+  } catch {
+    setSnapshotStatus("Snapshot: błąd");
+  }
+}
+
+function clearSnapshot() {
+  localStorage.removeItem(SNAPSHOT_KEY);
+  updateSnapshotPill();
+  setSnapshotStatus("Snapshot: usunięty");
+}
+
+/* ==========================
+   Defaults + role switching
+========================== */
+
+function ensureBlock(blockId) {
+  if (!state.blocks[blockId]) {
+    state.blocks[blockId] = { enabled: true, title: BLOCKS[blockId]?.label || blockId, data: {} };
+  }
+  return state.blocks[blockId];
+}
+
+function hardLockHeroFirst() {
+  ensureBlock("hero").enabled = true;
+  state.order = state.order.filter(id => id !== "hero");
+  state.order.unshift("hero");
+}
+
+function applyRolePreset(role) {
+  const preset = ROLE_PRESETS[role] || ROLE_PRESETS.musician;
+
+  preset.forEach(id => ensureBlock(id).enabled = true);
+
+  Object.keys(state.blocks).forEach((id) => {
+    if (!preset.includes(id)) state.blocks[id].enabled = false;
+  });
+
+  state.role = role;
+  state.order = [...preset];
+  hardLockHeroFirst();
+
+  state.activeBlockId = state.order.find(id => state.blocks[id]?.enabled) || "hero";
+
+  const hero = ensureBlock("hero");
+  hero.data.headline = hero.data.headline ?? "Nowa strona artysty";
+  hero.data.subheadline = hero.data.subheadline ?? "Pokaż prace, materiały i kontakt. Estetycznie i bez korpo.";
+  hero.data.primaryCtaText = hero.data.primaryCtaText ?? "Zobacz";
+  hero.data.primaryCtaTarget = hero.data.primaryCtaTarget ?? "auto"; // auto | contact | custom
+  hero.data.primaryCtaUrl = hero.data.primaryCtaUrl ?? "";
+}
+
+/* ==========================
+   Structure changes vs Content changes (IMPORTANT for focus)
+========================== */
+
+function syncStateFromSettingsInputs() {
+  state.exportMode = $("exportMode").value;
+  state.livePreview = $("livePreview").checked;
+  state.role = $("role").value;
+  state.theme = $("theme").value;
+  state.template = $("template").value;
+  state.accent = $("accent").value;
+  state.sectionHeadersAlign = $("sectionHeadersAlign").value;
+  state.siteName = $("siteName").value;
+
+  setLiveStatus();
+}
+
+const contentChanged = debounce(() => {
+  saveDraft();
+  if (state.livePreview) rebuildPreview(true);
+}, 120);
+
+function structureChanged(forcePreview = false) {
+  syncStateFromSettingsInputs();
+  hardLockHeroFirst();
+  renderBlocksList();
+  renderAddBlockSelect();
+  renderBlockEditor();
+  saveDraft();
+
+  if (state.livePreview || forcePreview) rebuildPreview(true);
+}
+
+/* ==========================
+   Reorder / enable / add
+========================== */
+
+function moveBlock(blockId, dir) {
+  if (BLOCKS[blockId]?.locked) return;
+  const idx = state.order.indexOf(blockId);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 1) return;
+  if (newIdx >= state.order.length) return;
+
+  const arr = [...state.order];
+  const [item] = arr.splice(idx, 1);
+  arr.splice(newIdx, 0, item);
+  state.order = arr;
+  hardLockHeroFirst();
+}
+
+function toggleBlock(blockId, enabled) {
+  if (BLOCKS[blockId]?.locked) return;
+  ensureBlock(blockId).enabled = enabled;
+
+  if (enabled && !state.order.includes(blockId)) state.order.push(blockId);
+  if (!enabled && state.activeBlockId === blockId) {
+    const next = state.order.find(id => state.blocks[id]?.enabled);
+    state.activeBlockId = next || "hero";
+  }
+  hardLockHeroFirst();
+}
+
+function removeBlockFromPage(blockId) {
+  if (BLOCKS[blockId]?.locked) return;
+  state.order = state.order.filter(x => x !== blockId);
+  ensureBlock(blockId).enabled = false;
+  if (state.activeBlockId === blockId) {
+    const next = state.order.find(id => state.blocks[id]?.enabled);
+    state.activeBlockId = next || "hero";
+  }
+  hardLockHeroFirst();
+}
+
+/* ==========================
+   Embed normalization
+========================== */
+
+function extractIframeSrc(input) {
+  const m = String(input || "").match(/src\s*=\s*"(.*?)"/i);
+  return m ? m[1] : "";
+}
+
+function normalizeSpotify(input) {
+  const s = String(input || "").trim();
+  if (!s) return "";
+  if (s.includes("<iframe")) {
+    const src = extractIframeSrc(s);
+    return src ? normalizeSpotify(src) : "";
+  }
+  if (s.includes("open.spotify.com/")) return s.replace("open.spotify.com/", "open.spotify.com/embed/");
+  if (s.includes("spotify.com/embed/")) return s;
+  return s;
+}
+
+function normalizeYouTube(input) {
+  const s = String(input || "").trim();
+  if (!s) return "";
+  if (s.includes("<iframe")) {
+    const src = extractIframeSrc(s);
+    return src ? normalizeYouTube(src) : "";
+  }
+
+  const listMatch = s.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+  if (listMatch) return `https://www.youtube.com/embed/videoseries?list=${listMatch[1]}`;
+
+  const short = s.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (short) return `https://www.youtube.com/embed/${short[1]}`;
+
+  const watch = s.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  if (watch) return `https://www.youtube.com/embed/${watch[1]}`;
+
+  if (s.includes("youtube.com/embed/")) return s;
+  return s;
+}
+
+/* ==========================
+   Files / dataURL helpers
+========================== */
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve) => {
@@ -207,230 +446,33 @@ async function readMultipleImages(fileList) {
   return urls;
 }
 
-// ================== EMBED NORMALIZATION (link → iframe src) ==================
-function extractIframeSrc(input) {
-  const m = String(input || "").match(/src\s*=\s*"(.*?)"/i);
-  return m ? m[1] : "";
+function parseDataUrl(dataUrl) {
+  const m = String(dataUrl || "").match(/^data:(.*?);base64,(.*)$/);
+  if (!m) return null;
+  return { mime: m[1], b64: m[2] };
 }
 
-function normalizeSpotifyUrl(input) {
-  const s = String(input || "").trim();
-  if (!s) return "";
-  if (s.includes("<iframe")) {
-    const src = extractIframeSrc(s);
-    return src ? normalizeSpotifyUrl(src) : "";
-  }
-  if (s.includes("open.spotify.com/")) {
-    // open.spotify.com/track/ID -> open.spotify.com/embed/track/ID
-    return s.replace("open.spotify.com/", "open.spotify.com/embed/");
-  }
-  if (s.includes("spotify.com/embed/")) return s;
-  return s; // best effort
+function guessExtFromMime(mime) {
+  if (!mime) return "bin";
+  if (mime.includes("png")) return "png";
+  if (mime.includes("jpeg") || mime.includes("jpg")) return "jpg";
+  if (mime.includes("webp")) return "webp";
+  if (mime.includes("pdf")) return "pdf";
+  if (mime.includes("zip")) return "zip";
+  return "bin";
 }
 
-function normalizeYouTubeUrl(input) {
-  const s = String(input || "").trim();
-  if (!s) return "";
-  if (s.includes("<iframe")) {
-    const src = extractIframeSrc(s);
-    return src ? normalizeYouTubeUrl(src) : "";
-  }
-
-  // playlist
-  const listMatch = s.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-  if (listMatch) return `https://www.youtube.com/embed/videoseries?list=${listMatch[1]}`;
-
-  // youtu.be/ID
-  const short = s.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
-  if (short) return `https://www.youtube.com/embed/${short[1]}`;
-
-  // watch?v=ID
-  const watch = s.match(/[?&]v=([a-zA-Z0-9_-]+)/);
-  if (watch) return `https://www.youtube.com/embed/${watch[1]}`;
-
-  // already embed
-  if (s.includes("youtube.com/embed/")) return s;
-
-  return s;
+function cssUrl(dataUrl) {
+  // minimal safe for quotes
+  return String(dataUrl || "").replaceAll("'", "%27");
 }
 
-// ================== DEFAULT BLOCK CONFIG ==================
-function ensureBlock(blockId) {
-  if (!state.blocks[blockId]) {
-    state.blocks[blockId] = {
-      enabled: true,
-      title: BLOCKS[blockId]?.label || blockId,
-      data: {}
-    };
-  }
-  return state.blocks[blockId];
-}
+/* ==========================
+   UI rendering
+========================== */
 
-function hardLockHeroFirst() {
-  // hero always exists, enabled, first
-  ensureBlock("hero").enabled = true;
-  state.order = state.order.filter(id => id !== "hero");
-  state.order.unshift("hero");
-}
-
-function applyRolePreset(role) {
-  const preset = ROLE_PRESETS[role] || ROLE_PRESETS.musician;
-
-  // enable + create preset blocks
-  preset.forEach(id => ensureBlock(id).enabled = true);
-
-  // disable blocks not in preset (but keep data for later)
-  Object.keys(state.blocks).forEach((id) => {
-    if (!preset.includes(id)) state.blocks[id].enabled = false;
-  });
-
-  state.role = role;
-  state.order = [...preset];
-  hardLockHeroFirst();
-
-  state.activeBlockId = state.order.find(id => state.blocks[id]?.enabled) || "hero";
-
-  // defaults for hero if empty
-  const hero = ensureBlock("hero");
-  hero.data.headline = hero.data.headline ?? "Nowa strona artysty";
-  hero.data.subheadline = hero.data.subheadline ?? "Pokaż prace, materiały i kontakt. Estetycznie i bez korpo.";
-  hero.data.primaryCtaText = hero.data.primaryCtaText ?? "Zobacz";
-  hero.data.primaryCtaTarget = hero.data.primaryCtaTarget ?? "auto"; // auto | contact | custom
-  hero.data.primaryCtaUrl = hero.data.primaryCtaUrl ?? "";
-}
-
-// ================== AUTOSAVE ==================
-function saveDraft() {
-  const data = {};
-  for (const id of PERSIST_IDS) {
-    const el = $(id);
-    if (!el) continue;
-    if (el.type === "checkbox") data[id] = el.checked;
-    else data[id] = el.value ?? "";
-  }
-
-  const blocksPersist = {};
-  for (const [id, cfg] of Object.entries(state.blocks)) {
-    blocksPersist[id] = {
-      enabled: !!cfg.enabled,
-      title: cfg.title ?? "",
-      data: cfg.data ?? {}
-    };
-  }
-
-  const payload = {
-    data,
-    state: {
-      exportMode: state.exportMode,
-      livePreview: state.livePreview,
-      role: state.role,
-      theme: state.theme,
-      template: state.template,
-      accent: state.accent,
-      sectionHeadersAlign: state.sectionHeadersAlign,
-      siteName: state.siteName,
-      order: state.order,
-      blocks: blocksPersist,
-      activeBlockId: state.activeBlockId,
-    },
-    savedAt: new Date().toISOString(),
-  };
-
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    setSaveStatus(`Zapis: ${new Date().toLocaleTimeString()}`);
-  } catch {
-    setSaveStatus("Zapis: błąd (brak miejsca?)");
-  }
-}
-
-function loadDraft() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return false;
-  try {
-    const payload = JSON.parse(raw);
-    const s = payload?.state;
-    if (!s) return false;
-
-    Object.assign(state, {
-      exportMode: s.exportMode ?? state.exportMode,
-      livePreview: s.livePreview ?? state.livePreview,
-      role: s.role ?? state.role,
-      theme: s.theme ?? state.theme,
-      template: s.template ?? state.template,
-      accent: s.accent ?? state.accent,
-      sectionHeadersAlign: s.sectionHeadersAlign ?? state.sectionHeadersAlign,
-      siteName: s.siteName ?? state.siteName,
-      order: Array.isArray(s.order) ? s.order : state.order,
-      blocks: s.blocks ?? state.blocks,
-      activeBlockId: s.activeBlockId ?? state.activeBlockId,
-    });
-
-    // restore form
-    $("exportMode").value = state.exportMode;
-    $("livePreview").checked = !!state.livePreview;
-
-    $("role").value = state.role;
-    $("theme").value = state.theme;
-    $("template").value = state.template;
-    $("accent").value = state.accent;
-
-    $("sectionHeadersAlign").value = state.sectionHeadersAlign;
-    $("siteName").value = state.siteName;
-
-    hardLockHeroFirst();
-    setLiveStatus();
-
-    const savedAt = payload?.savedAt ? new Date(payload.savedAt) : null;
-    setSaveStatus(savedAt ? `Zapis: wczytano (${savedAt.toLocaleTimeString()})` : "Zapis: wczytano");
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function resetDraft() {
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
-}
-
-// ================== UI: BLOCK LIST ==================
-function moveBlock(blockId, dir) {
-  if (BLOCKS[blockId]?.locked) return; // hero locked
-  const idx = state.order.indexOf(blockId);
-  if (idx < 0) return;
-  const newIdx = idx + dir;
-  if (newIdx < 1) return; // keep hero at index 0
-  if (newIdx >= state.order.length) return;
-  const arr = [...state.order];
-  const [item] = arr.splice(idx, 1);
-  arr.splice(newIdx, 0, item);
-  state.order = arr;
-  hardLockHeroFirst();
-}
-
-function toggleBlock(blockId, enabled) {
-  if (BLOCKS[blockId]?.locked) return; // hero always enabled
-  ensureBlock(blockId).enabled = enabled;
-
-  if (enabled && !state.order.includes(blockId)) state.order.push(blockId);
-
-  if (!enabled && state.activeBlockId === blockId) {
-    const next = state.order.find(id => state.blocks[id]?.enabled);
-    state.activeBlockId = next || "hero";
-  }
-  hardLockHeroFirst();
-}
-
-function removeBlockFromPage(blockId) {
-  if (BLOCKS[blockId]?.locked) return;
-  state.order = state.order.filter(x => x !== blockId);
-  ensureBlock(blockId).enabled = false;
-  if (state.activeBlockId === blockId) {
-    const next = state.order.find(id => state.blocks[id]?.enabled);
-    state.activeBlockId = next || "hero";
-  }
-  hardLockHeroFirst();
+function enabledBlocksInOrder() {
+  return state.order.filter(id => state.blocks[id]?.enabled);
 }
 
 function renderBlocksList() {
@@ -455,23 +497,25 @@ function renderBlocksList() {
         ${checkboxHtml}
         <div>
           <strong>${escapeHtml(BLOCKS[id]?.label || id)}</strong><br/>
-          <small>${escapeHtml(cfg.title || "")}</small>
+          <small data-small="${id}">${escapeHtml(cfg.title || "")}</small>
         </div>
       </div>
 
       <div class="blockActions">
-        <button class="iconBtn" data-up="${id}" ${locked || idx === 0 || idx === 1 ? "disabled" : ""} title="Góra">↑</button>
+        <button class="iconBtn" data-up="${id}" ${locked || idx <= 1 ? "disabled" : ""} title="Góra">↑</button>
         <button class="iconBtn" data-down="${id}" ${locked || idx === state.order.length - 1 ? "disabled" : ""} title="Dół">↓</button>
         <button class="iconBtn" data-remove="${id}" ${locked ? "disabled" : ""} title="Usuń z układu">✕</button>
       </div>
     `;
+
     host.appendChild(el);
   });
 
   host.querySelectorAll("[data-select]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.activeBlockId = btn.getAttribute("data-select");
-      renderAll(true);
+      renderBlocksList();
+      renderBlockEditor();
     });
   });
 
@@ -479,28 +523,28 @@ function renderBlocksList() {
     chk.addEventListener("change", () => {
       const id = chk.getAttribute("data-toggle");
       toggleBlock(id, chk.checked);
-      renderAll(true);
+      structureChanged();
     });
   });
 
   host.querySelectorAll("[data-up]").forEach(b => {
     b.addEventListener("click", () => {
       moveBlock(b.getAttribute("data-up"), -1);
-      renderAll(true);
+      structureChanged();
     });
   });
 
   host.querySelectorAll("[data-down]").forEach(b => {
     b.addEventListener("click", () => {
       moveBlock(b.getAttribute("data-down"), +1);
-      renderAll(true);
+      structureChanged();
     });
   });
 
   host.querySelectorAll("[data-remove]").forEach(b => {
     b.addEventListener("click", () => {
       removeBlockFromPage(b.getAttribute("data-remove"));
-      renderAll(true);
+      structureChanged();
     });
   });
 }
@@ -518,7 +562,6 @@ function renderAddBlockSelect() {
   $("addBlockBtn").disabled = !options;
 }
 
-// ================== UI: BLOCK EDITOR ==================
 function fieldRow(label, inputHtml, hint = "") {
   return `
     <label class="field">
@@ -529,38 +572,47 @@ function fieldRow(label, inputHtml, hint = "") {
   `;
 }
 
-function itemInput(label, id, value, type="text", placeholder="") {
-  return `
-    <label class="field" style="margin:0;">
-      <span>${escapeHtml(label)}</span>
-      <input data-field="${escapeHtml(id)}" type="${type}" value="${escapeHtml(value || "")}" placeholder="${escapeHtml(placeholder)}"/>
-    </label>
-  `;
+function setByPath(rootObj, path, value) {
+  const parts = String(path).split(".");
+  let obj = rootObj;
+
+  for (let i = 0; i < parts.length - 1; i++) {
+    const k = parts[i];
+    const next = parts[i + 1];
+    const isIndex = /^\d+$/.test(next);
+
+    if (!(k in obj)) obj[k] = isIndex ? [] : {};
+    obj = obj[k];
+  }
+
+  const last = parts[parts.length - 1];
+  if (/^\d+$/.test(last)) obj[Number(last)] = value;
+  else obj[last] = value;
 }
 
-function itemTextarea(label, id, value, placeholder="") {
-  return `
-    <label class="field" style="margin:0;">
-      <span>${escapeHtml(label)}</span>
-      <textarea data-field="${escapeHtml(id)}" rows="3" placeholder="${escapeHtml(placeholder)}">${escapeHtml(value || "")}</textarea>
-    </label>
-  `;
-}
-
-function renderListItemsUI(items, schema, blockId, listKey, itemLabel="Pozycja") {
+function listEditor(items, listKey, label, schema) {
   const cards = items.map((it, idx) => {
     const fieldsHtml = schema.map(f => {
+      const path = `${listKey}.${idx}.${f.key}`;
       if (f.type === "textarea") {
-        return itemTextarea(f.label, `${listKey}.${idx}.${f.key}`, it[f.key] || "", f.placeholder || "");
+        return `
+          <label class="field" style="margin:0;">
+            <span>${escapeHtml(f.label)}</span>
+            <textarea data-path="${escapeHtml(path)}" rows="3" placeholder="${escapeHtml(f.placeholder || "")}">${escapeHtml(it[f.key] || "")}</textarea>
+          </label>`;
       }
-      return itemInput(f.label, `${listKey}.${idx}.${f.key}`, it[f.key] || "", f.type || "text", f.placeholder || "");
+      return `
+        <label class="field" style="margin:0;">
+          <span>${escapeHtml(f.label)}</span>
+          <input data-path="${escapeHtml(path)}" type="${escapeHtml(f.type || "text")}" value="${escapeHtml(it[f.key] || "")}" placeholder="${escapeHtml(f.placeholder || "")}"/>
+        </label>`;
     }).join("");
 
     return `
-      <div class="itemCard" data-list="${listKey}" data-index="${idx}">
+      <div class="itemCard" data-list="${escapeHtml(listKey)}" data-idx="${idx}">
         <div class="itemCardTop">
-          <strong>${escapeHtml(itemLabel)} #${idx+1}</strong>
-          <button class="btnSmall" type="button" data-remove-item="${listKey}" data-index="${idx}">Usuń</button>
+          <strong>${escapeHtml(label)} #${idx+1}</strong>
+          <button class="btnSmall" type="button" data-remove-item="${escapeHtml(listKey)}" data-idx="${idx}">Usuń</button>
         </div>
         <div class="itemGrid2">${fieldsHtml}</div>
       </div>
@@ -571,35 +623,20 @@ function renderListItemsUI(items, schema, blockId, listKey, itemLabel="Pozycja")
     <div class="itemList">
       ${cards || `<div class="hint">Brak pozycji. Dodaj pierwszą.</div>`}
       <div class="itemActions">
-        <button class="btnSmall" type="button" data-add-item="${listKey}">+ Dodaj</button>
+        <button class="btnSmall" type="button" data-add-item="${escapeHtml(listKey)}">+ Dodaj</button>
       </div>
     </div>
   `;
 }
 
-function renderUrlListUI(urls, listKey, hintText) {
-  const rows = urls.map((u, idx) => `
-    <div class="itemCard" data-list="${listKey}" data-index="${idx}">
-      <div class="itemCardTop">
-        <strong>Link #${idx+1}</strong>
-        <button class="btnSmall" type="button" data-remove-item="${listKey}" data-index="${idx}">Usuń</button>
-      </div>
-      <div style="display:grid; gap:10px;">
-        <input data-field="${listKey}.${idx}.url" type="url" value="${escapeHtml(u || "")}" placeholder="Wklej link…"/>
-      </div>
-    </div>
-  `).join("");
-
-  return `
-    <div class="itemList">
-      ${rows || `<div class="hint">Wklej pierwszy link i dodaj kolejne.</div>`}
-      <div class="itemActions">
-        <button class="btnSmall" type="button" data-add-item="${listKey}">+ Dodaj link</button>
-      </div>
-      ${hintText ? `<div class="hint">${hintText}</div>` : ""}
-    </div>
-  `;
+function updateBlockSmallTitle(blockId, title) {
+  const small = document.querySelector(`[data-small="${blockId}"]`);
+  if (small) small.textContent = title || "";
 }
+
+/* ==========================
+   Block editor (NO rerender per keystroke)
+========================== */
 
 function renderBlockEditor() {
   const host = $("blockEditor");
@@ -613,55 +650,62 @@ function renderBlockEditor() {
   const cfg = ensureBlock(id);
   const def = BLOCKS[id];
 
-  // common title (dla hero zostaje, ale to bardziej etykieta; w podglądzie hero i tak ma własny layout)
-  const commonTitle = `
-    ${fieldRow("Tytuł sekcji", `<input id="ed_title" type="text" value="${escapeHtml(cfg.title || "")}"/>`,
-      def.locked ? "HERO jest stały i zawsze na górze." : "Tytuł wyświetlany w menu/sekcji.")}
-  `;
+  const common = fieldRow(
+    "Tytuł sekcji",
+    `<input id="ed_title" type="text" value="${escapeHtml(cfg.title || "")}" />`,
+    def.locked ? "HERO jest stały i zawsze na górze." : "Tytuł w menu i nagłówku sekcji."
+  );
 
   let specific = "";
 
   if (def.editor === "hero") {
     const h = cfg.data;
-    const headline = h.headline ?? "";
-    const subheadline = h.subheadline ?? "";
-    const ctaText = h.primaryCtaText ?? "Zobacz";
-    const ctaTarget = h.primaryCtaTarget ?? "auto";
-    const ctaUrl = h.primaryCtaUrl ?? "";
+    const heroInfo = assets.heroImages.length
+      ? `<div class="hint">HERO zdjęcia: ${assets.heroImages.length} (pierwsze = tło)</div>
+         <div class="itemList">
+           ${assets.heroImages.map((_, i) => `
+             <div class="itemCard">
+               <div class="itemCardTop">
+                 <strong>Zdjęcie #${i+1}</strong>
+                 <button class="btnSmall" type="button" data-remove-heroimg="${i}">Usuń</button>
+               </div>
+             </div>
+           `).join("")}
+         </div>`
+      : `<div class="hint">Brak zdjęć w HERO. Dodaj co najmniej 1, żeby mieć tło.</div>`;
 
     specific = `
-      ${fieldRow("Nagłówek (H1)", `<input id="ed_hero_headline" type="text" value="${escapeHtml(headline)}" placeholder="np. Muzyka. Obraz. Emocje."/>`)}
-      ${fieldRow("Opis (1–2 zdania)", `<textarea id="ed_hero_sub" rows="4" placeholder="Krótko i konkretnie…">${escapeHtml(subheadline)}</textarea>`)}
+      ${fieldRow("Nagłówek (H1)", `<input id="ed_hero_headline" type="text" value="${escapeHtml(h.headline || "")}" />`)}
+      ${fieldRow("Opis", `<textarea id="ed_hero_sub" rows="4">${escapeHtml(h.subheadline || "")}</textarea>`)}
       <div class="grid2">
-        ${fieldRow("Tekst przycisku", `<input id="ed_hero_cta_text" type="text" value="${escapeHtml(ctaText)}"/>`)}
+        ${fieldRow("Tekst przycisku", `<input id="ed_hero_cta_text" type="text" value="${escapeHtml(h.primaryCtaText || "Zobacz")}" />`)}
         ${fieldRow("Cel przycisku", `
           <select id="ed_hero_cta_target">
-            <option value="auto" ${ctaTarget==="auto"?"selected":""}>Automatycznie (pierwsza sekcja)</option>
-            <option value="contact" ${ctaTarget==="contact"?"selected":""}>Kontakt</option>
-            <option value="custom" ${ctaTarget==="custom"?"selected":""}>Własny link (URL)</option>
+            <option value="auto" ${h.primaryCtaTarget==="auto"?"selected":""}>Automatycznie</option>
+            <option value="contact" ${h.primaryCtaTarget==="contact"?"selected":""}>Kontakt</option>
+            <option value="custom" ${h.primaryCtaTarget==="custom"?"selected":""}>Własny URL</option>
           </select>
         `)}
       </div>
-      <div id="heroCustomUrlWrap" style="display:${ctaTarget==="custom"?"block":"none"};">
-        ${fieldRow("Własny URL", `<input id="ed_hero_cta_url" type="url" value="${escapeHtml(ctaUrl)}" placeholder="https://..."/>`)}
+      <div id="heroCustomUrlWrap" style="display:${h.primaryCtaTarget==="custom"?"block":"none"};">
+        ${fieldRow("Własny URL", `<input id="ed_hero_cta_url" type="url" value="${escapeHtml(h.primaryCtaUrl || "")}" placeholder="https://..." />`)}
       </div>
-      ${fieldRow("Okładka / zdjęcie (upload)", `<input id="ed_hero_image" type="file" accept="image/*"/>`,
-        "Upload działa w podglądzie. Do eksportu ZIP będziemy dokładać assets w kolejnej iteracji, jeśli chcesz.")}
-      <div class="hint">
-        HERO to Twój start. Tu ma być najważniejsze: kim jesteś i dokąd kliknąć.
-      </div>
+
+      ${fieldRow("Zdjęcia HERO (upload, multi)", `<input id="ed_hero_images" type="file" accept="image/*" multiple />`,
+        "1 zdjęcie = tło. 2+ zdjęcia = mini-galeria w HERO automatycznie."
+      )}
+      ${heroInfo}
     `;
   }
 
   if (def.editor === "text") {
-    const text = cfg.data.text ?? "";
-    specific = fieldRow("Treść", `<textarea id="ed_text" rows="7" placeholder="Napisz krótko: co robisz, styl, w czym jesteś najlepszy…">${escapeHtml(text)}</textarea>`);
+    specific = fieldRow("Treść", `<textarea id="ed_text" rows="7">${escapeHtml(cfg.data.text || "")}</textarea>`);
   }
 
   if (def.editor === "gallery") {
     const layout = cfg.data.layout ?? "grid";
     const thumbs = assets.galleryImages.length
-      ? `<div class="hint">Wgrane zdjęcia: ${assets.galleryImages.length} (kliknij usuń w razie czego)</div>
+      ? `<div class="hint">Wgrane zdjęcia: ${assets.galleryImages.length}</div>
          <div class="itemList">
             ${assets.galleryImages.map((_, i) => `
               <div class="itemCard">
@@ -686,132 +730,101 @@ function renderBlockEditor() {
     `;
   }
 
-  if (def.editor === "spotify") {
-    cfg.data.urls = Array.isArray(cfg.data.urls) ? cfg.data.urls : [];
-    specific = renderUrlListUI(
-      cfg.data.urls,
-      "urls",
-      "Wklej link do open.spotify.com (track/album/artist/playlist). Generator sam zrobi iframe."
-    );
+  if (def.editor === "embed_spotify") {
+    cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    specific = listEditor(cfg.data.items, "items", "Link", [
+      { key: "url", label: "Link Spotify", type: "url", placeholder: "https://open.spotify.com/..." }
+    ]) + `<div class="hint">Wklej link (lub iframe) → generator zrobi embed automatycznie.</div>`;
   }
 
-  if (def.editor === "youtube") {
-    cfg.data.urls = Array.isArray(cfg.data.urls) ? cfg.data.urls : [];
-    specific = renderUrlListUI(
-      cfg.data.urls,
-      "urls",
-      "Wklej link YouTube (watch?v=…, youtu.be/…, playlist z list=…). Generator sam zrobi iframe."
-    );
+  if (def.editor === "embed_youtube") {
+    cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    specific = listEditor(cfg.data.items, "items", "Link", [
+      { key: "url", label: "Link YouTube", type: "url", placeholder: "https://youtube.com/watch?v=... lub playlist" }
+    ]) + `<div class="hint">Wklej link (lub iframe) → generator zrobi embed automatycznie.</div>`;
   }
 
   if (def.editor === "events") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const schema = [
-      { key: "date", label: "Data", type: "date", placeholder: "YYYY-MM-DD" },
+    specific = listEditor(cfg.data.items, "items", "Wydarzenie", [
+      { key: "date", label: "Data", type: "date" },
       { key: "city", label: "Miasto", type: "text", placeholder: "Kraków" },
       { key: "place", label: "Miejsce", type: "text", placeholder: "Klub / galeria" },
       { key: "link", label: "Link", type: "url", placeholder: "https://..." },
-    ];
-    specific = renderListItemsUI(cfg.data.items, schema, id, "items", "Wydarzenie");
+    ]);
   }
 
   if (def.editor === "projects") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const schema = [
-      { key: "title", label: "Tytuł", type: "text", placeholder: "Projekt / realizacja" },
-      { key: "link", label: "Link", type: "url", placeholder: "https://..." },
-      { key: "desc", label: "Opis", type: "textarea", placeholder: "1–3 zdania: co i dla kogo." },
-      { key: "tags", label: "Tagi", type: "text", placeholder: "np. okładki, identyfikacja, live" },
-    ];
-    specific = renderListItemsUI(cfg.data.items, schema, id, "items", "Projekt");
+    specific = listEditor(cfg.data.items, "items", "Projekt", [
+      { key: "title", label: "Tytuł", type: "text" },
+      { key: "link", label: "Link", type: "url" },
+      { key: "desc", label: "Opis", type: "textarea", placeholder: "1–3 zdania" },
+      { key: "tags", label: "Tagi", type: "text", placeholder: "np. okładki, live, klip" },
+    ]);
   }
 
   if (def.editor === "services") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const schema = [
-      { key: "name", label: "Usługa", type: "text", placeholder: "np. Sesja zdjęciowa / okładka / klip" },
+    specific = listEditor(cfg.data.items, "items", "Usługa", [
+      { key: "name", label: "Nazwa", type: "text" },
       { key: "price", label: "Cena (opcjonalnie)", type: "text", placeholder: "od 500 zł" },
-      { key: "desc", label: "Opis", type: "textarea", placeholder: "Konkretnie: co zawiera i jak wygląda proces." },
-    ];
-    specific = renderListItemsUI(cfg.data.items, schema, id, "items", "Usługa");
+      { key: "desc", label: "Opis", type: "textarea" },
+    ]);
   }
 
   if (def.editor === "simpleList") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const schema = [
-      { key: "text", label: "Wpis", type: "text", placeholder: "np. Nike / Vogue / Wyróżnienie..." },
-      { key: "link", label: "Link (opcjonalnie)", type: "url", placeholder: "https://..." },
-    ];
-    specific = renderListItemsUI(cfg.data.items, schema, id, "items", "Wpis");
+    specific = listEditor(cfg.data.items, "items", "Wpis", [
+      { key: "text", label: "Treść", type: "text" },
+      { key: "link", label: "Link (opcjonalnie)", type: "url" },
+    ]);
   }
 
   if (def.editor === "publications") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const schema = [
-      { key: "title", label: "Tytuł", type: "text", placeholder: "Tytuł książki / tekstu" },
+    specific = listEditor(cfg.data.items, "items", "Publikacja", [
+      { key: "title", label: "Tytuł", type: "text" },
       { key: "year", label: "Rok", type: "text", placeholder: "2025" },
-      { key: "url", label: "Link", type: "url", placeholder: "https://..." },
-      { key: "where", label: "Gdzie opublikowano", type: "text", placeholder: "Wydawnictwo / magazyn" },
-    ];
-    specific = renderListItemsUI(cfg.data.items, schema, id, "items", "Publikacja");
+      { key: "where", label: "Gdzie", type: "text", placeholder: "Magazyn / wydawnictwo" },
+      { key: "url", label: "Link", type: "url" },
+    ]);
   }
 
   if (def.editor === "testimonials") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const schema = [
-      { key: "quote", label: "Cytat", type: "textarea", placeholder: "Krótko. Mocno. Bez lania wody." },
-      { key: "who", label: "Autor / źródło", type: "text", placeholder: "Imię / firma / media" },
-      { key: "link", label: "Link (opcjonalnie)", type: "url", placeholder: "https://..." },
-    ];
-    specific = renderListItemsUI(cfg.data.items, schema, id, "items", "Opinia");
-  }
-
-  if (def.editor === "products") {
-    cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const schema = [
-      { key: "name", label: "Produkt", type: "text", placeholder: "Koszulka / print / płyta" },
-      { key: "price", label: "Cena", type: "text", placeholder: "99 zł" },
-      { key: "url", label: "Link", type: "url", placeholder: "https://..." },
-      { key: "note", label: "Opis (opcjonalnie)", type: "textarea", placeholder: "Warianty, rozmiary, itp." },
-    ];
-    specific = renderListItemsUI(cfg.data.items, schema, id, "items", "Produkt");
+    specific = listEditor(cfg.data.items, "items", "Opinia", [
+      { key: "quote", label: "Cytat", type: "textarea" },
+      { key: "who", label: "Autor", type: "text" },
+      { key: "link", label: "Link (opcjonalnie)", type: "url" },
+    ]);
   }
 
   if (def.editor === "newsletter") {
     cfg.data.title = cfg.data.title ?? "Zapisz się";
-    cfg.data.desc = cfg.data.desc ?? "Dostaniesz nowe prace / premiery / terminy jako pierwszy.";
+    cfg.data.desc = cfg.data.desc ?? "Dostaniesz nowe rzeczy jako pierwszy.";
     cfg.data.btn = cfg.data.btn ?? "Dołącz";
     cfg.data.url = cfg.data.url ?? "";
+
     specific = `
       ${fieldRow("Tytuł", `<input id="ed_news_title" type="text" value="${escapeHtml(cfg.data.title)}"/>`)}
       ${fieldRow("Opis", `<textarea id="ed_news_desc" rows="4">${escapeHtml(cfg.data.desc)}</textarea>`)}
       <div class="grid2">
         ${fieldRow("Tekst przycisku", `<input id="ed_news_btn" type="text" value="${escapeHtml(cfg.data.btn)}"/>`)}
-        ${fieldRow("Link do zapisu", `<input id="ed_news_url" type="url" value="${escapeHtml(cfg.data.url)}" placeholder="np. link do MailerLite/Substack/Google Form…"/>`)}
+        ${fieldRow("Link do zapisu", `<input id="ed_news_url" type="url" value="${escapeHtml(cfg.data.url)}" placeholder="https://..."/>`)}
       </div>
-      <div class="hint">Bez backendu najprościej: link do zewnętrznego formularza.</div>
     `;
   }
 
   if (def.editor === "epk") {
     cfg.data.shortBio = cfg.data.shortBio ?? "";
-    cfg.data.longBio = cfg.data.longBio ?? "";
     cfg.data.pressLinks = Array.isArray(cfg.data.pressLinks) ? cfg.data.pressLinks : [];
     cfg.data.downloadLinks = Array.isArray(cfg.data.downloadLinks) ? cfg.data.downloadLinks : [];
 
-    const pressSchema = [
-      { key: "name", label: "Nazwa", type: "text", placeholder: "Wywiad / recenzja / artykuł" },
-      { key: "url", label: "Link", type: "url", placeholder: "https://..." },
-    ];
-    const downSchema = [
-      { key: "name", label: "Nazwa pliku", type: "text", placeholder: "Presspack PDF / Logo pack" },
-      { key: "url", label: "Link do pobrania", type: "url", placeholder: "https://..." },
-    ];
-
-    const epkThumbs = assets.epkImages.length
-      ? `<div class="hint">Zdjęcia prasowe: ${assets.epkImages.length}</div>
+    const photosInfo = assets.epkPressPhotos.length
+      ? `<div class="hint">Zdjęcia prasowe: ${assets.epkPressPhotos.length}</div>
          <div class="itemList">
-            ${assets.epkImages.map((_, i) => `
+            ${assets.epkPressPhotos.map((_, i) => `
               <div class="itemCard">
                 <div class="itemCardTop">
                   <strong>Press photo #${i+1}</strong>
@@ -822,8 +835,8 @@ function renderBlockEditor() {
          </div>`
       : `<div class="hint">Brak zdjęć prasowych. Wgraj poniżej.</div>`;
 
-    const epkFiles = assets.epkFiles.length
-      ? `<div class="hint">Pliki upload (podgląd):</div>
+    const filesInfo = assets.epkFiles.length
+      ? `<div class="hint">Pliki presspack: ${assets.epkFiles.length}</div>
          <div class="itemList">
            ${assets.epkFiles.map((f, i) => `
              <div class="itemCard">
@@ -834,1077 +847,1089 @@ function renderBlockEditor() {
              </div>
            `).join("")}
          </div>`
-      : `<div class="hint">Możesz wrzucić PDF presspack itd. (to jest podgląd w generatorze).</div>`;
+      : `<div class="hint">Brak plików. Wgraj poniżej.</div>`;
 
     specific = `
-      ${fieldRow("Bio krótkie", `<textarea id="ed_epk_short" rows="4" placeholder="2–4 zdania">${escapeHtml(cfg.data.shortBio)}</textarea>`)}
-      ${fieldRow("Bio długie", `<textarea id="ed_epk_long" rows="7" placeholder="Konkretnie: styl, osiągnięcia, gdzie grane/publikowane…">${escapeHtml(cfg.data.longBio)}</textarea>`)}
-      <div class="hint">Press linki</div>
-      ${renderListItemsUI(cfg.data.pressLinks, pressSchema, id, "pressLinks", "Link")}
-      <div class="hint">Pliki do pobrania (linki)</div>
-      ${renderListItemsUI(cfg.data.downloadLinks, downSchema, id, "downloadLinks", "Plik")}
+      ${fieldRow("Krótki opis (bio)", `<textarea id="ed_epk_bio" rows="6">${escapeHtml(cfg.data.shortBio)}</textarea>`)}
+      ${fieldRow("Linki prasowe", "", "")}
+      ${listEditor(cfg.data.pressLinks, "pressLinks", "Link", [
+        { key: "name", label: "Nazwa", type: "text", placeholder: "Recenzja / wywiad" },
+        { key: "url", label: "URL", type: "url", placeholder: "https://..." },
+      ])}
 
-      ${fieldRow("Zdjęcia prasowe (upload)", `<input id="ed_epk_images" type="file" accept="image/*" multiple />`)}
-      ${epkThumbs}
+      ${fieldRow("Linki do pobrania (opcjonalnie)", "", "")}
+      ${listEditor(cfg.data.downloadLinks, "downloadLinks", "Plik", [
+        { key: "name", label: "Nazwa", type: "text", placeholder: "Press kit PDF" },
+        { key: "url", label: "URL", type: "url", placeholder: "https://..." },
+      ])}
 
-      ${fieldRow("Pliki (upload)", `<input id="ed_epk_files" type="file" multiple />`,
-        "Upload nie wchodzi do HTML-a automatycznie. Jeśli chcesz pełny eksport z assetami, dorobimy ZIP z folderem /assets.")}
-      ${epkFiles}
+      ${fieldRow("Zdjęcia prasowe (upload)", `<input id="ed_epk_photos" type="file" accept="image/*" multiple />`, "Do ZIP trafią do assets/press/")}
+      ${photosInfo}
+
+      ${fieldRow("Pliki presspack (upload)", `<input id="ed_epk_files" type="file" accept=".pdf,.zip,.png,.jpg,.jpeg,.webp" multiple />`, "Do ZIP trafią do assets/press/")}
+      ${filesInfo}
     `;
   }
 
   if (def.editor === "contact") {
     cfg.data.email = cfg.data.email ?? "";
     cfg.data.phone = cfg.data.phone ?? "";
-    cfg.data.booking = cfg.data.booking ?? "";
     cfg.data.city = cfg.data.city ?? "";
+    cfg.data.cta = cfg.data.cta ?? "Napisz do mnie";
     specific = `
       <div class="grid2">
-        ${fieldRow("Email", `<input id="ed_ct_email" type="email" value="${escapeHtml(cfg.data.email)}" placeholder="kontakt@..."/>`)}
-        ${fieldRow("Telefon", `<input id="ed_ct_phone" type="tel" value="${escapeHtml(cfg.data.phone)}" placeholder="+48..."/>`)}
+        ${fieldRow("Email", `<input id="ed_contact_email" type="email" value="${escapeHtml(cfg.data.email)}" placeholder="mail@..." />`)}
+        ${fieldRow("Telefon", `<input id="ed_contact_phone" type="text" value="${escapeHtml(cfg.data.phone)}" placeholder="+48 ..." />`)}
       </div>
       <div class="grid2">
-        ${fieldRow("Booking/management", `<input id="ed_ct_booking" type="email" value="${escapeHtml(cfg.data.booking)}" placeholder="booking@..."/>`)}
-        ${fieldRow("Miasto", `<input id="ed_ct_city" type="text" value="${escapeHtml(cfg.data.city)}" placeholder="Kraków"/>`)}
-      </div>
-      <div class="hint">
-        Prosto i klasycznie: mail/telefon. Formularze bez backendu robią więcej problemów niż pożytku.
+        ${fieldRow("Miasto", `<input id="ed_contact_city" type="text" value="${escapeHtml(cfg.data.city)}" placeholder="Kraków" />`)}
+        ${fieldRow("Tekst CTA", `<input id="ed_contact_cta" type="text" value="${escapeHtml(cfg.data.cta)}" />`)}
       </div>
     `;
   }
 
   if (def.editor === "social") {
-    cfg.data.instagram = cfg.data.instagram ?? "";
-    cfg.data.facebook = cfg.data.facebook ?? "";
-    cfg.data.youtube = cfg.data.youtube ?? "";
-    cfg.data.spotify = cfg.data.spotify ?? "";
-    cfg.data.tiktok = cfg.data.tiktok ?? "";
-    cfg.data.portfolio = cfg.data.portfolio ?? "";
-
-    specific = `
-      <div class="grid2">
-        ${fieldRow("Instagram", `<input id="ed_soc_instagram" type="url" value="${escapeHtml(cfg.data.instagram)}" placeholder="https://instagram.com/..."/>`)}
-        ${fieldRow("YouTube", `<input id="ed_soc_youtube" type="url" value="${escapeHtml(cfg.data.youtube)}" placeholder="https://youtube.com/..."/>`)}
-      </div>
-      <div class="grid2">
-        ${fieldRow("Facebook", `<input id="ed_soc_facebook" type="url" value="${escapeHtml(cfg.data.facebook)}" placeholder="https://facebook.com/..."/>`)}
-        ${fieldRow("Spotify/Bandcamp", `<input id="ed_soc_spotify" type="url" value="${escapeHtml(cfg.data.spotify)}" placeholder="https://open.spotify.com/..."/>`)}
-      </div>
-      <div class="grid2">
-        ${fieldRow("TikTok", `<input id="ed_soc_tiktok" type="url" value="${escapeHtml(cfg.data.tiktok)}" placeholder="https://tiktok.com/@..."/>`)}
-        ${fieldRow("Portfolio (Behance / własna)", `<input id="ed_soc_portfolio" type="url" value="${escapeHtml(cfg.data.portfolio)}" placeholder="https://..."/>`)}
-      </div>
-    `;
+    cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    specific = listEditor(cfg.data.items, "items", "Profil", [
+      { key: "name", label: "Nazwa", type: "text", placeholder: "Instagram" },
+      { key: "url", label: "URL", type: "url", placeholder: "https://..." },
+    ]);
   }
 
-  host.innerHTML = commonTitle + specific;
+  host.innerHTML = common + specific;
 
-  // bind common title
-  $("ed_title")?.addEventListener("input", () => {
-    cfg.title = $("ed_title").value;
-    renderAll(true);
-  });
-
-  // bind per editor
-  bindBlockEditorEvents(id);
+  bindEditorHandlers(host, id);
 }
 
-function bindBlockEditorEvents(blockId) {
+function bindEditorHandlers(host, blockId) {
   const cfg = ensureBlock(blockId);
   const def = BLOCKS[blockId];
 
-  // HERO
-  if (def.editor === "hero") {
-    $("ed_hero_headline")?.addEventListener("input", () => { cfg.data.headline = $("ed_hero_headline").value; renderAll(true); });
-    $("ed_hero_sub")?.addEventListener("input", () => { cfg.data.subheadline = $("ed_hero_sub").value; renderAll(true); });
-    $("ed_hero_cta_text")?.addEventListener("input", () => { cfg.data.primaryCtaText = $("ed_hero_cta_text").value; renderAll(true); });
-    $("ed_hero_cta_target")?.addEventListener("change", () => {
-      cfg.data.primaryCtaTarget = $("ed_hero_cta_target").value;
-      const show = cfg.data.primaryCtaTarget === "custom";
-      const wrap = document.getElementById("heroCustomUrlWrap");
-      if (wrap) wrap.style.display = show ? "block" : "none";
-      renderAll(true);
-    });
-    $("ed_hero_cta_url")?.addEventListener("input", () => { cfg.data.primaryCtaUrl = $("ed_hero_cta_url").value; renderAll(true); });
-
-    $("ed_hero_image")?.addEventListener("change", async () => {
-      assets.heroDataUrl = await readFileAsDataUrl($("ed_hero_image").files[0]);
-      renderAll(false);
+  // title (update small label without rerender)
+  const titleEl = host.querySelector("#ed_title");
+  if (titleEl) {
+    titleEl.addEventListener("input", () => {
+      cfg.title = titleEl.value;
+      updateBlockSmallTitle(blockId, cfg.title);
+      contentChanged();
     });
   }
 
-  // TEXT
-  if (def.editor === "text") {
-    $("ed_text")?.addEventListener("input", () => { cfg.data.text = $("ed_text").value; renderAll(true); });
-  }
-
-  // GALLERY
-  if (def.editor === "gallery") {
-    $("ed_gallery_layout")?.addEventListener("change", () => { cfg.data.layout = $("ed_gallery_layout").value; renderAll(true); });
-    $("ed_gallery_upload")?.addEventListener("change", async () => {
-      const added = await readMultipleImages($("ed_gallery_upload").files);
-      assets.galleryImages = [...assets.galleryImages, ...added];
-      renderAll(false);
-    });
-
-    document.querySelectorAll("[data-remove-gallery]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const idx = Number(btn.getAttribute("data-remove-gallery"));
-        assets.galleryImages.splice(idx, 1);
-        renderAll(false);
-      });
-    });
-  }
-
-  // EPK uploads remove
-  if (def.editor === "epk") {
-    $("ed_epk_short")?.addEventListener("input", () => { cfg.data.shortBio = $("ed_epk_short").value; renderAll(true); });
-    $("ed_epk_long")?.addEventListener("input", () => { cfg.data.longBio = $("ed_epk_long").value; renderAll(true); });
-
-    $("ed_epk_images")?.addEventListener("change", async () => {
-      const added = await readMultipleImages($("ed_epk_images").files);
-      assets.epkImages = [...assets.epkImages, ...added];
-      renderAll(false);
-    });
-
-    $("ed_epk_files")?.addEventListener("change", () => {
-      const files = Array.from($("ed_epk_files").files || []);
-      assets.epkFiles.forEach(f => { try { URL.revokeObjectURL(f.url); } catch {} });
-      assets.epkFiles = files.map(f => ({ name: f.name, type: f.type || "", url: URL.createObjectURL(f) }));
-      renderAll(false);
-    });
-
-    document.querySelectorAll("[data-remove-epkphoto]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const idx = Number(btn.getAttribute("data-remove-epkphoto"));
-        assets.epkImages.splice(idx, 1);
-        renderAll(false);
-      });
-    });
-
-    document.querySelectorAll("[data-remove-epkfile]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const idx = Number(btn.getAttribute("data-remove-epkfile"));
-        const f = assets.epkFiles[idx];
-        if (f?.url) { try { URL.revokeObjectURL(f.url); } catch {} }
-        assets.epkFiles.splice(idx, 1);
-        renderAll(false);
-      });
-    });
-  }
-
-  // Contact
-  if (def.editor === "contact") {
-    $("ed_ct_email")?.addEventListener("input", () => { cfg.data.email = $("ed_ct_email").value; renderAll(true); });
-    $("ed_ct_phone")?.addEventListener("input", () => { cfg.data.phone = $("ed_ct_phone").value; renderAll(true); });
-    $("ed_ct_booking")?.addEventListener("input", () => { cfg.data.booking = $("ed_ct_booking").value; renderAll(true); });
-    $("ed_ct_city")?.addEventListener("input", () => { cfg.data.city = $("ed_ct_city").value; renderAll(true); });
-  }
-
-  // Social
-  if (def.editor === "social") {
-    $("ed_soc_instagram")?.addEventListener("input", () => { cfg.data.instagram = $("ed_soc_instagram").value; renderAll(true); });
-    $("ed_soc_youtube")?.addEventListener("input", () => { cfg.data.youtube = $("ed_soc_youtube").value; renderAll(true); });
-    $("ed_soc_facebook")?.addEventListener("input", () => { cfg.data.facebook = $("ed_soc_facebook").value; renderAll(true); });
-    $("ed_soc_spotify")?.addEventListener("input", () => { cfg.data.spotify = $("ed_soc_spotify").value; renderAll(true); });
-    $("ed_soc_tiktok")?.addEventListener("input", () => { cfg.data.tiktok = $("ed_soc_tiktok").value; renderAll(true); });
-    $("ed_soc_portfolio")?.addEventListener("input", () => { cfg.data.portfolio = $("ed_soc_portfolio").value; renderAll(true); });
-  }
-
-  // Newsletter
-  if (def.editor === "newsletter") {
-    $("ed_news_title")?.addEventListener("input", () => { cfg.data.title = $("ed_news_title").value; renderAll(true); });
-    $("ed_news_desc")?.addEventListener("input", () => { cfg.data.desc = $("ed_news_desc").value; renderAll(true); });
-    $("ed_news_btn")?.addEventListener("input", () => { cfg.data.btn = $("ed_news_btn").value; renderAll(true); });
-    $("ed_news_url")?.addEventListener("input", () => { cfg.data.url = $("ed_news_url").value; renderAll(true); });
-  }
-
-  // Generic list editor events (add/remove + input)
-  const editor = $("blockEditor");
-  editor.querySelectorAll("[data-add-item]").forEach(btn => {
+  // list add/remove (structural inside editor -> rerender OK)
+  host.querySelectorAll("[data-add-item]").forEach(btn => {
     btn.addEventListener("click", () => {
       const listKey = btn.getAttribute("data-add-item");
       cfg.data[listKey] = Array.isArray(cfg.data[listKey]) ? cfg.data[listKey] : [];
       cfg.data[listKey].push({});
-      renderAll(true);
+      renderBlockEditor();
+      saveDraft();
+      if (state.livePreview) rebuildPreview(true);
     });
   });
 
-  editor.querySelectorAll("[data-remove-item]").forEach(btn => {
+  host.querySelectorAll("[data-remove-item]").forEach(btn => {
     btn.addEventListener("click", () => {
       const listKey = btn.getAttribute("data-remove-item");
-      const idx = Number(btn.getAttribute("data-index"));
+      const idx = Number(btn.getAttribute("data-idx"));
       cfg.data[listKey] = Array.isArray(cfg.data[listKey]) ? cfg.data[listKey] : [];
       cfg.data[listKey].splice(idx, 1);
-      renderAll(true);
+      renderBlockEditor();
+      saveDraft();
+      if (state.livePreview) rebuildPreview(true);
     });
   });
 
-  // inputs inside list cards
-  editor.querySelectorAll("[data-field]").forEach(input => {
-    input.addEventListener("input", () => {
-      const path = input.getAttribute("data-field"); // e.g. items.0.date OR urls.1.url
-      if (!path) return;
+  // list field edits (NO rerender)
+  host.querySelectorAll("[data-path]").forEach(el => {
+    el.addEventListener("input", () => {
+      const path = el.getAttribute("data-path");
+      setByPath(cfg.data, path, el.value);
+      contentChanged();
+    });
+  });
 
-      const parts = path.split(".");
-      const listKey = parts[0];
-      const idx = Number(parts[1]);
-      const key = parts[2];
+  // HERO
+  if (def.editor === "hero") {
+    const h = cfg.data;
 
-      cfg.data[listKey] = Array.isArray(cfg.data[listKey]) ? cfg.data[listKey] : [];
+    const headline = host.querySelector("#ed_hero_headline");
+    const sub = host.querySelector("#ed_hero_sub");
+    const ctaText = host.querySelector("#ed_hero_cta_text");
+    const ctaTarget = host.querySelector("#ed_hero_cta_target");
+    const ctaUrl = host.querySelector("#ed_hero_cta_url");
+    const customWrap = host.querySelector("#heroCustomUrlWrap");
+    const imgs = host.querySelector("#ed_hero_images");
 
-      // url list special
-      if (listKey === "urls" && key === "url") {
-        cfg.data.urls[idx] = input.value;
-        renderAll(true);
-        return;
+    if (headline) headline.addEventListener("input", () => { h.headline = headline.value; contentChanged(); });
+    if (sub) sub.addEventListener("input", () => { h.subheadline = sub.value; contentChanged(); });
+    if (ctaText) ctaText.addEventListener("input", () => { h.primaryCtaText = ctaText.value; contentChanged(); });
+
+    if (ctaTarget) {
+      ctaTarget.addEventListener("change", () => {
+        h.primaryCtaTarget = ctaTarget.value;
+        if (customWrap) customWrap.style.display = (ctaTarget.value === "custom") ? "block" : "none";
+        saveDraft();
+        if (state.livePreview) rebuildPreview(true);
+      });
+    }
+
+    if (ctaUrl) ctaUrl.addEventListener("input", () => { h.primaryCtaUrl = ctaUrl.value; contentChanged(); });
+
+    if (imgs) {
+      imgs.addEventListener("change", async () => {
+        const newImgs = await readMultipleImages(imgs.files);
+        assets.heroImages.push(...newImgs);
+        renderBlockEditor(); // structural (list)
+        saveDraft();
+        if (state.livePreview) rebuildPreview(true);
+      });
+    }
+
+    host.querySelectorAll("[data-remove-heroimg]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.getAttribute("data-remove-heroimg"));
+        assets.heroImages.splice(idx, 1);
+        renderBlockEditor();
+        saveDraft();
+        if (state.livePreview) rebuildPreview(true);
+      });
+    });
+  }
+
+  if (def.editor === "text") {
+    const t = host.querySelector("#ed_text");
+    if (t) t.addEventListener("input", () => { cfg.data.text = t.value; contentChanged(); });
+  }
+
+  if (def.editor === "gallery") {
+    const layout = host.querySelector("#ed_gallery_layout");
+    const upload = host.querySelector("#ed_gallery_upload");
+
+    if (layout) layout.addEventListener("change", () => { cfg.data.layout = layout.value; saveDraft(); if (state.livePreview) rebuildPreview(true); });
+
+    if (upload) {
+      upload.addEventListener("change", async () => {
+        const imgs = await readMultipleImages(upload.files);
+        assets.galleryImages.push(...imgs);
+        renderBlockEditor();
+        saveDraft();
+        if (state.livePreview) rebuildPreview(true);
+      });
+    }
+
+    host.querySelectorAll("[data-remove-gallery]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.getAttribute("data-remove-gallery"));
+        assets.galleryImages.splice(idx, 1);
+        renderBlockEditor();
+        saveDraft();
+        if (state.livePreview) rebuildPreview(true);
+      });
+    });
+  }
+
+  if (def.editor === "epk") {
+    const bio = host.querySelector("#ed_epk_bio");
+    if (bio) bio.addEventListener("input", () => { cfg.data.shortBio = bio.value; contentChanged(); });
+
+    const photos = host.querySelector("#ed_epk_photos");
+    if (photos) {
+      photos.addEventListener("change", async () => {
+        const imgs = await readMultipleImages(photos.files);
+        assets.epkPressPhotos.push(...imgs);
+        renderBlockEditor();
+        saveDraft();
+        if (state.livePreview) rebuildPreview(true);
+      });
+    }
+
+    host.querySelectorAll("[data-remove-epkphoto]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.getAttribute("data-remove-epkphoto"));
+        assets.epkPressPhotos.splice(idx, 1);
+        renderBlockEditor();
+        saveDraft();
+        if (state.livePreview) rebuildPreview(true);
+      });
+    });
+
+    const files = host.querySelector("#ed_epk_files");
+    if (files) {
+      files.addEventListener("change", async () => {
+        const list = Array.from(files.files || []);
+        for (const f of list) {
+          const dataUrl = await readFileAsDataUrl(f);
+          const parsed = parseDataUrl(dataUrl);
+          assets.epkFiles.push({
+            name: f.name,
+            dataUrl,
+            mime: parsed?.mime || "",
+          });
+        }
+        renderBlockEditor();
+        saveDraft();
+        if (state.livePreview) rebuildPreview(true);
+      });
+    }
+
+    host.querySelectorAll("[data-remove-epkfile]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.getAttribute("data-remove-epkfile"));
+        assets.epkFiles.splice(idx, 1);
+        renderBlockEditor();
+        saveDraft();
+        if (state.livePreview) rebuildPreview(true);
+      });
+    });
+  }
+
+  if (def.editor === "newsletter") {
+    const a = host.querySelector("#ed_news_title");
+    const b = host.querySelector("#ed_news_desc");
+    const c = host.querySelector("#ed_news_btn");
+    const d = host.querySelector("#ed_news_url");
+    if (a) a.addEventListener("input", () => { cfg.data.title = a.value; contentChanged(); });
+    if (b) b.addEventListener("input", () => { cfg.data.desc = b.value; contentChanged(); });
+    if (c) c.addEventListener("input", () => { cfg.data.btn = c.value; contentChanged(); });
+    if (d) d.addEventListener("input", () => { cfg.data.url = d.value; contentChanged(); });
+  }
+
+  if (def.editor === "contact") {
+    const email = host.querySelector("#ed_contact_email");
+    const phone = host.querySelector("#ed_contact_phone");
+    const city = host.querySelector("#ed_contact_city");
+    const cta = host.querySelector("#ed_contact_cta");
+    if (email) email.addEventListener("input", () => { cfg.data.email = email.value; contentChanged(); });
+    if (phone) phone.addEventListener("input", () => { cfg.data.phone = phone.value; contentChanged(); });
+    if (city) city.addEventListener("input", () => { cfg.data.city = city.value; contentChanged(); });
+    if (cta) cta.addEventListener("input", () => { cfg.data.cta = cta.value; contentChanged(); });
+  }
+}
+
+/* ==========================
+   Site HTML/CSS/JS generation
+========================== */
+
+function blockToFile(id) { return `${id}.html`; }
+
+function getNavItemsZip() {
+  const items = [{ label: "Home", href: "index.html", id: "home" }];
+  for (const id of enabledBlocksInOrder()) {
+    if (id === "hero") continue;
+    items.push({ label: state.blocks[id].title || BLOCKS[id].label, href: blockToFile(id), id });
+  }
+  return items;
+}
+
+function getNavItemsSingle() {
+  return enabledBlocksInOrder().map(id => ({ label: state.blocks[id].title || BLOCKS[id].label, href: `#${id}`, id }));
+}
+
+function buildSiteCss() {
+  const accent = state.accent || "#6d28d9";
+  const headersAlign = state.sectionHeadersAlign === "center" ? "center" : "left";
+
+  return `
+:root{
+  --accent:${accent};
+  --max: 1160px;
+  --radius: 0px;
+  --shadow: none;
+}
+
+/* theme */
+body{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+body.theme-minimalist{
+  color:#0b1020;
+  background:#f7f7fb;
+}
+body.theme-modern{
+  color:#eaf0ff;
+  background:#06070b;
+}
+body.theme-elegant{
+  color:#12131a;
+  background:#f4f0ea;
+}
+
+/* core */
+.container{ max-width: var(--max); margin: 0 auto; padding: 26px 18px 70px; }
+.sectionTitle{ text-align:${headersAlign}; margin:0 0 14px 0; font-size: 22px; letter-spacing:.2px; }
+.muted{ opacity:.75; line-height:1.65; }
+
+.siteHeader{
+  position: sticky; top:0; z-index:50;
+  background: rgba(255,255,255,.85);
+  border-bottom: 1px solid rgba(20,20,20,.12);
+  backdrop-filter: blur(10px);
+}
+.theme-modern .siteHeader{
+  background: rgba(6,7,11,.80);
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+.headerInner{
+  max-width: var(--max);
+  margin:0 auto;
+  padding: 14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+}
+.brand{
+  display:flex; align-items:center; gap:10px;
+  font-weight: 900;
+  letter-spacing:.2px;
+}
+.brandDot{
+  width:12px; height:12px;
+  background: var(--accent);
+}
+.nav{ display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+.nav a{
+  text-decoration:none;
+  color: inherit;
+  opacity:.75;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 8px 8px;
+}
+.nav a:hover{ opacity:1; }
+.nav a.active{ opacity:1; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  border: 1px solid rgba(20,20,20,.18);
+  padding: 10px 14px;
+  font-weight: 900;
+  text-decoration:none;
+  color: inherit;
+  background: transparent;
+}
+.theme-modern .btn{ border-color: rgba(255,255,255,.16); }
+.btn.primary{
+  border-color: transparent;
+  background: var(--accent);
+  color: #fff;
+}
+.btn:hover{ filter: brightness(1.03); }
+
+.grid{ display:grid; gap:16px; }
+.grid2{ display:grid; gap:16px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 900px){ .grid2{ grid-template-columns: 1fr; } }
+
+/* hero with background */
+.hero{
+  position:relative;
+  min-height: 520px;
+  display:flex;
+  align-items:flex-end;
+  padding: 28px;
+  background: #111;
+  color:#fff;
+  overflow:hidden;
+}
+.hero::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image: var(--hero-bg);
+  background-size: cover;
+  background-position: center;
+  filter: saturate(1.05);
+  transform: scale(1.02);
+}
+.hero::after{
+  content:"";
+  position:absolute; inset:0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.72));
+}
+.heroInner{
+  position:relative;
+  max-width: 70ch;
+}
+.hero .kicker{
+  display:inline-flex; align-items:center; gap:10px;
+  font-weight:900;
+  opacity:.95;
+}
+.kdot{ width:10px; height:10px; background: var(--accent); }
+.hero h1{ margin: 10px 0 10px 0; font-size: 52px; letter-spacing:-.6px; }
+.hero p{ margin: 0 0 18px 0; font-size: 16px; opacity:.88; }
+
+.heroActions{ display:flex; gap:10px; flex-wrap:wrap; }
+.heroGallery{
+  position:relative;
+  margin-top: 16px;
+  display:grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+@media (max-width: 900px){ .hero{ min-height: 520px; } .heroGallery{ grid-template-columns: repeat(3,1fr);} }
+.heroGallery a{
+  display:block;
+  aspect-ratio: 1 / 1;
+  overflow:hidden;
+}
+.heroGallery img{
+  width:100%; height:100%; object-fit: cover; display:block;
+}
+
+/* sections default (borderless) */
+.section{
+  margin-top: 26px;
+}
+
+/* gallery */
+.galleryGrid{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+@media (max-width: 900px){ .galleryGrid{ grid-template-columns: repeat(2,1fr); } }
+.galleryGrid img{ width:100%; height:auto; display:block; }
+
+.masonry{
+  column-count: 3;
+  column-gap: 14px;
+}
+@media (max-width: 900px){ .masonry{ column-count: 2; } }
+.masonryItem{ break-inside: avoid; margin:0 0 14px 0; }
+.masonryItem img{ width:100%; height:auto; display:block; }
+
+.embed{ width:100%; aspect-ratio: 16/9; border:0; }
+.embed.tall{ aspect-ratio: 16/10; }
+
+.footer{ margin-top: 36px; opacity:.7; font-size: 12px; text-align:center; }
+
+/* TEMPLATE: Square Grid (minimal like your ref #2) */
+body.tpl-square{
+  --radius: 0px;
+}
+body.tpl-square .container{ padding-top: 18px; }
+body.tpl-square .brandDot{ box-shadow:none; }
+body.tpl-square .nav a{ letter-spacing:.2px; }
+body.tpl-square .btn{ border-radius: 0; }
+body.tpl-square .hero{ border-radius: 0; }
+
+/* TEMPLATE: Colorwash (minimal with colored backdrop like ref #3) */
+body.tpl-colorwash{
+  background:
+    linear-gradient(0deg,
+      color-mix(in oklab, var(--accent), white 85%),
+      color-mix(in oklab, var(--accent), white 85%)
+    );
+}
+body.theme-modern.tpl-colorwash{
+  background:
+    linear-gradient(0deg,
+      color-mix(in oklab, var(--accent), black 75%),
+      color-mix(in oklab, var(--accent), black 75%)
+    );
+}
+body.tpl-colorwash .siteHeader{
+  background: rgba(255,255,255,.75);
+}
+body.theme-modern.tpl-colorwash .siteHeader{
+  background: rgba(6,7,11,.78);
+}
+body.tpl-colorwash .hero{
+  min-height: 560px;
+}
+body.tpl-colorwash .brandDot{ background:#111; }
+body.theme-modern.tpl-colorwash .brandDot{ background:#fff; }
+
+/* TEMPLATE: Rounded (cards) */
+body.tpl-rounded{ --radius: 18px; }
+body.tpl-rounded .btn{ border-radius: 999px; }
+body.tpl-rounded .hero{ border-radius: 26px; }
+body.tpl-rounded .siteHeader{ border-bottom-color: rgba(127,127,127,.20); }
+
+/* TEMPLATE: Editorial */
+body.tpl-editorial{
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+}
+body.tpl-editorial .nav a{ font-family: ui-sans-serif, system-ui; }
+body.tpl-editorial .hero h1{ font-size: 58px; }
+
+/* TEMPLATE: Neon */
+body.tpl-neon .hero::after{
+  background:
+    radial-gradient(800px 420px at 20% 15%, rgba(109,40,217,.35), transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.75));
+}
+
+/* TEMPLATE: Soft */
+body.tpl-soft .hero::after{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.00), rgba(0,0,0,.78));
+}
+`;
+}
+
+function buildSiteScript() {
+  // Works in srcdoc preview: intercept .html links -> parent postMessage
+  return `
+(function(){
+  // This flag is injected only for iframe srcdoc preview (never for exported files)
+  const IN_PREVIEW = !!(document.documentElement && document.documentElement.hasAttribute("data-kpo-preview"));
+  function send(msg){ try{ parent.postMessage(msg, "*"); }catch(e){} }
+
+  document.addEventListener("click", function(e){
+    const a = e.target.closest("a");
+    if(!a) return;
+    const href = a.getAttribute("href") || "";
+    if(!href) return;
+
+    if(href.startsWith("#")){
+      if(href.length <= 1) return; // allow bare "#" to behave normally
+      e.preventDefault();
+      const el = document.getElementById(href.slice(1)) || document.querySelector(href);
+      if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+      return;
+    }
+
+    if(IN_PREVIEW){
+      // ZIP preview: switch between inlined pages instead of real navigation
+      const raw = String(href || "").trim();
+      const lower = raw.toLowerCase();
+      // don't hijack external/protocol links
+      if(
+        lower.startsWith("http:") ||
+        lower.startsWith("https:") ||
+        lower.startsWith("mailto:") ||
+        lower.startsWith("tel:") ||
+        lower.startsWith("sms:") ||
+        lower.startsWith("data:") ||
+        lower.startsWith("blob:")
+      ) return;
+
+      let clean = raw;
+      if(clean.startsWith("./")) clean = clean.slice(2);
+      if(clean.startsWith("/")) clean = clean.slice(1);
+      clean = clean.split("#")[0].split("?")[0];
+
+      if(clean.endsWith(".html")){
+        e.preventDefault();
+        send({type:"NAVIGATE", page: clean});
       }
-
-      cfg.data[listKey][idx] = cfg.data[listKey][idx] || {};
-      cfg.data[listKey][idx][key] = input.value;
-      renderAll(true);
-    });
+    }
   });
+})();
+`;
 }
 
-// ================== THEME + TEMPLATE (preview vars) ==================
-function themeVars(theme, accent) {
-  const a = accent || "#6d28d9";
-  if (theme === "modern") {
-    return {
-      "--bg": "#070A0F",
-      "--text": "#EAF0FF",
-      "--muted": "rgba(234,240,255,.72)",
-      "--card": "rgba(255,255,255,.06)",
-      "--stroke": "rgba(255,255,255,.10)",
-      "--accent": a,
-      "--shadow": "0 20px 60px rgba(0,0,0,.55)"
-    };
-  }
-  if (theme === "elegant") {
-    return {
-      "--bg": "#0f0f12",
-      "--text": "#f3f0ea",
-      "--muted": "rgba(243,240,234,.72)",
-      "--card": "rgba(255,255,255,.05)",
-      "--stroke": "rgba(255,255,255,.12)",
-      "--accent": a,
-      "--shadow": "0 18px 55px rgba(0,0,0,.55)"
-    };
-  }
-  return {
-    "--bg": "#f7f7fb",
-    "--text": "#101322",
-    "--muted": "rgba(16,19,34,.70)",
-    "--card": "#ffffff",
-    "--stroke": "rgba(16,19,34,.10)",
-    "--accent": a,
-    "--shadow": "0 14px 40px rgba(16,19,34,.12)"
-  };
-}
-
-function templateVars(templateKey) {
-  const t = TEMPLATES[templateKey] || TEMPLATES.rounded;
-  return t.vars || {};
-}
-
-function varsToCss(varsObj) {
-  return Object.entries(varsObj).map(([k,v]) => `${k}:${v};`).join("");
-}
-
-// ================== PREVIEW RENDERERS ==================
-function sectionHeaderClass() {
-  return state.sectionHeadersAlign === "center" ? "card__head card__head--center" : "card__head";
-}
-
-function toEmbedList(blockId, urls) {
-  const list = (urls || [])
-    .map(u => String(u || "").trim())
-    .filter(Boolean);
-
-  if (blockId === "spotify") {
-    return list.map(normalizeSpotifyUrl).filter(Boolean);
-  }
-  if (blockId === "youtube") {
-    return list.map(normalizeYouTubeUrl).filter(Boolean);
-  }
-  return list;
-}
-
-function iconSvg(name) {
-  const common = `fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"`;
-  if (name === "instagram") return `<svg viewBox="0 0 24 24" ${common}><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>`;
-  if (name === "facebook") return `<svg viewBox="0 0 24 24" ${common}><path d="M14 8h3V5h-3c-2.2 0-4 1.8-4 4v3H7v3h3v6h3v-6h3l1-3h-4V9c0-.6.4-1 1-1z"/></svg>`;
-  if (name === "youtube") return `<svg viewBox="0 0 24 24" ${common}><path d="M21 8s-.2-1.4-.8-2c-.8-.8-1.7-.8-2.1-.9C15.2 5 12 5 12 5h0s-3.2 0-6.1.1c-.4.1-1.3.1-2.1.9C3.2 6.6 3 8 3 8S2.8 9.6 2.8 11.2v1.5C2.8 14.4 3 16 3 16s.2 1.4.8 2c.8.8 1.9.8 2.4.9C7.9 19 12 19 12 19s3.2 0 6.1-.1c.4-.1 1.3-.1 2.1-.9.6-.6.8-2 .8-2s.2-1.6.2-3.3v-1.5C21.2 9.6 21 8 21 8z"/><path d="M10 15V9l6 3-6 3z"/></svg>`;
-  if (name === "spotify") return `<svg viewBox="0 0 24 24" ${common}><circle cx="12" cy="12" r="9"/><path d="M8 11.5c2.9-1 5.9-.8 8.5.4"/><path d="M8.5 14c2.4-.7 4.9-.5 7 .3"/><path d="M9 16.3c1.9-.5 3.6-.4 5.2.2"/></svg>`;
-  if (name === "tiktok") return `<svg viewBox="0 0 24 24" ${common}><path d="M14 3v10.2a4.8 4.8 0 1 1-3-4.5V5.2c.8 2.6 2.8 4.6 5.5 5.3"/></svg>`;
-  return "";
-}
-
-function sectionCard(id, label, inner) {
-  return `
-    <section class="card" id="${id}">
-      <div class="${sectionHeaderClass()}"><h2>${escapeHtml(label)}</h2></div>
-      <div class="card__body">${inner}</div>
-    </section>
-  `;
-}
-
-// ================== HTML GENERATORS ==================
-function baseCss(varsCss) {
-  return `
-  :root{${varsCss}}
-  *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{
-    margin:0;
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    background: var(--bg);
-    color: var(--text);
-    line-height:1.55;
-    font-size: var(--body-size, 15px);
-  }
-  a{color:inherit}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 18px}
-  .topbar{
-    position: sticky; top:0; z-index:50;
-    backdrop-filter: blur(10px);
-    background: color-mix(in oklab, var(--bg) 78%, transparent);
-    border-bottom: var(--stroke-w, 1px) solid var(--stroke);
-  }
-  .topbar__in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}
-  .brand{display:flex;align-items:center;gap:10px;text-decoration:none}
-  .mark{
-    width:34px;height:34px;border-radius: 14px;
-    background: radial-gradient(18px 18px at 30% 30%, color-mix(in oklab, var(--accent) 70%, white), var(--accent));
-    box-shadow: var(--shadow);
-  }
-  nav{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-  nav a{
-    text-decoration:none;
-    font-size:13px;
-    color: var(--muted);
-    padding:8px 10px;
-    border-radius:999px;
-    border: var(--stroke-w, 1px) solid transparent;
-  }
-  nav a:hover{
-    color: var(--text);
-    border-color: var(--stroke);
-    background: color-mix(in oklab, var(--card) 65%, transparent);
-  }
-
-  .hero{padding:34px 0 18px}
-  .hero__grid{display:grid;grid-template-columns: 1.2fr .8fr;gap:18px;align-items:stretch}
-  .hero__copy{
-    background: var(--card);
-    border: var(--stroke-w, 1px) solid var(--stroke);
-    border-radius: var(--rad-media, 22px);
-    padding: var(--pad-card, 16px);
-    box-shadow: var(--card-glow, var(--shadow));
-  }
-  .kicker{display:inline-flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
-  .dot{width:8px;height:8px;border-radius:50%;background: var(--accent)}
-  h1{
-    margin:10px 0 8px;
-    font-size: clamp(26px, 3.2vw, 44px);
-    line-height:1.1;
-    font-weight: var(--h1-weight, 900);
-  }
-  h2{font-weight: var(--h2-weight, 900);}
-  .sub{margin:0;color:var(--muted)}
-  .hero__actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-  .btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:10px;
-    border-radius: var(--rad-btn, 14px);
-    padding: 10px 14px;
-    border: var(--stroke-w, 1px) solid var(--stroke);
-    background: color-mix(in oklab, var(--card) 70%, transparent);
-    text-decoration:none;
-    font-weight:900;
-    font-size:14px;
-  }
-  .btn--primary{
-    border-color: color-mix(in oklab, var(--accent) 55%, var(--stroke));
-    background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 70%, white), var(--accent));
-    color: #fff;
-  }
-  .btn--ghost{opacity:.95}
-  .btn[disabled], button[disabled]{opacity:.45;cursor:not-allowed}
-
-  .hero__media{
-    border-radius: var(--rad-media, 22px);
-    border: var(--stroke-w, 1px) solid var(--stroke);
-    background: color-mix(in oklab, var(--card) 70%, transparent);
-    box-shadow: var(--card-glow, var(--shadow));
-    overflow:hidden;
-    display:flex;align-items:center;justify-content:center;
-    position:relative;
-    min-height: 240px;
-  }
-  .hero__media img{width:100%;height:100%;object-fit:cover;display:block}
-  .hero__media--placeholder{flex-direction:column;gap:10px;color:var(--muted);font-size:13px}
-  .ph{display:flex;gap:8px}
-  .ph__dot{
-    width:10px;height:10px;border-radius:50%;
-    background: color-mix(in oklab, var(--accent) 55%, transparent);
-    box-shadow: 0 0 0 6px color-mix(in oklab, var(--accent) 20%, transparent);
-  }
-
-  .main{padding: 6px 0 40px}
-  .stack{display:grid;gap:14px}
-  .card{
-    background: var(--card);
-    border: var(--stroke-w, 1px) solid var(--stroke);
-    border-radius: var(--rad-card, 22px);
-    box-shadow: var(--card-glow, var(--shadow));
-    overflow:hidden;
-  }
-  .card__head{padding: 14px 16px;border-bottom: var(--stroke-w, 1px) solid var(--stroke)}
-  .card__head--center{display:flex;justify-content:center;text-align:center}
-  .card__head h2{margin:0;font-size:16px;letter-spacing:.2px}
-  .card__body{padding: var(--pad-card, 16px)}
-  .lead{margin:0}
-
-  .muted{color: var(--muted)}
-  .small{font-size:12px}
-  .mini{margin:0 0 10px 0; font-size: 14px}
-
-  .two{display:grid;grid-template-columns: 1fr 1.2fr;gap:14px;align-items:start}
-
-  .gallery{display:grid;grid-template-columns: repeat(3, 1fr);gap:10px}
-  .gallery--masonry{grid-auto-flow:dense}
-  .shot{margin:0;border-radius: calc(var(--rad-card, 22px) - 6px);overflow:hidden;border: var(--stroke-w, 1px) solid var(--stroke);background: color-mix(in oklab, var(--card) 65%, transparent)}
-  .shot img{width:100%;height:140px;object-fit:cover;display:block;transition:transform .25s ease}
-  .shot:hover img{transform: scale(1.04)}
-  .empty{border: var(--stroke-w, 1px) dashed var(--stroke);border-radius: calc(var(--rad-card, 22px) - 6px);padding: 14px;color: var(--muted);background: color-mix(in oklab, var(--card) 55%, transparent)}
-
-  .embeds{display:grid;gap:10px}
-  .embed{border: var(--stroke-w, 1px) solid var(--stroke);border-radius: calc(var(--rad-card, 22px) - 6px);overflow:hidden;background: color-mix(in oklab, var(--card) 55%, transparent)}
-  .embed--video{position:relative;padding-top:56.25%}
-  .embed--video iframe{position:absolute;inset:0;width:100%;height:100%}
-
-  .cards{display:grid;grid-template-columns: repeat(2, 1fr);gap:10px}
-  .xCard{border: var(--stroke-w, 1px) solid var(--stroke);border-radius: calc(var(--rad-card, 22px) - 4px);padding:12px;background: color-mix(in oklab, var(--card) 60%, transparent);display:grid;gap:8px}
-  .xCard__top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-  .link{color: color-mix(in oklab, var(--accent) 75%, var(--text)); text-decoration:none; font-weight: 900}
-  .link:hover{text-decoration:underline}
-
-  .social{display:grid;grid-template-columns: repeat(3, 1fr);gap:10px}
-  .sBtn{display:flex;align-items:center;gap:10px;border: var(--stroke-w, 1px) solid var(--stroke);background: color-mix(in oklab, var(--card) 60%, transparent);border-radius: calc(var(--rad-card, 22px) - 6px);padding: 12px;text-decoration:none;font-weight:900;font-size:13px}
-  .sBtn:hover{border-color: color-mix(in oklab, var(--accent) 45%, var(--stroke))}
-  .sBtn__ic{width:34px;height:34px;border-radius:14px;display:grid;place-items:center;background: radial-gradient(16px 16px at 30% 30%, color-mix(in oklab, var(--accent) 60%, white), var(--accent));color:#fff}
-  .sBtn__ic--plain{background: rgba(255,255,255,.08); color: var(--text)}
-  .sBtn__ic svg{width:18px;height:18px}
-
-  .footer{border-top: var(--stroke-w, 1px) solid var(--stroke);padding: 18px 0;color: var(--muted);font-size: 12px}
-
-  @media (max-width: 920px){
-    .hero__grid{grid-template-columns: 1fr}
-    .two{grid-template-columns: 1fr}
-    .gallery{grid-template-columns: 1fr 1fr}
-    .cards{grid-template-columns: 1fr}
-    .social{grid-template-columns: 1fr 1fr}
-  }
-  `;
-}
-
-function buildHeroHtml() {
-  const hero = ensureBlock("hero").data;
-  const siteName = escapeHtml(state.siteName);
-  const headline = escapeHtml(hero.headline || state.siteName || "Portfolio");
-  const subheadline = escapeHtml(hero.subheadline || "").replaceAll("\n","<br/>");
-  const ctaText = escapeHtml(hero.primaryCtaText || "Zobacz");
-
-  const enabledSections = state.order.filter(id => state.blocks[id]?.enabled && id !== "hero");
-  const first = enabledSections[0] || "about";
-  let ctaHref = `#${first}`;
-
-  if (hero.primaryCtaTarget === "contact") ctaHref = "#contact";
-  if (hero.primaryCtaTarget === "custom" && hero.primaryCtaUrl) ctaHref = hero.primaryCtaUrl;
-
-  const heroVisual = assets.heroDataUrl
-    ? `<div class="hero__media"><img src="${assets.heroDataUrl}" alt="Okładka" /></div>`
-    : `<div class="hero__media hero__media--placeholder"><div class="ph"><div class="ph__dot"></div><div class="ph__dot"></div><div class="ph__dot"></div></div><span>Dodaj okładkę</span></div>`;
-
-  return `
-    <header class="hero" id="top">
-      <div class="wrap hero__grid">
-        <div class="hero__copy">
-          <div class="kicker"><span class="dot"></span><span>Oficjalna strona</span></div>
-          <h1>${headline}</h1>
-          <p class="sub">${subheadline}</p>
-          <div class="hero__actions">
-            <a class="btn btn--primary" href="${ctaHref}">${ctaText}</a>
-            <a class="btn btn--ghost" href="#contact">Kontakt</a>
-          </div>
-        </div>
-        ${heroVisual}
-      </div>
-    </header>
-  `;
-}
-
-function renderBlockToHtml(blockId) {
-  const cfg = ensureBlock(blockId);
-  const title = cfg.title || BLOCKS[blockId].label;
-
-  if (blockId === "about") {
-    const txt = escapeHtml(cfg.data.text || "Napisz krótko kim jesteś i co tworzysz.").replaceAll("\n","<br/>");
-    return sectionCard(blockId, title, `<p class="lead">${txt}</p>`);
-  }
-
-  if (blockId === "gallery") {
-    const layout = cfg.data.layout || "grid";
-    const imgs = assets.galleryImages;
-    const html = imgs.length
-      ? `<div class="gallery ${layout === "masonry" ? "gallery--masonry" : ""}">
-          ${imgs.map((u, i) => `<figure class="shot"><img src="${u}" alt="Praca ${i+1}"></figure>`).join("")}
-         </div>`
-      : `<div class="empty">Wgraj zdjęcia w bloku Galeria.</div>`;
-    return sectionCard(blockId, title, html);
-  }
-
-  if (blockId === "spotify") {
-    const srcs = toEmbedList("spotify", cfg.data.urls || []);
-    const html = srcs.length
-      ? `<div class="embeds">
-          ${srcs.map(src => `
-            <div class="embed">
-              <iframe style="border-radius:16px" src="${escapeHtml(src)}" width="100%" height="152" frameborder="0"
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-            </div>
-          `).join("")}
-         </div>`
-      : `<div class="empty">Dodaj link Spotify.</div>`;
-    return sectionCard(blockId, title, html);
-  }
-
-  if (blockId === "youtube") {
-    const srcs = toEmbedList("youtube", cfg.data.urls || []);
-    const html = srcs.length
-      ? `<div class="embeds">
-          ${srcs.map(src => `
-            <div class="embed embed--video">
-              <iframe src="${escapeHtml(src)}" title="YouTube" frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen loading="lazy"></iframe>
-            </div>
-          `).join("")}
-         </div>`
-      : `<div class="empty">Dodaj link YouTube.</div>`;
-    return sectionCard(blockId, title, html);
-  }
-
-  if (blockId === "events" || blockId === "exhibitions") {
-    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const cards = items.length
-      ? `<div class="cards">
-          ${items.map(e => `
-            <div class="xCard">
-              <div class="xCard__top">
-                <strong>${escapeHtml(e.date || "—")} • ${escapeHtml(e.city || "")}</strong>
-                ${e.link ? `<a class="link" href="${escapeHtml(e.link)}" target="_blank" rel="noopener">Info</a>` : `<span class="muted small">—</span>`}
-              </div>
-              <div class="muted">${escapeHtml(e.place || "")}</div>
-            </div>
-          `).join("")}
-        </div>`
-      : `<div class="empty">Dodaj wydarzenia.</div>`;
-    return sectionCard(blockId, title, cards);
-  }
-
-  if (blockId === "projects" || blockId === "caseStudies") {
-    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const cards = items.length
-      ? `<div class="cards">
-          ${items.map(p => `
-            <div class="xCard">
-              <div class="xCard__top">
-                <strong>${escapeHtml(p.title || "Projekt")}</strong>
-                ${p.link ? `<a class="link" href="${escapeHtml(p.link)}" target="_blank" rel="noopener">Link</a>` : `<span class="muted small">—</span>`}
-              </div>
-              ${p.desc ? `<div class="muted">${escapeHtml(p.desc)}</div>` : ""}
-              ${p.tags ? `<div class="muted small">${escapeHtml(p.tags)}</div>` : ""}
-            </div>
-          `).join("")}
-        </div>`
-      : `<div class="empty">Dodaj projekty.</div>`;
-    return sectionCard(blockId, title, cards);
-  }
-
-  if (blockId === "services") {
-    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const cards = items.length
-      ? `<div class="cards">
-          ${items.map(s => `
-            <div class="xCard">
-              <div class="xCard__top">
-                <strong>${escapeHtml(s.name || "Usługa")}</strong>
-                <span class="muted small">${escapeHtml(s.price || "")}</span>
-              </div>
-              ${s.desc ? `<div class="muted">${escapeHtml(s.desc)}</div>` : ""}
-            </div>
-          `).join("")}
-        </div>`
-      : `<div class="empty">Dodaj usługi.</div>`;
-    return sectionCard(blockId, title, cards);
-  }
-
-  if (blockId === "clients" || blockId === "awards") {
-    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const html = items.length
-      ? `<div class="cards">
-          ${items.map(it => `
-            <div class="xCard">
-              <div class="xCard__top">
-                <strong>${escapeHtml(it.text || "—")}</strong>
-                ${it.link ? `<a class="link" href="${escapeHtml(it.link)}" target="_blank" rel="noopener">Link</a>` : `<span class="muted small"> </span>`}
-              </div>
-            </div>
-          `).join("")}
-        </div>`
-      : `<div class="empty">Dodaj wpisy.</div>`;
-    return sectionCard(blockId, title, html);
-  }
-
-  if (blockId === "publications") {
-    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const html = items.length
-      ? `<div class="cards">
-          ${items.map(p => `
-            <div class="xCard">
-              <div class="xCard__top">
-                <strong>${escapeHtml(p.title || "Publikacja")}</strong>
-                ${p.url ? `<a class="link" href="${escapeHtml(p.url)}" target="_blank" rel="noopener">Czytaj</a>` : `<span class="muted small">—</span>`}
-              </div>
-              <div class="muted small">${escapeHtml([p.where, p.year].filter(Boolean).join(" • "))}</div>
-            </div>
-          `).join("")}
-        </div>`
-      : `<div class="empty">Dodaj publikacje.</div>`;
-    return sectionCard(blockId, title, html);
-  }
-
-  if (blockId === "testimonials") {
-    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const html = items.length
-      ? `<div class="cards">
-          ${items.map(t => `
-            <div class="xCard">
-              <div class="muted">„${escapeHtml(t.quote || "")}”</div>
-              <div class="xCard__top" style="margin-top:10px;">
-                <strong>${escapeHtml(t.who || "—")}</strong>
-                ${t.link ? `<a class="link" href="${escapeHtml(t.link)}" target="_blank" rel="noopener">Źródło</a>` : `<span class="muted small"> </span>`}
-              </div>
-            </div>
-          `).join("")}
-        </div>`
-      : `<div class="empty">Dodaj opinie.</div>`;
-    return sectionCard(blockId, title, html);
-  }
-
-  if (blockId === "shop") {
-    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
-    const html = items.length
-      ? `<div class="cards">
-          ${items.map(p => `
-            <div class="xCard">
-              <div class="xCard__top">
-                <strong>${escapeHtml(p.name || "Produkt")}</strong>
-                <span class="muted small">${escapeHtml(p.price || "")}</span>
-              </div>
-              ${p.note ? `<div class="muted">${escapeHtml(p.note)}</div>` : ""}
-              ${p.url ? `<div style="margin-top:10px;"><a class="btn btn--primary" href="${escapeHtml(p.url)}" target="_blank" rel="noopener">Kup</a></div>` : ""}
-            </div>
-          `).join("")}
-        </div>`
-      : `<div class="empty">Dodaj produkty.</div>`;
-    return sectionCard(blockId, title, html);
-  }
-
-  if (blockId === "newsletter") {
-    const t = escapeHtml(cfg.data.title || "Zapisz się");
-    const d = escapeHtml(cfg.data.desc || "").replaceAll("\n","<br/>");
-    const b = escapeHtml(cfg.data.btn || "Dołącz");
-    const u = cfg.data.url ? escapeHtml(cfg.data.url) : "";
-    const btn = u ? `<a class="btn btn--primary" href="${u}" target="_blank" rel="noopener">${b}</a>` : `<a class="btn btn--ghost" href="#contact">Kontakt</a>`;
-    const html = `
-      <div class="xCard">
-        <div class="xCard__top"><strong>${t}</strong></div>
-        <div class="muted">${d}</div>
-        <div style="margin-top:12px;">${btn}</div>
-      </div>
-    `;
-    return sectionCard(blockId, title, html);
-  }
-
-  if (blockId === "epk") {
-    const shortBio = escapeHtml(cfg.data.shortBio || "").replaceAll("\n","<br/>");
-    const longBio = escapeHtml(cfg.data.longBio || "").replaceAll("\n","<br/>");
-
-    const press = Array.isArray(cfg.data.pressLinks) ? cfg.data.pressLinks : [];
-    const down = Array.isArray(cfg.data.downloadLinks) ? cfg.data.downloadLinks : [];
-
-    const pressHtml = press.length
-      ? press.map(p => `<a class="link" href="${escapeHtml(p.url||"#")}" target="_blank" rel="noopener">${escapeHtml(p.name||"Link")}</a>`).join("<br/>")
-      : `<span class="muted">Brak linków.</span>`;
-
-    const downHtml = down.length
-      ? down.map(d => `<a class="link" href="${escapeHtml(d.url||"#")}" target="_blank" rel="noopener">${escapeHtml(d.name||"Plik")}</a>`).join("<br/>")
-      : `<span class="muted">Brak plików.</span>`;
-
-    const photosHtml = assets.epkImages.length
-      ? `<div class="gallery">${assets.epkImages.map((u,i)=>`<figure class="shot"><img src="${u}" alt="Press ${i+1}"></figure>`).join("")}</div>`
-      : `<div class="empty">Wgraj zdjęcia prasowe w EPK.</div>`;
-
-    const html = `
-      <div class="two">
-        <div>
-          <div class="xCard">
-            <div class="xCard__top"><strong>Bio krótkie</strong></div>
-            <div class="muted">${shortBio || "—"}</div>
-          </div>
-          <div class="xCard" style="margin-top:10px;">
-            <div class="xCard__top"><strong>Bio długie</strong></div>
-            <div class="muted">${longBio || "—"}</div>
-          </div>
-          <div class="xCard" style="margin-top:10px;">
-            <div class="xCard__top"><strong>Press</strong></div>
-            <div class="muted">${pressHtml}</div>
-          </div>
-          <div class="xCard" style="margin-top:10px;">
-            <div class="xCard__top"><strong>Pliki</strong></div>
-            <div class="muted">${downHtml}</div>
-          </div>
-        </div>
-        <div>
-          <div class="xCard">
-            <div class="xCard__top"><strong>Zdjęcia prasowe</strong></div>
-            ${photosHtml}
-          </div>
-        </div>
-      </div>
-    `;
-    return sectionCard(blockId, title, html);
-  }
-
-  if (blockId === "contact") {
-    const email = cfg.data.email || "";
-    const phone = cfg.data.phone || "";
-    const booking = cfg.data.booking || "";
-    const city = cfg.data.city || "";
-
-    const mailto = email ? `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent("Kontakt / współpraca")}` : "";
-    const bookingMailto = booking ? `mailto:${encodeURIComponent(booking)}?subject=${encodeURIComponent("Booking / współpraca")}` : "";
-
-    const html = `
-      <div class="cards">
-        <div class="xCard">
-          <div class="xCard__top"><strong>Email</strong><span class="muted small">${escapeHtml(email || "—")}</span></div>
-          <div style="margin-top:10px;">
-            ${email ? `<a class="btn btn--primary" href="${mailto}">Napisz</a>` : `<span class="muted">Dodaj email w edytorze.</span>`}
-          </div>
-        </div>
-        <div class="xCard">
-          <div class="xCard__top"><strong>Booking</strong><span class="muted small">${escapeHtml(booking || "—")}</span></div>
-          <div style="margin-top:10px;">
-            ${booking ? `<a class="btn btn--ghost" href="${bookingMailto}">Booking</a>` : `<span class="muted">Opcjonalnie.</span>`}
-          </div>
-        </div>
-        <div class="xCard">
-          <div class="xCard__top"><strong>Telefon</strong><span class="muted small">${escapeHtml(phone || "—")}</span></div>
-          ${city ? `<div class="muted small" style="margin-top:8px;">${escapeHtml(city)}</div>` : ""}
-        </div>
-      </div>
-    `;
-    return sectionCard(blockId, title, html);
-  }
-
-  if (blockId === "social") {
-    const d = cfg.data || {};
-    const links = [
-      d.instagram ? { name:"Instagram", href:d.instagram, icon:"instagram" } : null,
-      d.facebook ? { name:"Facebook", href:d.facebook, icon:"facebook" } : null,
-      d.youtube ? { name:"YouTube", href:d.youtube, icon:"youtube" } : null,
-      d.spotify ? { name:"Spotify/Bandcamp", href:d.spotify, icon:"spotify" } : null,
-      d.tiktok ? { name:"TikTok", href:d.tiktok, icon:"tiktok" } : null,
-      d.portfolio ? { name:"Portfolio", href:d.portfolio, icon:"" } : null,
-    ].filter(Boolean);
-
-    const html = links.length
-      ? `<div class="social">
-          ${links.map(l => `
-            <a class="sBtn" href="${escapeHtml(l.href)}" target="_blank" rel="noopener">
-              ${l.icon ? `<span class="sBtn__ic">${iconSvg(l.icon)}</span>` : `<span class="sBtn__ic sBtn__ic--plain">↗</span>`}
-              <span>${escapeHtml(l.name)}</span>
-            </a>
-          `).join("")}
-         </div>`
-      : `<div class="empty">Dodaj linki social.</div>`;
-
-    return sectionCard(blockId, title, html);
-  }
-
-  return sectionCard(blockId, title, `<div class="empty">Ten blok nie ma jeszcze renderera.</div>`);
-}
-
-function generateSinglePageHtml() {
-  const vars = { ...themeVars(state.theme, state.accent), ...templateVars(state.template) };
-  const varsCss = varsToCss(vars);
-
-  const siteName = escapeHtml(state.siteName || "Artysta");
-  const enabled = state.order.filter(id => state.blocks[id]?.enabled);
-
-  // nav anchors exclude hero
-  const navItems = enabled
-    .filter(id => id !== "hero")
-    .map(id => `<a href="#${id}">${escapeHtml(state.blocks[id].title || BLOCKS[id].label)}</a>`)
-    .join("");
-
-  const blocksHtml = enabled
-    .filter(id => id !== "hero")
-    .map(id => renderBlockToHtml(id))
-    .join("");
-
-  const heroHtml = buildHeroHtml();
-
-  return `<!DOCTYPE html>
-<html lang="pl">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>${siteName}</title>
-<style>${baseCss(varsCss)}</style>
-</head>
-<body>
-  <div class="topbar">
-    <div class="wrap">
-      <div class="topbar__in">
-        <a class="brand" href="#top"><span class="mark" aria-hidden="true"></span><div><b>${siteName}</b></div></a>
-        <nav aria-label="Nawigacja">${navItems}</nav>
-      </div>
-    </div>
-  </div>
-
-  ${heroHtml}
-
-  <main class="main">
-    <div class="wrap">
-      <div class="stack">
-        ${blocksHtml || `<div class="card"><div class="card__body"><p class="muted">Włącz bloki i dodaj treści.</p></div></div>`}
-      </div>
-    </div>
-  </main>
-
-  <footer class="footer">
-    <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <span>© ${new Date().getFullYear()} ${siteName}</span>
-      <span>HTML/CSS • GitHub Pages friendly</span>
-    </div>
-  </footer>
-</body>
-</html>`;
-}
-
-// ZIP mode: proste, sensowne grupowanie na podstrony
-function getZipPages() {
-  const enabled = state.order.filter(id => state.blocks[id]?.enabled);
-
-  const has = (id) => enabled.includes(id);
-
-  const pages = {};
-
-  // index: hero + about (i ewentualnie contact jeśli ktoś ma tylko basics)
-  pages["index.html"] = ["hero", ...(has("about") ? ["about"] : [])];
-
-  // media
-  const media = ["spotify","youtube"].filter(has);
-  if (media.length) pages["media.html"] = media;
-
-  // gallery
-  const gal = ["gallery"].filter(has);
-  if (gal.length) pages["gallery.html"] = gal;
-
-  // work
-  const work = ["projects","caseStudies"].filter(has);
-  if (work.length) pages["work.html"] = work;
-
-  // events
-  const ev = ["events","exhibitions"].filter(has);
-  if (ev.length) pages["events.html"] = ev;
-
-  // publications
-  const pub = ["publications"].filter(has);
-  if (pub.length) pages["publications.html"] = pub;
-
-  // info (services/clients/awards/testimonials/shop/newsletter)
-  const info = ["services","clients","awards","testimonials","shop","newsletter"].filter(has);
-  if (info.length) pages["info.html"] = info;
-
-  // epk
-  const epk = ["epk"].filter(has);
-  if (epk.length) pages["epk.html"] = epk;
-
-  // contact
-  const contact = ["contact","social"].filter(has);
-  if (contact.length) pages["contact.html"] = contact;
-
-  return pages;
-}
-
-function buildMultiPageNav(currentFile, pages) {
-  const entries = Object.keys(pages);
-  const niceName = (file) => {
-    const map = {
-      "index.html": "Home",
-      "media.html": "Media",
-      "gallery.html": "Galeria",
-      "work.html": "Prace",
-      "events.html": "Wydarzenia",
-      "publications.html": "Publikacje",
-      "info.html": "Info",
-      "epk.html": "EPK",
-      "contact.html": "Kontakt",
-    };
-    return map[file] || file;
-  };
-
-  return entries.map(file => {
-    const label = niceName(file);
-    const href = file;
-    return `<a href="${href}" ${file===currentFile ? 'style="color:var(--text);border-color:var(--stroke);"' : ""}>${escapeHtml(label)}</a>`;
+function buildHeader(navItems, activeHref) {
+  const brand = escapeHtml(state.siteName || "Portfolio");
+  const links = navItems.map(it => {
+    const isActive = it.href === activeHref;
+    return `<a href="${it.href}" class="${isActive ? "active" : ""}">${escapeHtml(it.label)}</a>`;
   }).join("");
+
+  return `
+<header class="siteHeader">
+  <div class="headerInner">
+    <div class="brand"><span class="brandDot"></span> ${brand}</div>
+    <nav class="nav">${links}</nav>
+  </div>
+</header>`;
 }
 
-function generateZipFiles() {
-  const vars = { ...themeVars(state.theme, state.accent), ...templateVars(state.template) };
-  const varsCss = varsToCss(vars);
-  const siteName = escapeHtml(state.siteName || "Artysta");
+function renderHeroSection(mode) {
+  const hero = ensureBlock("hero");
+  const h = hero.data || {};
+  const headline = escapeHtml(h.headline || "");
+  const sub = escapeHtml(h.subheadline || "");
+  const btnText = escapeHtml(h.primaryCtaText || "Zobacz");
+  const target = h.primaryCtaTarget || "auto";
+  const customUrl = String(h.primaryCtaUrl || "").trim();
 
-  const pages = getZipPages();
+  const enabled = enabledBlocksInOrder().filter(id => id !== "hero");
+  const contactEnabled = enabledBlocksInOrder().includes("contact");
 
-  const files = {};
-  for (const [file, blockIds] of Object.entries(pages)) {
-    const nav = buildMultiPageNav(file, pages);
+  let ctaHref = "#";
+  if (mode === "single") {
+    if (target === "custom" && customUrl) ctaHref = customUrl;
+    else if (target === "contact") ctaHref = contactEnabled ? "#contact" : (enabled[0] ? `#${enabled[0]}` : "#hero");
+    else ctaHref = enabled[0] ? `#${enabled[0]}` : "#hero";
+  } else {
+    if (target === "custom" && customUrl) ctaHref = customUrl;
+    else if (target === "contact") ctaHref = contactEnabled ? "contact.html" : (enabled[0] ? `${enabled[0]}.html` : "index.html");
+    else ctaHref = enabled[0] ? `${enabled[0]}.html` : "index.html";
+  }
 
-    const isIndex = file === "index.html";
-    const heroHtml = isIndex ? buildHeroHtml() : `
-      <header class="hero" id="top">
-        <div class="wrap">
-          <div class="hero__copy">
-            <div class="kicker"><span class="dot"></span><span>${siteName}</span></div>
-            <h1>${escapeHtml(file.replace(".html","").toUpperCase())}</h1>
-            <p class="sub">Podstrona wygenerowana z Twoich bloków.</p>
-          </div>
-        </div>
-      </header>
-    `;
+  const bg = assets.heroImages[0] ? `url('${cssUrl(assets.heroImages[0])}')` : `linear-gradient(135deg, var(--accent), #111)`;
 
-    const contentBlocks = blockIds
-      .filter(id => id !== "hero")
-      .map(id => renderBlockToHtml(id))
-      .join("") || `<div class="card"><div class="card__body"><p class="muted">Brak treści.</p></div></div>`;
+  const heroGallery = assets.heroImages.length > 1
+    ? `<div class="heroGallery">
+        ${assets.heroImages.map((u, i) => `
+          <a href="${u}" target="_blank" rel="noopener" title="HERO #${i+1}">
+            <img src="${u}" alt="HERO ${i+1}"/>
+          </a>
+        `).join("")}
+      </div>`
+    : "";
 
-    const html = `<!DOCTYPE html>
-<html lang="pl">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>${siteName}</title>
-<style>${baseCss(varsCss)}</style>
-</head>
-<body>
-  <div class="topbar">
-    <div class="wrap">
-      <div class="topbar__in">
-        <a class="brand" href="index.html"><span class="mark" aria-hidden="true"></span><div><b>${siteName}</b></div></a>
-        <nav aria-label="Nawigacja">${nav}</nav>
+  return `
+<section id="hero" class="hero" style="--hero-bg:${bg};">
+  <div class="heroInner">
+    <div class="kicker"><span class="kdot"></span> Oficjalna strona</div>
+    <h1>${headline}</h1>
+    <p>${sub}</p>
+    <div class="heroActions">
+      <a class="btn primary" href="${ctaHref}">${btnText}</a>
+      <a class="btn" href="${mode==="single" ? "#contact" : "contact.html"}">Kontakt</a>
+    </div>
+    ${heroGallery}
+  </div>
+</section>
+`;
+}
+
+function renderBlockSection(id, mode) {
+  const cfg = ensureBlock(id);
+  const title = escapeHtml(cfg.title || BLOCKS[id].label);
+  const editor = BLOCKS[id].editor;
+
+  if (id === "hero") return renderHeroSection(mode);
+
+  if (editor === "text") {
+    const text = escapeHtml(cfg.data.text || "").replaceAll("\n", "<br/>");
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div class="muted">${text || "—"}</div>
+</section>`;
+  }
+
+  if (editor === "gallery") {
+    const layout = cfg.data.layout || "grid";
+    const items = assets.galleryImages.length ? assets.galleryImages : [];
+
+    if (!items.length) {
+      return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div class="muted">Brak zdjęć — wgraj w generatorze.</div>
+</section>`;
+    }
+
+    const body = layout === "masonry"
+      ? `<div class="masonry">
+          ${items.map(u => `<div class="masonryItem"><img src="${u}" alt=""/></div>`).join("")}
+        </div>`
+      : `<div class="galleryGrid">
+          ${items.map(u => `<img src="${u}" alt=""/>`).join("")}
+        </div>`;
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  ${body}
+</section>`;
+  }
+
+  if (editor === "embed_spotify") {
+    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const iframes = items
+      .map(it => normalizeSpotify(it.url || ""))
+      .filter(Boolean)
+      .map(src => `<iframe class="embed tall" src="${src}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`)
+      .join("");
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div class="grid">${iframes || `<div class="muted">Wklej linki Spotify w generatorze.</div>`}</div>
+</section>`;
+  }
+
+  if (editor === "embed_youtube") {
+    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const iframes = items
+      .map(it => normalizeYouTube(it.url || ""))
+      .filter(Boolean)
+      .map(src => `<iframe class="embed" src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`)
+      .join("");
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div class="grid">${iframes || `<div class="muted">Wklej linki YouTube w generatorze.</div>`}</div>
+</section>`;
+  }
+
+  if (editor === "events") {
+    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const rows = items.map(it => {
+      const date = escapeHtml(it.date || "");
+      const city = escapeHtml(it.city || "");
+      const place = escapeHtml(it.place || "");
+      const link = (it.link || "").trim();
+      return `
+<div style="display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+  <div><strong>${date || "—"}</strong> • ${city || "—"}<div class="muted">${place || ""}</div></div>
+  ${link ? `<a class="btn" href="${escapeHtml(link)}" target="_blank" rel="noopener">Szczegóły</a>` : ``}
+</div>`;
+    }).join("");
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div>${rows || `<div class="muted">Dodaj wydarzenia w generatorze.</div>`}</div>
+</section>`;
+  }
+
+  if (editor === "projects") {
+    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const cards = items.map(it => {
+      const t = escapeHtml(it.title || "");
+      const desc = escapeHtml(it.desc || "").replaceAll("\n","<br/>");
+      const tags = escapeHtml(it.tags || "");
+      const link = (it.link || "").trim();
+      return `
+<div style="padding:12px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+  <div style="display:flex; justify-content:space-between; gap:12px; align-items:baseline;">
+    <div style="font-weight:900;">${t || "—"}</div>
+    ${tags ? `<div class="muted" style="font-size:12px;">${tags}</div>` : ``}
+  </div>
+  <div class="muted" style="margin-top:8px;">${desc || ""}</div>
+  ${link ? `<div style="margin-top:10px;"><a class="btn primary" href="${escapeHtml(link)}" target="_blank" rel="noopener">Zobacz</a></div>` : ``}
+</div>`;
+    }).join("");
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div>${cards || `<div class="muted">Dodaj projekty w generatorze.</div>`}</div>
+</section>`;
+  }
+
+  if (editor === "services") {
+    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const rows = items.map(it => `
+<div style="padding:12px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+  <div style="display:flex; justify-content:space-between; gap:12px;">
+    <div style="font-weight:900;">${escapeHtml(it.name || "—")}</div>
+    <div class="muted">${escapeHtml(it.price || "")}</div>
+  </div>
+  <div class="muted" style="margin-top:8px;">${escapeHtml(it.desc || "").replaceAll("\n","<br/>")}</div>
+</div>`).join("");
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div>${rows || `<div class="muted">Dodaj usługi w generatorze.</div>`}</div>
+</section>`;
+  }
+
+  if (editor === "simpleList") {
+    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const rows = items.map(it => {
+      const text = escapeHtml(it.text || "");
+      const link = (it.link || "").trim();
+      return `<div style="padding:10px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+        <strong>${text || "—"}</strong>
+        ${link ? ` <a class="btn" style="margin-left:10px;" href="${escapeHtml(link)}" target="_blank" rel="noopener">Link</a>` : ``}
+      </div>`;
+    }).join("");
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div>${rows || `<div class="muted">Dodaj wpisy w generatorze.</div>`}</div>
+</section>`;
+  }
+
+  if (editor === "publications") {
+    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const rows = items.map(it => `
+<div style="padding:12px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+  <div style="font-weight:900;">${escapeHtml(it.title || "—")}</div>
+  <div class="muted" style="margin-top:6px;">${escapeHtml(it.where || "")} ${it.year ? "• " + escapeHtml(it.year) : ""}</div>
+  ${it.url ? `<div style="margin-top:10px;"><a class="btn" href="${escapeHtml(it.url)}" target="_blank" rel="noopener">Czytaj</a></div>` : ``}
+</div>`).join("");
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div>${rows || `<div class="muted">Dodaj publikacje w generatorze.</div>`}</div>
+</section>`;
+  }
+
+  if (editor === "testimonials") {
+    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const rows = items.map(it => `
+<div style="padding:12px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+  <div style="font-weight:900;">„${escapeHtml(it.quote || "—").replaceAll("\n"," ")}”</div>
+  <div class="muted" style="margin-top:8px;">— ${escapeHtml(it.who || "")}</div>
+  ${it.link ? `<div style="margin-top:10px;"><a class="btn" href="${escapeHtml(it.link)}" target="_blank" rel="noopener">Źródło</a></div>` : ``}
+</div>`).join("");
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div>${rows || `<div class="muted">Dodaj opinie w generatorze.</div>`}</div>
+</section>`;
+  }
+
+  if (editor === "epk") {
+    const bio = escapeHtml(cfg.data.shortBio || "").replaceAll("\n","<br/>");
+
+    const pressLinks = (cfg.data.pressLinks || []).map(it => `
+      <div style="padding:10px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+        <strong>${escapeHtml(it.name || "Link")}</strong>
+        ${it.url ? ` <a class="btn" style="margin-left:10px;" href="${escapeHtml(it.url)}" target="_blank" rel="noopener">Otwórz</a>` : ``}
       </div>
+    `).join("");
+
+    const dlLinks = (cfg.data.downloadLinks || []).map(it => `
+      <div style="padding:10px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+        <strong>${escapeHtml(it.name || "Plik")}</strong>
+        ${it.url ? ` <a class="btn primary" style="margin-left:10px;" href="${escapeHtml(it.url)}" target="_blank" rel="noopener">Pobierz</a>` : ``}
+      </div>
+    `).join("");
+
+    const photos = assets.epkPressPhotos.length
+      ? `<div class="galleryGrid">${assets.epkPressPhotos.map(u => `<img src="${u}" alt=""/>`).join("")}</div>`
+      : `<div class="muted">Brak zdjęć prasowych.</div>`;
+
+    const files = assets.epkFiles.length
+      ? assets.epkFiles.map(f => `
+        <div style="padding:10px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+          <strong>${escapeHtml(f.name)}</strong>
+          <a class="btn primary" style="margin-left:10px;" href="${f.dataUrl}" download="${escapeHtml(f.name)}">Pobierz</a>
+        </div>
+      `).join("")
+      : `<div class="muted">Brak plików presspack.</div>`;
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+
+  <div class="grid2">
+    <div>
+      <h3 style="margin:0 0 10px 0;">Bio</h3>
+      <div class="muted">${bio || "—"}</div>
+    </div>
+    <div>
+      <h3 style="margin:0 0 10px 0;">Linki prasowe</h3>
+      <div>${pressLinks || `<div class="muted">—</div>`}</div>
+      <h3 style="margin:18px 0 10px 0;">Do pobrania</h3>
+      <div>${dlLinks || `<div class="muted">—</div>`}</div>
     </div>
   </div>
 
-  ${heroHtml}
+  <h3 style="margin:22px 0 10px 0;">Zdjęcia prasowe</h3>
+  ${photos}
 
-  <main class="main">
-    <div class="wrap">
-      <div class="stack">${contentBlocks}</div>
-    </div>
+  <h3 style="margin:22px 0 10px 0;">Pliki</h3>
+  <div>${files}</div>
+</section>`;
+  }
+
+  if (editor === "contact") {
+    const email = escapeHtml(cfg.data.email || "");
+    const phone = escapeHtml(cfg.data.phone || "");
+    const city = escapeHtml(cfg.data.city || "");
+    const cta = escapeHtml(cfg.data.cta || "Napisz do mnie");
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div class="muted">
+    ${email ? `Email: <strong>${email}</strong><br/>` : ``}
+    ${phone ? `Telefon: <strong>${phone}</strong><br/>` : ``}
+    ${city ? `Miasto: <strong>${city}</strong><br/>` : ``}
+  </div>
+  ${email ? `<div style="margin-top:12px;"><a class="btn primary" href="mailto:${email}">${cta}</a></div>` : ``}
+</section>`;
+  }
+
+  if (editor === "social") {
+    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const rows = items.map(it => `
+<div style="padding:10px 0; border-bottom:1px solid rgba(127,127,127,.18);">
+  <strong>${escapeHtml(it.name || "Profil")}</strong>
+  ${it.url ? ` <a class="btn" style="margin-left:10px;" href="${escapeHtml(it.url)}" target="_blank" rel="noopener">Otwórz</a>` : ``}
+</div>`).join("");
+
+    return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div>${rows || `<div class="muted">Dodaj profile w generatorze.</div>`}</div>
+</section>`;
+  }
+
+  return `
+<section id="${id}" class="section">
+  <h2 class="sectionTitle">${title}</h2>
+  <div class="muted">Sekcja.</div>
+</section>`;
+}
+
+function buildSingleHtml(forPreviewInline = true) {
+  const nav = getNavItemsSingle();
+  const css = buildSiteCss();
+  const js = buildSiteScript();
+  const bodySections = enabledBlocksInOrder().map(id => renderBlockSection(id, "single")).join("");
+
+  const previewAttr = forPreviewInline ? ` data-kpo-preview="1"` : ``;
+
+  const headCss = forPreviewInline ? `<style>${css}</style>` : `<link rel="stylesheet" href="style.css"/>`;
+  const footJs = forPreviewInline ? `<script>${js}</script>` : `<script src="site.js"></script>`;
+
+  return `
+<!doctype html>
+<html lang="pl"${previewAttr}>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>${escapeHtml(state.siteName || "Portfolio")}</title>
+${headCss}
+</head>
+<body class="theme-${escapeHtml(state.theme)} tpl-${escapeHtml(state.template)}">
+  ${buildHeader(nav, nav[0]?.href || "#hero")}
+  <main class="container">
+    ${bodySections}
+    <div class="footer">© ${escapeHtml(state.siteName || "Artysta")}</div>
   </main>
-
-  <footer class="footer">
-    <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <span>© ${new Date().getFullYear()} ${siteName}</span>
-      <span>Multi-page ZIP • GitHub Pages friendly</span>
-    </div>
-  </footer>
+${footJs}
 </body>
-</html>`;
+</html>`.trim();
+}
 
-    files[file] = html;
+function buildZipFiles(forPreviewInline) {
+  const css = buildSiteCss();
+  const js = buildSiteScript();
+  const nav = getNavItemsZip();
+  const files = {};
+
+  const previewAttr = forPreviewInline ? ` data-kpo-preview="1"` : ``;
+
+  // export version: separate files + html links
+  if (!forPreviewInline) {
+    files["style.css"] = css;
+    files["site.js"] = js;
+  }
+
+  const headCss = forPreviewInline ? `<style>${css}</style>` : `<link rel="stylesheet" href="style.css"/>`;
+  const footJs = forPreviewInline ? `<script>${js}</script>` : `<script src="site.js"></script>`;
+
+  // index.html
+  const enabled = enabledBlocksInOrder().filter(id => id !== "hero");
+  const quick = enabled.slice(0, 6).map(id => {
+    const t = escapeHtml(state.blocks[id].title || BLOCKS[id].label);
+    const href = blockToFile(id);
+    return `<a class="btn" href="${href}">${t}</a>`;
+  }).join(" ");
+
+  const indexBody = `
+    ${renderBlockSection("hero", "zip")}
+    ${quick ? `<section class="section">
+      <h2 class="sectionTitle">Skróty</h2>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">${quick}</div>
+    </section>` : ``}
+  `;
+
+  files["index.html"] = `
+<!doctype html>
+<html lang="pl"${previewAttr}>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>${escapeHtml(state.siteName || "Portfolio")}</title>
+${headCss}
+</head>
+<body class="theme-${escapeHtml(state.theme)} tpl-${escapeHtml(state.template)}">
+  ${buildHeader(nav, "index.html")}
+  <main class="container">
+    ${indexBody}
+    <div class="footer">© ${escapeHtml(state.siteName || "Artysta")}</div>
+  </main>
+${footJs}
+</body>
+</html>`.trim();
+
+  // pages per block
+  for (const id of enabled) {
+    const file = blockToFile(id);
+    files[file] = `
+<!doctype html>
+<html lang="pl"${previewAttr}>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>${escapeHtml(state.siteName || "Portfolio")} • ${escapeHtml(state.blocks[id].title || BLOCKS[id].label)}</title>
+${headCss}
+</head>
+<body class="theme-${escapeHtml(state.theme)} tpl-${escapeHtml(state.template)}">
+  ${buildHeader(nav, file)}
+  <main class="container">
+    ${renderBlockSection(id, "zip")}
+    <div class="footer">© ${escapeHtml(state.siteName || "Artysta")}</div>
+  </main>
+${footJs}
+</body>
+</html>`.trim();
   }
 
   return files;
 }
 
-// ================== RENDER PIPELINE ==================
-function syncFromFormToState() {
-  state.exportMode = $("exportMode").value;
-  state.livePreview = !!$("livePreview").checked;
+/* ==========================
+   Preview rebuild
+========================== */
 
-  state.role = $("role").value;
-  state.theme = $("theme").value;
-  state.template = $("template").value;
-  state.accent = $("accent").value;
+function rebuildPreview(force=false) {
+  syncStateFromSettingsInputs();
 
-  state.sectionHeadersAlign = $("sectionHeadersAlign").value;
-  state.siteName = $("siteName").value;
-}
-
-let lastGeneratedHtml = "";
-
-function renderPreview(force=false) {
-  // if live disabled and not forced, do nothing
-  if (!state.livePreview && !force) return;
+  const iframe = $("previewFrame");
 
   if (state.exportMode === "single") {
-    lastGeneratedHtml = generateSinglePageHtml();
-    $("previewFrame").srcdoc = lastGeneratedHtml;
-  } else {
-    // preview index.html of ZIP build
-    const files = generateZipFiles();
-    lastGeneratedHtml = files["index.html"] || Object.values(files)[0] || "";
-    $("previewFrame").srcdoc = lastGeneratedHtml;
+    zipPreviewFiles = null;
+    zipPreviewCurrent = "index.html";
+    iframe.srcdoc = buildSingleHtml(true);
+    setPreviewPageLabel("index.html");
+    return;
   }
+
+  // ZIP preview: build inline pages (fixes your broken preview)
+  zipPreviewFiles = buildZipFiles(true);
+
+  if (!zipPreviewFiles[zipPreviewCurrent]) zipPreviewCurrent = "index.html";
+  iframe.srcdoc = zipPreviewFiles[zipPreviewCurrent] || "";
+  setPreviewPageLabel(zipPreviewCurrent);
 }
 
-function renderAll(shouldAutosave=true, forcePreview=false) {
-  syncFromFormToState();
-  setLiveStatus();
+/* ==========================
+   Preview navigation from iframe (ZIP)
+========================== */
 
-  renderAddBlockSelect();
-  renderBlocksList();
-  renderBlockEditor();
+window.addEventListener("message", (ev) => {
+  const d = ev.data || {};
+  if (d.type !== "NAVIGATE") return;
 
-  renderPreview(forcePreview);
+  const page = String(d.page || "").trim();
+  if (!page) return;
 
-  if (shouldAutosave) saveDraft();
-}
+  if (state.exportMode !== "zip") return;
 
-const renderAllDebounced = debounce(() => renderAll(true, false), 150);
+  if (!zipPreviewFiles) zipPreviewFiles = buildZipFiles(true);
 
-// ================== ADD BLOCK ==================
-function addBlock(blockId) {
-  if (!blockId) return;
-  ensureBlock(blockId).enabled = true;
-  if (!state.order.includes(blockId)) state.order.push(blockId);
-  hardLockHeroFirst();
-  state.activeBlockId = blockId;
-  renderAll(true, true);
-}
+  if (zipPreviewFiles[page]) {
+    zipPreviewCurrent = page;
+    $("previewFrame").srcdoc = zipPreviewFiles[page];
+    setPreviewPageLabel(page);
+  }
+});
 
-// ================== DOWNLOAD ==================
-function downloadBlob(blob, filename) {
+/* ==========================
+   Download
+========================== */
+
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -1912,83 +1937,163 @@ function downloadBlob(blob, filename) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 600);
+  setTimeout(() => URL.revokeObjectURL(url), 500);
 }
 
-function downloadSingle() {
-  const html = generateSinglePageHtml();
-  downloadBlob(new Blob([html], { type: "text/html;charset=utf-8" }), "index.html");
-}
-
-async function downloadZip() {
-  if (typeof JSZip === "undefined") {
-    alert("Brak JSZip. Podłącz CDN lub dodaj lokalny plik jszip.min.js.");
-    return;
-  }
+async function downloadZip(filesMap) {
   const zip = new JSZip();
-  const files = generateZipFiles();
-  Object.entries(files).forEach(([name, html]) => zip.file(name, html));
+  const root = zip.folder(ZIP_ROOT_FOLDER);
+
+  for (const [name, content] of Object.entries(filesMap)) {
+    root.file(name, content);
+  }
+
+  // assets folder
+  const assetsFolder = root.folder("assets");
+
+  if (assets.heroImages.length) {
+    const h = assetsFolder.folder("hero");
+    assets.heroImages.forEach((u, i) => {
+      const parsed = parseDataUrl(u);
+      if (!parsed) return;
+      const ext = guessExtFromMime(parsed.mime);
+      h.file(`hero-${String(i+1).padStart(2,"0")}.${ext}`, parsed.b64, { base64: true });
+    });
+  }
+
+  if (assets.galleryImages.length) {
+    const g = assetsFolder.folder("gallery");
+    assets.galleryImages.forEach((u, i) => {
+      const parsed = parseDataUrl(u);
+      if (!parsed) return;
+      const ext = guessExtFromMime(parsed.mime);
+      g.file(`img-${String(i+1).padStart(2,"0")}.${ext}`, parsed.b64, { base64: true });
+    });
+  }
+
+  if (assets.epkPressPhotos.length || assets.epkFiles.length) {
+    const p = assetsFolder.folder("press");
+
+    assets.epkPressPhotos.forEach((u, i) => {
+      const parsed = parseDataUrl(u);
+      if (!parsed) return;
+      const ext = guessExtFromMime(parsed.mime);
+      p.file(`photo-${String(i+1).padStart(2,"0")}.${ext}`, parsed.b64, { base64: true });
+    });
+
+    assets.epkFiles.forEach((f) => {
+      const parsed = parseDataUrl(f.dataUrl);
+      if (!parsed) return;
+      p.file(f.name, parsed.b64, { base64: true });
+    });
+  }
 
   const blob = await zip.generateAsync({ type: "blob" });
-  downloadBlob(blob, "site.zip");
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${ZIP_ROOT_FOLDER}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
 }
 
-// ================== INIT ==================
-function bindGlobalInputs() {
-  // export mode / live
-  $("exportMode").addEventListener("change", () => renderAll(true, true));
-  $("livePreview").addEventListener("change", () => {
-    renderAll(true, true);
+/* ==========================
+   Init + bindings
+========================== */
+
+function bindSettings() {
+  $("exportMode").addEventListener("change", () => {
+    state.exportMode = $("exportMode").value;
+    if (state.exportMode === "zip") zipPreviewCurrent = "index.html";
+    structureChanged(true);
   });
 
-  // role changes MUST auto-apply preset (Twoje wymaganie)
+  $("livePreview").addEventListener("change", () => {
+    state.livePreview = $("livePreview").checked;
+    setLiveStatus();
+    saveDraft();
+    if (state.livePreview) rebuildPreview(true);
+  });
+
   $("role").addEventListener("change", () => {
     applyRolePreset($("role").value);
-    renderAll(true, true);
+    structureChanged(true);
   });
 
+  // settings that should NOT rerender UI on each key
   ["theme","template","accent","sectionHeadersAlign","siteName"].forEach(id => {
-    $(id).addEventListener(id === "theme" || id === "template" || id === "sectionHeadersAlign" ? "change" : "input", () => {
-      renderAllDebounced();
+    $(id).addEventListener("input", () => {
+      syncStateFromSettingsInputs();
+      contentChanged();
+    });
+    $(id).addEventListener("change", () => {
+      syncStateFromSettingsInputs();
+      saveDraft();
+      if (state.livePreview) rebuildPreview(true);
     });
   });
 
-  $("addBlockBtn").addEventListener("click", () => addBlock($("addBlockSelect").value));
+  $("addBlockBtn").addEventListener("click", () => {
+    const id = $("addBlockSelect").value;
+    if (!id) return;
+    ensureBlock(id).enabled = true;
+    if (!state.order.includes(id)) state.order.push(id);
+    hardLockHeroFirst();
+    state.activeBlockId = id;
+    structureChanged();
+  });
 
-  $("btnReset").addEventListener("click", resetDraft);
-  $("btnManualRefresh").addEventListener("click", () => renderAll(true, true));
-
-  $("btnOpenExportHint").addEventListener("click", () => {
-    const el = $("exportHint");
-    el.style.display = (el.style.display === "none" || !el.style.display) ? "block" : "none";
+  $("btnManualRefresh").addEventListener("click", () => {
+    rebuildPreview(true);
   });
 
   $("btnDownload").addEventListener("click", async () => {
-    if (state.exportMode === "single") downloadSingle();
-    else await downloadZip();
+    syncStateFromSettingsInputs();
+    if (state.exportMode === "single") {
+      // export: separate files? -> simplest: one index.html with inline CSS/JS
+      downloadText("index.html", buildSingleHtml(true));
+      return;
+    }
+    const files = buildZipFiles(false); // export = external style.css + site.js
+    await downloadZip(files);
   });
-}
 
-function initDefaults() {
-  applyRolePreset(state.role);
-  // default some titles
-  ensureBlock("about").title = ensureBlock("about").title || "O mnie";
-  ensureBlock("contact").title = ensureBlock("contact").title || "Kontakt";
-  ensureBlock("social").title = ensureBlock("social").title || "Social media";
-  ensureBlock("epk").title = ensureBlock("epk").title || "EPK / Press kit";
+  $("btnReset").addEventListener("click", () => resetDraft());
+  $("btnSaveSnapshot").addEventListener("click", () => saveSnapshot());
+  $("btnLoadSnapshot").addEventListener("click", () => loadSnapshot());
+  $("btnClearSnapshot").addEventListener("click", () => clearSnapshot());
 }
 
 function init() {
+  bindPanelToggle();
+  applyRolePreset(state.role);
+
   const loaded = loadDraft();
-  if (!loaded) initDefaults();
+  if (!loaded) {
+    $("exportMode").value = state.exportMode;
+    $("livePreview").checked = state.livePreview;
+    $("role").value = state.role;
+    $("theme").value = state.theme;
+    $("template").value = state.template;
+    $("accent").value = state.accent;
+    $("sectionHeadersAlign").value = state.sectionHeadersAlign;
+    $("siteName").value = state.siteName;
+  } else {
+    hardLockHeroFirst();
+  }
 
-  // ensure all blocks in order exist
-  state.order.forEach(ensureBlock);
-  hardLockHeroFirst();
+  updateSnapshotPill();
+  setLiveStatus();
+  bindSettings();
 
-  if (!state.activeBlockId) state.activeBlockId = "hero";
-
-  bindGlobalInputs();
-  renderAll(false, true);
+  // first render
+  syncStateFromSettingsInputs();
+  renderBlocksList();
+  renderAddBlockSelect();
+  renderBlockEditor();
+  rebuildPreview(true);
 }
+
 init();

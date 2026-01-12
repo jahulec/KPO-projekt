@@ -16,6 +16,14 @@
             <h1>Generator strony artysty</h1>
             <p>Edytujesz po lewej → podgląd po prawej. Szkic zapisuje się lokalnie.</p>
           </div>
+
+          <button
+            id="btnTogglePanel"
+            class="iconBtn panelToggle"
+            type="button"
+            aria-label="Zwiń / rozwiń panel"
+            title="Zwiń / rozwiń"
+          >⟷</button>
         </div>
 
         <div class="statusRow">
@@ -25,8 +33,8 @@
         </div>
       </div>
 
-      <section class="panel__section">
-        <h2>Ustawienia</h2>
+      <details class="panel__section" open>
+        <summary>Ustawienia</summary>
 
         <div class="grid2">
           <label class="field">
@@ -75,11 +83,12 @@
           <label class="field">
             <span>Szablon (układ + styl)</span>
             <select id="template">
-              <option value="rounded" selected>Rounded (karty)</option>
-              <option value="sharp">Sharp (panelowy)</option>
+              <option value="square" selected>Square Grid (minimal)</option>
+              <option value="colorwash">Colorwash (tło kolorystyczne)</option>
+              <option value="rounded">Rounded (karty)</option>
               <option value="editorial">Editorial (magazyn)</option>
-              <option value="neon">Neon (glow + futurystyczny)</option>
-              <option value="soft">Soft (miękki, airy)</option>
+              <option value="neon">Neon (glow)</option>
+              <option value="soft">Soft (miękki)</option>
             </select>
           </label>
 
@@ -107,10 +116,10 @@
         <div class="hint">
           Zmiana typu artysty automatycznie przełącza zestaw bloków pod branżowy standard.
         </div>
-      </section>
+      </details>
 
-      <section class="panel__section">
-        <h2>Bloki strony</h2>
+      <details class="panel__section" open>
+        <summary>Bloki strony</summary>
 
         <label class="field" style="margin:0;">
           <span>Dodaj blok</span>
@@ -125,17 +134,17 @@
         <div class="hint">
           Strzałki = góra/dół. HERO jest zawsze na górze.
         </div>
-      </section>
+      </details>
 
-      <section class="panel__section">
-        <h2>Edycja bloku</h2>
+      <details class="panel__section" open>
+        <summary>Edycja bloku</summary>
         <div id="blockEditor" class="blockEditor">
           <div class="emptyEditor">Wybierz blok z listy powyżej.</div>
         </div>
-      </section>
+      </details>
 
-      <section class="panel__section">
-        <h2>Akcje</h2>
+      <details class="panel__section" open>
+        <summary>Akcje</summary>
         <div class="panel__actions">
           <button id="btnSaveSnapshot" class="btn" type="button">Zapisz</button>
           <button id="btnLoadSnapshot" class="btn" type="button">Wczytaj</button>
@@ -148,7 +157,7 @@
           <button id="btnReset" class="btn" type="button">Reset szkicu</button>
           <button id="btnClearSnapshot" class="btn" type="button">Usuń zapis</button>
         </div>
-      </section>
+      </details>
     </aside>
 
     <main class="preview">
@@ -164,7 +173,7 @@
         <iframe
           id="previewFrame"
           title="Podgląd strony"
-          sandbox="allow-scripts allow-forms allow-same-origin"
+          sandbox="allow-scripts allow-forms"
         ></iframe>
       </div>
     </main>
