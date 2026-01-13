@@ -30,9 +30,13 @@ function debounce(fn, delay = 180) {
 function setSaveStatus(msg) { $("saveStatus").textContent = msg; }
 function setSnapshotStatus(msg) { $("snapshotStatus").textContent = msg; }
 function setLiveStatus() {
-  $("liveStatus").textContent = `LIVE: ${state.livePreview ? "ON" : "OFF"}`;
-  $("previewSubtitle").textContent = state.livePreview ? "LIVE" : "PAUSED";
+  const el = $("liveStatus");
+  if (!el) return;
+  el.textContent = `LIVE: ${state.livePreview ? "ON" : "OFF"}`;
+  el.setAttribute("aria-pressed", String(!!state.livePreview));
+  el.classList.toggle("isOff", !state.livePreview);
 }
+
 function setPreviewPageLabel(label) { $("previewPageLabel").textContent = label; }
 
 function setPreviewDevice(device) {
@@ -162,6 +166,8 @@ function duplicateBlock(blockId) {
     state.blocks[newId] = { enabled: true, title: src.title || "", data: { ...(src.data || {}) } };
   }
   state.blocks[newId].enabled = true;
+  // duplicates: hide from header menu by default
+  if (base !== "hero") state.blocks[newId].showInHeader = false;
 
   const i = state.order.indexOf(blockId);
   if (i >= 0) state.order.splice(i + 1, 0, newId);
@@ -210,6 +216,7 @@ const state = {
 
   sectionHeadersAlign: "left",
   siteName: "Moje Portfolio",
+  useLogoInHeader: false,
 
   metaTitle: "",
   metaDescription: "",
@@ -227,6 +234,7 @@ const assets = {
   epkPressPhotos: [],      // {dataUrl, alt}[]
   epkFiles: [],            // {name, dataUrl, mime}
 
+  logo: null,              // {dataUrl, mime} | null
   favicon: null,           // {dataUrl, mime} | null
   ogImage: null,           // {dataUrl, mime} | null
 };
@@ -338,6 +346,7 @@ function buildPayload() {
     accent: state.accent,
     sectionHeadersAlign: state.sectionHeadersAlign,
     siteName: state.siteName,
+    useLogoInHeader: state.useLogoInHeader,
 
     metaTitle: state.metaTitle,
     metaDescription: state.metaDescription,
@@ -361,6 +370,7 @@ function applyPayload(payload, setStatusText = true) {
   state.accent = d.accent ?? state.accent;
   state.sectionHeadersAlign = d.sectionHeadersAlign ?? state.sectionHeadersAlign;
   state.siteName = d.siteName ?? state.siteName;
+  state.useLogoInHeader = d.useLogoInHeader ?? state.useLogoInHeader;
 
   state.metaTitle = d.metaTitle ?? state.metaTitle;
   state.metaDescription = d.metaDescription ?? state.metaDescription;
@@ -371,13 +381,13 @@ function applyPayload(payload, setStatusText = true) {
   state.activeBlockId = d.activeBlockId ?? state.activeBlockId;
 
   $("exportMode").value = state.exportMode;
-  $("livePreview").checked = !!state.livePreview;
   $("role").value = state.role;
   $("theme").value = state.theme;
   $("template").value = state.template;
   $("accent").value = state.accent;
   $("sectionHeadersAlign").value = state.sectionHeadersAlign;
   $("siteName").value = state.siteName;
+  if ($("useLogoInHeader")) $("useLogoInHeader").checked = !!state.useLogoInHeader;
 
   if ($("metaTitle")) $("metaTitle").value = state.metaTitle;
   if ($("metaDescription")) $("metaDescription").value = state.metaDescription;
@@ -725,11 +735,32 @@ function generateSampleData() {
 ========================== */
 
 function ensureBlock(blockId) {
+  const isHero = baseBlockId(blockId) === "hero";
+  const isDup = !!blockSuffix(blockId);
+
   if (!state.blocks[blockId]) {
-    state.blocks[blockId] = { enabled: true, title: "", data: {} };
+    // new block
+    state.blocks[blockId] = {
+      enabled: true,
+      title: "",
+      data: {},
+      // default: hero hidden in menu; duplicates hidden in menu
+      showInHeader: (!isHero && !isDup),
+      // default: show H2 title for normal sections
+      showHeading: (!isHero)
+    };
+  } else {
+    // migrate older drafts
+    if (typeof state.blocks[blockId].showInHeader === "undefined") {
+      state.blocks[blockId].showInHeader = (!isHero && !isDup);
+    }
+    if (typeof state.blocks[blockId].showHeading === "undefined") {
+      state.blocks[blockId].showHeading = (!isHero);
+    }
   }
   return state.blocks[blockId];
 }
+
 
 function hardLockHeroFirst() {
   ensureBlock("hero").enabled = true;
@@ -766,13 +797,13 @@ function applyRolePreset(role) {
 
 function syncStateFromSettingsInputs() {
   state.exportMode = $("exportMode").value;
-  state.livePreview = $("livePreview").checked;
   state.role = $("role").value;
   state.theme = $("theme").value;
   state.template = $("template").value;
   state.accent = $("accent").value;
   state.sectionHeadersAlign = $("sectionHeadersAlign").value;
   state.siteName = $("siteName").value;
+  if ($("useLogoInHeader")) state.useLogoInHeader = $("useLogoInHeader").checked;
 
   if ($("metaTitle")) state.metaTitle = $("metaTitle").value;
   if ($("metaDescription")) state.metaDescription = $("metaDescription").value;
@@ -1424,11 +1455,23 @@ function renderBlockEditor() {
   const cfg = ensureBlock(id);
   const def = getBlockDef(id);
 
-  const common = fieldRow(
+  let common = fieldRow(
     "Tytuł sekcji",
     `<input id="ed_title" type="text" value="${escapeHtml(cfg.title || "")}" />`,
     def.locked ? "HERO jest stały i zawsze na górze." : "Tytuł w menu i nagłówku sekcji."
   );
+
+  if (!def.locked) {
+    common += `
+      <div class="grid2">
+        <label class="toggleRow"><input id="ed_showInHeader" type="checkbox" ${cfg.showInHeader === false ? "" : "checked"} /> <span class="toggleText">Pokaż w menu</span></label>
+        <label class="toggleRow"><input id="ed_showHeading" type="checkbox" ${cfg.showHeading === false ? "" : "checked"} /> <span class="toggleText">Pokaż nagłówek</span></label>
+      </div>
+      <div class="hint" style="margin-top:6px;">
+        „Pokaż w menu” decyduje, czy sekcja będzie widoczna w nagłówku strony. „Pokaż nagłówek” steruje H2 w treści sekcji.
+      </div>
+    `;
+  }
 
   let specific = "";
 
@@ -1737,6 +1780,24 @@ function bindEditorHandlers(host, blockId) {
       updateBlockSmallTitle(blockId, cfg.title);
       contentChanged();
     });
+  // show in header
+  const inHeaderEl = host.querySelector("#ed_showInHeader");
+  if (inHeaderEl) {
+    inHeaderEl.addEventListener("change", () => {
+      cfg.showInHeader = !!inHeaderEl.checked;
+      contentChanged();
+    });
+  }
+
+  // show section heading
+  const headingEl = host.querySelector("#ed_showHeading");
+  if (headingEl) {
+    headingEl.addEventListener("change", () => {
+      cfg.showHeading = !!headingEl.checked;
+      contentChanged();
+    });
+  }
+
   }
 
   // list add/remove (structural inside editor -> rerender OK)
@@ -1950,24 +2011,28 @@ function blockToFile(id) { return `${id}.html`; }
 
 function getNavItemsZip() {
   const items = [{ label: "Home", href: "index.html", id: "home" }];
-  const seen = new Set();
+
+  const added = new Set();
   for (const id of enabledBlocksInOrder()) {
     if (id === "hero") continue;
+    const cfg = ensureBlock(id);
+    if (cfg.showInHeader === false) continue;
+
     const base = baseBlockId(id);
-    if (seen.has(base)) continue; // hide duplicates in menu
-    seen.add(base);
-    items.push({ label: getBlockDisplayName(id), href: blockToFile(id), id });
+    if (added.has(base)) continue; // one page per base in ZIP nav
+    added.add(base);
+
+    items.push({ label: getBlockDisplayName(id), href: blockToFile(base), id: base });
   }
   return items;
 }
 
 function getNavItemsSingle() {
   const items = [];
-  const seen = new Set();
   for (const id of enabledBlocksInOrder()) {
-    const base = baseBlockId(id);
-    if (seen.has(base)) continue; // hide duplicates in menu
-    seen.add(base);
+    const cfg = ensureBlock(id);
+    if (cfg.showInHeader === false) continue;
+    // on single we allow duplicates if user explicitly wants them
     items.push({ label: getBlockDisplayName(id), href: `#${id}`, id });
   }
   return items;
@@ -2029,7 +2094,7 @@ body.theme-elegant{
   font-weight: 900;
   letter-spacing:.2px;
 }
-.brandDot{
+.brandDotRemoved{
   width:12px; height:12px;
   background: var(--accent);
 }
@@ -2175,7 +2240,7 @@ body.tpl-square{
   --radius: 0px;
 }
 body.tpl-square .container{ padding-top: 18px; }
-body.tpl-square .brandDot{ box-shadow:none; }
+body.tpl-square .brandDotRemoved{ box-shadow:none; }
 body.tpl-square .nav a{ letter-spacing:.2px; }
 body.tpl-square .btn{ border-radius: 0; }
 body.tpl-square .hero{ border-radius: 0; }
@@ -2204,8 +2269,8 @@ body.theme-modern.tpl-colorwash .siteHeader{
 body.tpl-colorwash .hero{
   min-height: 560px;
 }
-body.tpl-colorwash .brandDot{ background:#111; }
-body.theme-modern.tpl-colorwash .brandDot{ background:#fff; }
+body.tpl-colorwash .brandDotRemoved{ background:#111; }
+body.theme-modern.tpl-colorwash .brandDotRemoved{ background:#fff; }
 
 /* TEMPLATE: Rounded (cards) */
 body.tpl-rounded{ --radius: 18px; }
@@ -2232,6 +2297,34 @@ body.tpl-soft .hero::after{
   background:
     linear-gradient(180deg, rgba(255,255,255,.00), rgba(0,0,0,.78));
 }
+
+.navToggle{
+  display:none;
+  border:1px solid rgba(0,0,0,.15);
+  background: rgba(255,255,255,.65);
+  color: inherit;
+  border-radius: 12px;
+  padding: 8px 10px;
+  line-height: 1;
+  cursor:pointer;
+}
+.brandLogo{ height: 28px; width: auto; display:block; }
+
+@media (max-width: 820px){
+  .navToggle{ display:block; }
+  .nav{
+    display:none;
+    position:absolute;
+    left:0; right:0;
+    top: 100%;
+    background: rgba(255,255,255,.98);
+    border-bottom: 1px solid rgba(0,0,0,.10);
+    padding: 10px 14px 14px;
+  }
+  .nav a{ display:block; padding: 10px 8px; border-radius: 12px; }
+  .siteHeader.menuOpen .nav{ display:block; }
+  .headerInner{ position:relative; }
+}
 `;
 }
 
@@ -2240,6 +2333,38 @@ function buildSiteScript() {
   return `
 (function(){
   const IN_PREVIEW = document.documentElement.hasAttribute('data-kpo-preview');
+
+  function setupHamburger(){
+    const header = document.querySelector('.siteHeader');
+    if(!header) return;
+    const btn = header.querySelector('.navToggle');
+    const nav = header.querySelector('.nav');
+    if(!btn || !nav) return;
+
+    function close(){
+      header.classList.remove('menuOpen');
+      btn.setAttribute('aria-expanded','false');
+    }
+    function toggle(){
+      const open = header.classList.toggle('menuOpen');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    btn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); toggle(); });
+
+    nav.addEventListener('click', (e)=>{
+      const a = e.target.closest('a');
+      if(a) close();
+    });
+
+    document.addEventListener('click', (e)=>{
+      if(!header.contains(e.target)) close();
+    });
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape') close();
+    });
+  }
 
   function send(msg){
     try { parent.postMessage(msg, '*'); } catch (e) {}
@@ -2495,13 +2620,25 @@ overlay.appendChild(box);
   document.addEventListener('DOMContentLoaded', () => {
     initEventsArchive();
     setupLightbox();
+    setupHamburger();
   });
 })();
 `;
 }
 
-function buildHeader(navItems, activeHref) {
-  const brand = escapeHtml(state.siteName || "Portfolio");
+function buildHeader(navItems, activeHref, inlineAssets) {
+  const name = String(state.siteName || "Portfolio").trim() || "Portfolio";
+  const brandText = escapeHtml(name);
+
+  // logo (optional)
+  let brandHtml = brandText;
+  if (state.useLogoInHeader && assets.logo && assets.logo.dataUrl) {
+    const href = assetHrefForHead(assets.logo, !!inlineAssets, "assets/logo");
+    if (href) {
+      brandHtml = `<img class="brandLogo" src="${escapeHtml(href)}" alt="${brandText}"/>`;
+    }
+  }
+
   const links = navItems.map(it => {
     const isActive = it.href === activeHref;
     return `<a href="${it.href}" class="${isActive ? "active" : ""}">${escapeHtml(it.label)}</a>`;
@@ -2510,8 +2647,9 @@ function buildHeader(navItems, activeHref) {
   return `
 <header class="siteHeader">
   <div class="headerInner">
-    <div class="brand"><span class="brandDot"></span> ${brand}</div>
-    <nav class="nav">${links}</nav>
+    <div class="brand">${brandHtml}</div>
+    <button class="navToggle" type="button" aria-label="Menu" aria-expanded="false">☰</button>
+    <nav class="nav" aria-label="Nawigacja">${links}</nav>
   </div>
 </header>`;
 }
@@ -2582,6 +2720,7 @@ function renderBlockSection(id, mode) {
   const def = getBlockDef(id);
   const title = escapeHtml(cfg.title || def.label);
   const editor = def.editor;
+  const headingHtml = (cfg.showHeading === false) ? "" : `<h2 class=\"sectionTitle\">${title}</h2>`;
 
   if (id === "hero") return renderHeroSection(mode);
 
@@ -2589,7 +2728,7 @@ function renderBlockSection(id, mode) {
     const text = escapeHtml(cfg.data.text || "").replaceAll("\n", "<br/>");
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div class="muted">${text || "—"}</div>
 </section>`;
   }
@@ -2601,7 +2740,7 @@ function renderBlockSection(id, mode) {
     if (!items.length) {
       return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div class="muted">Brak zdjęć — wgraj w generatorze.</div>
 </section>`;
     }
@@ -2628,7 +2767,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   ${body}
 </section>`;
   }
@@ -2662,7 +2801,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div class="grid embedGrid" style="--embed-max:${sz}%;">${parts || `<div class="muted">Wklej linki Spotify w generatorze.</div>`}</div>
 </section>`;
   }
@@ -2696,7 +2835,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div class="grid embedGrid" style="--embed-max:${sz}%;">${parts || `<div class="muted">Wklej linki YouTube w generatorze.</div>`}</div>
 </section>`;
   }
@@ -2718,7 +2857,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   ${rows ? `
     <div class="eventsUpcoming" data-events-upcoming>${rows}</div>
     <details class="eventsArchiveWrap" data-events-archive-wrap style="display:none; margin-top:12px;">
@@ -2749,7 +2888,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div>${cards || `<div class="muted">Dodaj projekty w generatorze.</div>`}</div>
 </section>`;
   }
@@ -2767,7 +2906,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div>${rows || `<div class="muted">Dodaj usługi w generatorze.</div>`}</div>
 </section>`;
   }
@@ -2785,7 +2924,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div>${rows || `<div class="muted">Dodaj wpisy w generatorze.</div>`}</div>
 </section>`;
   }
@@ -2801,7 +2940,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div>${rows || `<div class="muted">Dodaj publikacje w generatorze.</div>`}</div>
 </section>`;
   }
@@ -2817,7 +2956,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div>${rows || `<div class="muted">Dodaj opinie w generatorze.</div>`}</div>
 </section>`;
   }
@@ -2858,7 +2997,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
 
   <div class="grid2">
     <div>
@@ -2889,7 +3028,7 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div class="muted">
     ${email ? `Email: <strong>${email}</strong><br/>` : ``}
     ${phone ? `Telefon: <strong>${phone}</strong><br/>` : ``}
@@ -2909,14 +3048,14 @@ function renderBlockSection(id, mode) {
 
     return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div>${rows || `<div class="muted">Dodaj profile w generatorze.</div>`}</div>
 </section>`;
   }
 
   return `
 <section id="${id}" class="section">
-  <h2 class="sectionTitle">${title}</h2>
+  ${headingHtml}
   <div class="muted">Sekcja.</div>
 </section>`;
 }
@@ -2984,7 +3123,7 @@ ${buildHeadMetaTags(pageTitle, inlineAssets)}
 ${headCss}
 </head>
 <body class="theme-${escapeHtml(state.theme)} tpl-${escapeHtml(state.template)}">
-  ${buildHeader(nav, nav[0]?.href || "#hero")}
+  ${buildHeader(nav, nav[0]?.href || "#hero", inlineAssets)}
   <main class="container">
     ${bodySections}
     <div class="footer">© ${escapeHtml(state.siteName || "Artysta")}</div>
@@ -3018,18 +3157,11 @@ function buildZipFiles(opts = {}) {
 
   // index.html
   const enabled = enabledBlocksInOrder().filter(id => id !== "hero");
-  const quick = enabled.slice(0, 6).map(id => {
-    const t = escapeHtml(getBlockDisplayName(id));
-    const href = blockToFile(id);
-    return `<a class="btn" href="${href}">${t}</a>`;
-  }).join(" ");
 
+  // Home in ZIP behaves like "sekcje": HERO + wszystkie sekcje (w tym duplikaty)
   const indexBody = `
-    ${renderBlockSection("hero", "zip")}
-    ${quick ? `<section class="section">
-      <h2 class="sectionTitle">Skróty</h2>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">${quick}</div>
-    </section>` : ``}
+    ${renderBlockSection("hero", "single")}
+    ${enabled.map(id => renderBlockSection(id, "single")).join("")}
   `;
 
   files["index.html"] = `
@@ -3043,7 +3175,7 @@ ${buildHeadMetaTags(baseTitle, inlineAssets)}
 ${headCss}
 </head>
 <body class="theme-${escapeHtml(state.theme)} tpl-${escapeHtml(state.template)}">
-  ${buildHeader(nav, "index.html")}
+  ${buildHeader(nav, "index.html", inlineAssets)}
   <main class="container">
     ${indexBody}
     <div class="footer">© ${escapeHtml(state.siteName || "Artysta")}</div>
@@ -3052,9 +3184,22 @@ ${footJs}
 </body>
 </html>`.trim();
 
-  // pages per block
-  for (const id of enabled) {
-    const file = blockToFile(id);
+  // pages per block (one page per base id)
+  const baseFirst = new Map();
+  const basePage = new Map();
+
+  enabled.forEach((id) => {
+    const base = baseBlockId(id);
+    if (!baseFirst.has(base)) baseFirst.set(base, id);
+
+    const cfg = ensureBlock(id);
+    if (cfg.showInHeader === false) return;
+    if (!basePage.has(base)) basePage.set(base, id);
+  });
+
+  for (const [base, firstId] of baseFirst.entries()) {
+    const id = basePage.get(base) || firstId;
+    const file = blockToFile(base);
     const pageTitle = `${baseTitle} • ${getBlockDisplayName(id)}`;
     files[file] = `
 <!doctype html>
@@ -3067,7 +3212,7 @@ ${buildHeadMetaTags(pageTitle, inlineAssets)}
 ${headCss}
 </head>
 <body class="theme-${escapeHtml(state.theme)} tpl-${escapeHtml(state.template)}">
-  ${buildHeader(nav, file)}
+  ${buildHeader(nav, file, inlineAssets)}
   <main class="container">
     ${renderBlockSection(id, "zip")}
     <div class="footer">© ${escapeHtml(state.siteName || "Artysta")}</div>
@@ -3192,7 +3337,6 @@ async function downloadZip(filesMap) {
     });
   }
 
-
   // SEO assets (favicon / og image)
   if (assets.favicon && assets.favicon.dataUrl) {
     const parsed = parseDataUrl(assets.favicon.dataUrl);
@@ -3232,8 +3376,10 @@ function bindSettings() {
     structureChanged(true);
   });
 
-  $("livePreview").addEventListener("change", () => {
-    state.livePreview = $("livePreview").checked;
+  // LIVE toggle (only in top status row)
+  const liveBtn = $("liveStatus");
+  if (liveBtn) liveBtn.addEventListener("click", () => {
+    state.livePreview = !state.livePreview;
     setLiveStatus();
     saveDraft();
     if (state.livePreview) rebuildPreview(true);
@@ -3287,7 +3433,27 @@ function bindSettings() {
   // Issues list
   if ($("issuesPill")) $("issuesPill").addEventListener("click", () => openIssuesModal());
 
-  // SEO assets (favicon / og image)
+
+  // Logo upload + header option
+  const logoUp = $("logoUpload");
+  if (logoUp) logoUp.addEventListener("change", async () => {
+    const file = logoUp.files && logoUp.files[0];
+    if (!file) return;
+    const dataUrl = await readFileAsDataUrl(file);
+    if (!dataUrl) return;
+    assets.logo = { dataUrl, mime: file.type || (parseDataUrl(dataUrl)?.mime || '') };
+    contentChanged();
+    if (state.livePreview) rebuildPreview(true);
+  });
+
+  const useLogo = $("useLogoInHeader");
+  if (useLogo) useLogo.addEventListener("change", () => {
+    state.useLogoInHeader = !!useLogo.checked;
+    contentChanged();
+    if (state.livePreview) rebuildPreview(true);
+  });
+
+
   const fav = $("faviconUpload");
   if (fav) fav.addEventListener("change", async () => {
     const file = fav.files && fav.files[0];
@@ -3374,7 +3540,6 @@ function init() {
   const loaded = loadDraft();
   if (!loaded) {
     $("exportMode").value = state.exportMode;
-    $("livePreview").checked = state.livePreview;
     $("role").value = state.role;
     $("theme").value = state.theme;
     $("template").value = state.template;

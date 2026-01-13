@@ -294,6 +294,8 @@ input:focus, textarea:focus, select:focus{
 }
 .segBtn:hover{ background: rgba(255,255,255,.08); }
 .segBtn.isActive{ background: rgba(255,255,255,.10); }
+.segBtn:disabled{ opacity:.35; cursor:not-allowed; }
+.segBtn:disabled:hover{ background: transparent; }
 
 .preview__frameWrap{ width:100%; height:100%; display:flex; justify-content:center; align-items:stretch; padding: 0; background: rgba(0,0,0,.06); }
 #previewFrame{ width:100%; height:100%; border:0; background:white; }
@@ -345,3 +347,7 @@ input:focus, textarea:focus, select:focus{
 .issuesModal__hint{ color: var(--muted); font-size: 12px; line-height:1.5; margin-bottom: 10px; }
 .issuesModal__list{ margin:0; padding-left: 18px; }
 .issuesModal__list li{ margin: 8px 0; line-height: 1.45; }
+
+
+/* LIVE pill state */
+.pill.isOff{ opacity:.55; }

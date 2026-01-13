@@ -30,7 +30,7 @@
           <span class="pill" id="saveStatus">Zapis: —</span>
           <span class="pill" id="snapshotStatus">Snapshot: brak</span>
           <button class="pill pillBtn" id="issuesPill" type="button" title="Pokaż listę problemów / ostrzeżeń">Problemy: 0</button>
-          <span class="pill" id="liveStatus">LIVE: ON</span>
+          <button class="pill pillBtn" id="liveStatus" type="button" title="Włącz / wyłącz podgląd LIVE">LIVE: ON</button>
         </div>
       </div>
 
@@ -45,15 +45,7 @@
               <option value="zip">ZIP (podstrony)</option>
             </select>
           </label>
-
-          <label class="field">
-            <span>Podgląd LIVE</span>
-            <div class="toggleRow">
-              <input id="livePreview" type="checkbox" checked />
-              <span class="toggleText">Aktualizuj w czasie rzeczywistym</span>
-            </div>
-          </label>
-        </div>
+</div>
 
         <div class="grid2">
           <label class="field">
@@ -112,6 +104,20 @@
             <span>Nazwa / pseudonim</span>
             <input id="siteName" type="text" placeholder="np. Tabula Rasa" value="Moje Portfolio" />
           </label>
+
+          <div class="grid2">
+            <label class="field">
+              <span>Logo (opcjonalnie)</span>
+              <input id="logoUpload" type="file" accept="image/*" />
+            </label>
+            <label class="field">
+              <span>Nagłówek</span>
+              <div class="toggleRow" style="margin-top:0;">
+                <input id="useLogoInHeader" type="checkbox" />
+                <div class="toggleText">Logo zamiast nazwy</div>
+              </div>
+            </label>
+          </div>
         </div>
 
         <div class="hint">
@@ -195,7 +201,7 @@
       <div class="preview__bar">
         <div class="preview__title">
           <strong>Podgląd</strong>
-          <span id="previewSubtitle">LIVE</span>
+          
           <span id="previewPageLabel" class="pill" style="margin-left:8px;">index.html</span>
         </div>
 
