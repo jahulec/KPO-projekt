@@ -13,3 +13,12 @@ Projekt pozwala artystom na stworzenie własnej strony internetowej. Użytkownik
 ## Wymagania
 - JavaScript włączony w przeglądarce.
 - Możliwość hostowania strony na GitHub Pages lub innym serwerze.
+
+## Offline (bez CDN)
+Ta wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
+
+
+---
+
+**Uwaga (refactor):** `scripts.js` został podzielony na pliki w katalogu `js/`.
+Oryginał zostawiony jako `scripts.legacy.js`.
