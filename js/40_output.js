@@ -67,7 +67,8 @@ function buildFontLinks(){
   if (p === "system") return "";
   const links = {
     inter: "family=Inter:wght@300;400;500;600;700;800&display=swap",
-    space: "family=Space+Grotesk:wght@300;400;500;600;700&display=swap",
+    // Replacing Space Grotesk: cleaner, more universal geometric sans.
+    space: "family=Manrope:wght@300;400;500;600;700;800&display=swap",
     plex: "family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap",
     editorial: "family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap",
   };
@@ -81,12 +82,15 @@ function buildFontLinks(){
 
 function buildSiteCss() {
   const accent = state.accent || "#6d28d9";
+  const wash = state.bgColor || "#fef3c7";
 
   return `
 :root{
   --accent:${accent};
+  --wash:${wash};
   --max-main: 1160px;
   --max-header: 1160px;
+  --max-hero: 1160px;
   --radius: 18px;
   --border-w: 1px;
   --pad-y: 26px;
@@ -105,6 +109,11 @@ function buildSiteCss() {
 
 @media (prefers-reduced-motion: reduce){
   :root{ --motion-dur: 0ms; }
+}
+
+html.kpo-preload *, html.kpo-preload *::before, html.kpo-preload *::after{
+  transition: none !important;
+  animation: none !important;
 }
 
 /* theme tokens */
@@ -136,7 +145,8 @@ body.theme-modern{
 /* font presets */
 body.font-system{ --font-body: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; --font-display: var(--font-body); }
 body.font-inter{ --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; --font-display: var(--font-body); }
-body.font-space{ --font-body: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; --font-display: var(--font-body); }
+/* "space" preset now maps to Manrope (replaces Space Grotesk) */
+body.font-space{ --font-body: "Manrope", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; --font-display: var(--font-body); }
 body.font-plex{ --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; --font-display: var(--font-body); }
 body.font-editorial{ --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; --font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif; }
 
@@ -146,10 +156,23 @@ body.width-wide{ --max-main: 1320px !important; }
 /* full = zero bocznych marginesów/paddingów treści */
 body.width-full{ --max-main: 100% !important; --pad-x-main: 0px !important; }
 
+/* safety: apply widths directly (CSS variables can be overridden by template blocks) */
+body.width-normal .container{ max-width: 1160px !important; }
+body.width-wide .container{ max-width: 1320px !important; }
+body.width-full .container{ max-width: 100% !important; }
+
+body.headerw-normal .headerInner{ max-width: 1160px !important; }
+body.headerw-wide .headerInner{ max-width: 1320px !important; }
+body.headerw-full .headerInner{ max-width: 100% !important; }
+
 body.headerw-normal{ --max-header: 1160px !important; }
 body.headerw-wide{ --max-header: 1320px !important; }
 /* header może być full, ale wciąż ma mieć estetyczny oddech */
 body.headerw-full{ --max-header: 100% !important; --pad-x-header: 18px !important; }
+
+body.herow-normal{ --max-hero: 1160px !important; }
+body.herow-wide{ --max-hero: 1320px !important; }
+body.herow-full{ --max-hero: 100% !important; }
 
 body.density-comfortable{ --pad-y: 32px !important; --section-gap: 44px !important; --section-pad: 26px !important; --title-gap: 18px !important; --grid-gap: 22px !important; --hero-pad: 36px !important; --header-py: 18px !important; --btn-py: 12px !important; --btn-px: 18px !important; --nav-font: 15px !important; --nav-py: 10px !important; --nav-px: 12px !important; --lh-base: 1.72 !important; }
 body.density-normal{ --pad-y: 26px !important; --section-gap: 26px !important; --section-pad: 18px !important; --title-gap: 14px !important; --grid-gap: 16px !important; --hero-pad: 28px !important; --header-py: 14px !important; --btn-py: 10px !important; --btn-px: 14px !important; --nav-font: 14px !important; --nav-py: 8px !important; --nav-px: 10px !important; --lh-base: 1.65 !important; }
@@ -206,6 +229,19 @@ body.has-hero main.container{ padding-top: 0; }
 .sectionTitle{ text-align:left; margin:0 0 var(--title-gap) 0; font-size: clamp(22px, 2.2vw, 30px); letter-spacing:.2px; }
 .muted{ opacity:.78; line-height:var(--lh-base); }
 
+/* Rich text (About) */
+.richText p{ margin: 0 0 .9em 0; }
+.richText p:last-child{ margin-bottom: 0; }
+.richText h2{ margin: 1.0em 0 .4em; font-size: 1.25em; }
+.richText h3{ margin: 0.9em 0 .35em; font-size: 1.12em; }
+.richText ul, .richText ol{ margin: .6em 0 .9em 1.2em; }
+.richText li{ margin: .2em 0; }
+.richText a{ color: var(--accent); text-decoration: underline; }
+
+/* Embed sections (YouTube/Spotify): tytuł sekcji zawsze na środku, bo pod spodem są embedy. */
+.embedSection > .sectionTitle{ text-align:center; }
+.embedSection > .muted{ text-align:center; }
+
 /* header */
 .siteHeader{
   position: fixed;
@@ -218,6 +254,30 @@ body.has-hero main.container{ padding-top: 0; }
   overflow: visible;
 }
 
+
+/* header background mode: pill (floating) */
+body.headerbg-pill .siteHeader{
+  background: transparent;
+  border-bottom: 0;
+  backdrop-filter: none;
+  padding: 10px 0;
+}
+body.headerbg-pill .headerInner{
+  background: var(--header-bg);
+  border: var(--border-w) solid var(--header-border);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 30px rgba(0,0,0,.10);
+}
+/* nawet przy headerw-full pill ma mieć oddech od krawędzi */
+body.headerbg-pill.headerw-full .headerInner{ max-width: calc(100% - 24px); }
+
+/* pill: na HERO ma nachodzić jak transparent (bez odsunięcia treści). */
+body.headerbg-pill.has-hero main.container{ padding-top: 0; }
+/* pill: nie zamieniaj całego paska w pełnoszerokie tło przy otwartym menu */
+body.headerbg-pill .siteHeader.menuOpen{ background: transparent; border-bottom: 0; }
+
+
 /* header background mode:
    - solid: jak jest
    - transparent: header jako nakładka, HERO dojeżdża do samej góry, a header najeżdża na sekcje */
@@ -229,6 +289,17 @@ body.headerbg-transparent .siteHeader{
   /* bez "glass"/blura w trybie nakładki */
   backdrop-filter: none;
 }
+body.headerbg-transparent .navToggle{
+  background: rgba(0,0,0,.55);
+  border-color: rgba(255,255,255,.22);
+  color: #fff;
+}
+body.headerbg-transparent .siteHeader.menuOpen .navToggle{
+  background: var(--nav-bg-open);
+  border-color: var(--header-border);
+  color: var(--fg);
+}
+
 body.headerbg-transparent .siteHeader::before{
   content:"";
   position:absolute;
@@ -246,8 +317,28 @@ body.headerbg-transparent .siteHeader.menuOpen{
   backdrop-filter: none;
 }
 body.headerbg-transparent .siteHeader.menuOpen::before{ opacity: 0; }
-body.headerbg-transparent main.container{ padding-top: var(--pad-y); }
+/* Transparent header: overlay ma sens tylko nad HERO.
+   Bez HERO header ma być jak standardowy (czytelność + odsunięcie treści spod fixed). */
+body.headerbg-transparent:not(.has-hero) .siteHeader{
+  background: var(--header-bg);
+  border-bottom: var(--border-w) solid var(--header-border);
+  color: var(--fg);
+  backdrop-filter: blur(10px);
+}
+body.headerbg-transparent:not(.has-hero) .siteHeader::before{ opacity: 0; display:none; }
+body.headerbg-transparent:not(.has-hero) main.container{ padding-top: calc(var(--pad-y) + var(--header-h, 72px)); }
+
+/* Z HERO: treść startuje od razu po HERO (HERO jest poza <main>). */
 body.headerbg-transparent.has-hero main.container{ padding-top: 0; }
+
+/* Z HERO: po scrollu header ma się „zmaterializować”, żeby tekst nie ginął na jasnym tle. */
+body.headerbg-transparent.has-hero .siteHeader.headerSolid:not(.menuOpen){
+  background: var(--header-bg);
+  border-bottom: var(--border-w) solid var(--header-border);
+  color: var(--fg);
+  backdrop-filter: blur(10px);
+}
+body.headerbg-transparent.has-hero .siteHeader.headerSolid:not(.menuOpen)::before{ opacity: 0; }
 /* HERO jest poza <main>, więc nie kompensujemy paddingu kontenera. */
 .headerInner{
   max-width: var(--max-header);
@@ -314,7 +405,8 @@ body.accent-gradient .nav a.active,
 body.accent-gradient .navGroup a.active{
   background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent), white 22%));
   color:#fff;
-  box-shadow: 0 8px 30px color-mix(in oklab, var(--accent), transparent 72%);
+  /* keep it clean (no weird glow) */
+  box-shadow: none;
 }
 
 /* header layout: center */
@@ -336,6 +428,7 @@ body.header-center .navGroup a{ font-size: var(--nav-font); padding: var(--nav-p
 body.header-center .navToggle{ margin-left:auto; }
 /* header-center uses a dedicated mobile dropdown nav (.nav), keep it hidden on desktop */
 body.header-center .nav{ display:none; }
+body.header-center .siteHeader.forceHamburger .navGroup{ display:none !important; }
 
 @media (max-width: 760px){
   body.header-center .navGroup{ display:none; }
@@ -367,7 +460,8 @@ body.accent-outline .btn.primary{
 }
 body.accent-gradient .btn.primary{
   background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent), white 22%));
-  box-shadow: 0 10px 40px color-mix(in oklab, var(--accent), transparent 74%);
+  /* no heavy glow by default */
+  box-shadow: none;
 }
 .btn:hover{ filter: brightness(1.03); transform: translateY(-1px); }
 
@@ -423,7 +517,7 @@ body.sep-block .section{
    - transparent header (overlay): 100vh
    - standard header: (100vh - header) i HERO zaczyna się POD headerem (S1) */
 .hero{ --hero-vh: var(--vh); min-height: var(--hero-vh) !important; height: var(--hero-vh) !important; }
-body:not(.headerbg-transparent) .hero{
+body:not(.headerbg-transparent):not(.headerbg-pill) .hero{
   --hero-vh: calc(var(--vh) - var(--header-h, 72px));
   margin-top: var(--header-h, 72px);
 }
@@ -446,28 +540,33 @@ body:not(.headerbg-transparent) .hero{
 }
 
 
-/* HERO width:
-   - normal: w kontenerze
-   - wide: "do krawędzi kontenera" (zdejmuje tylko boczny padding)
-   - full: full-bleed na cały viewport (100vw, zero marginesów)
-*/
+/* HERO width (ma dawać realne marginesy sekcji, niezależnie od szerokości treści):
+   - normal: HERO w kontenerze (marginesy po bokach)
+   - wide: szerszy kontener HERO
+   - full: full-bleed na cały viewport */
+body.herow-normal #hero.hero,
 body.herow-wide #hero.hero{
-  margin-left: calc(-1 * var(--pad-x-main));
-  margin-right: calc(-1 * var(--pad-x-main));
-  /* NIE dotykamy geometrii fullscreen (margin-top header-h w trybie standard). */
+  width: 100%;
+  max-width: var(--max-hero);
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: var(--radius);
 }
 
-/* HERO width "wide" działa identycznie niezależnie od layout-left (HERO jest zawsze centrowany). */
 body.herow-full #hero.hero{
   width: 100vw;
+  max-width: none;
   position: relative;
   left: 50%;
   transform: translateX(-50%);
   margin-left: 0;
   margin-right: 0;
-  /* NIE dotykamy geometrii fullscreen (margin-top header-h w trybie standard). */
   border-radius: 0;
 }
+
+/* HERO: zawsze bez rounded corners */
+#hero.hero{ border-radius: 0 !important; }
+
 .hero::after{
   content:"";
   position:absolute; inset:0;
@@ -633,9 +732,21 @@ body.tpl-square main.container{ padding-top: calc(18px + var(--header-h, 72px));
 body.tpl-square .btn{ border-radius: 0; }
 body.tpl-square .hero{ border-radius: 0; }
 
-body.tpl-colorwash{ background: linear-gradient(0deg, color-mix(in oklab, var(--accent), white 85%), color-mix(in oklab, var(--accent), white 85%)); }
-body.theme-modern.tpl-colorwash{ background: linear-gradient(0deg, color-mix(in oklab, var(--accent), black 75%), color-mix(in oklab, var(--accent), black 75%)); }
-body.tpl-colorwash .siteHeader{ background: color-mix(in oklab, var(--header-bg), transparent 12%); }
+/* Colorwash: use the selected accent as the *actual* page/canvas color.
+   Also sync component backgrounds to it, so cards/segments don't turn white. */
+body.tpl-colorwash{
+  --bg: var(--wash);
+  --card-bg: var(--bg);
+  background: var(--bg);
+}
+/* jeśli ktoś przełączy motyw na ciemny, zachowaj odcień, ale przygaś dla czytelności */
+body.theme-modern.tpl-colorwash{
+  --bg: color-mix(in oklab, var(--wash), black 72%);
+  --card-bg: var(--bg);
+  background: var(--bg);
+}
+/* Colorwash: nie nadpisuj transparent/pill trybu na białe tło */
+body.tpl-colorwash.headerbg-solid .siteHeader{ background: color-mix(in oklab, var(--header-bg), transparent 12%); }
 body.tpl-colorwash .hero{ min-height: 560px; }
 body.tpl-colorwash .brandDotRemoved{ background:#111; }
 body.theme-modern.tpl-colorwash .brandDotRemoved{ background:#fff; }
@@ -696,7 +807,8 @@ body.tpl-rounded .sectionTitle{
 
 body.tpl-cinematic .hero{ min-height: 72vh; }
 body.tpl-cinematic .hero::before{ filter: saturate(1.0) contrast(1.08); }
-body.tpl-cinematic .hero::after{ background: radial-gradient(900px 460px at 18% 12%, rgba(20,184,166,.18), transparent 60%), linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.80)); }
+/* Cinematic: no neon/glow blob in HERO — only clean contrast overlay */
+body.tpl-cinematic .hero::after{ background: linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.84)); }
 body.tpl-cinematic .nav a{ letter-spacing:.35px; }
 body.tpl-cinematic .hero h1{ font-size: 56px; letter-spacing:-.8px; }
 
@@ -804,40 +916,104 @@ body.theme-modern .navToggle{
   }
 }
 
-/* auto-hamburger, gdy header nie miesci sie na desktop */
+/* Auto-hamburger (desktop): gdy header nie mieści się na desktop,
+   pokazujemy hamburger + rozwijamy NAWIGACJĘ POZIOMĄ (ładny pasek), a nie pionowy panel.
+   Na telefonie zostaje klasyczny dropdown z @media (max-width:760px). */
 .siteHeader.forceHamburger .navToggle{ display:block; }
 .siteHeader.forceHamburger .headerInner{ position:relative; }
-.siteHeader.forceHamburger .nav{
-  display:block;
-  position:absolute;
-  left:0; right:0;
-  top: 100%;
-  background: var(--nav-bg-open);
-  border-bottom: var(--border-w) solid var(--line-soft);
-  padding: 10px 14px 14px;
-  overflow:hidden;
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-6px);
-  pointer-events:none;
-  transition:
-    max-height var(--motion-dur) var(--motion-ease),
-    opacity var(--motion-dur) var(--motion-ease),
-    transform var(--motion-dur) var(--motion-ease);
-}
-body.theme-modern .siteHeader.forceHamburger .nav{
-  background: var(--nav-bg-open);
-  border-bottom-color: rgba(255,255,255,.10);
-}
-.siteHeader.forceHamburger.menuOpen .nav{
-  max-height: 70vh;
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events:auto;
+
+@media (min-width: 761px){
+  .siteHeader.forceHamburger .nav{
+    display:flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+
+    position:absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(calc(100% - 24px), var(--max-header));
+    max-width: var(--max-header);
+
+    background: var(--header-bg);
+    border: var(--border-w) solid var(--header-border);
+    border-radius: calc(var(--radius) + 10px);
+    backdrop-filter: blur(10px);
+    padding: 10px 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.10);
+
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px);
+    pointer-events:none;
+    visibility: hidden;
+    will-change: opacity, transform;
+    transition:
+      opacity var(--motion-dur) var(--motion-ease),
+      transform var(--motion-dur) var(--motion-ease),
+      visibility 0s linear var(--motion-dur);
+  }
+  .siteHeader.forceHamburger .nav::-webkit-scrollbar{ display:none; }
+  .siteHeader.forceHamburger .nav a{
+    display:inline-flex;
+    white-space: nowrap;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  /* Header-center: na desktop normalnie .nav jest ukryty, ale przy forceHamburger ma się pokazać. */
+  body.header-center .siteHeader.forceHamburger .nav{ display:flex !important; }
+
+  /* W pill menu ma wyglądać jak część headera (spójnie z pigułą). */
+  body.headerbg-pill .siteHeader.forceHamburger .nav{
+    background: var(--header-bg);
+    border-color: var(--header-border);
+    border-radius: 999px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.10);
+  }
+
+  body.headerbg-pill .siteHeader.forceHamburger .nav a{ border-radius: 999px; }
+
+  body.theme-modern .siteHeader.forceHamburger .nav{
+    background: var(--header-bg);
+    border-color: var(--header-border);
+  }
+
+  /* Transparent: ciemny glass tylko w trybie overlay (bez scrolla i bez otwartego menu). */
+  body.headerbg-transparent .siteHeader.forceHamburger:not(.menuOpen):not(.headerSolid) .nav{
+    background: rgba(0,0,0,.55);
+    border-color: rgba(255,255,255,.22);
+    color: #fff;
+    backdrop-filter: blur(10px);
+  }
+  /* Transparent: po otwarciu menu (lub po scrollu) wracamy do jasnego tła jak w headerze. */
+  body.headerbg-transparent .siteHeader.forceHamburger.menuOpen .nav{
+    background: var(--nav-bg-open);
+    border-color: var(--header-border);
+    color: var(--fg);
+    backdrop-filter: none;
+  }
+
+  .siteHeader.forceHamburger.menuOpen .nav{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events:auto;
+    visibility: visible;
+    transition:
+      opacity var(--motion-dur) var(--motion-ease),
+      transform var(--motion-dur) var(--motion-ease),
+      visibility 0s;
+  }
 }
 
 /* po otwarciu menu header ma byc czytelny */
-.siteHeader.menuOpen{ background: var(--nav-bg-open); backdrop-filter: none; }
+.siteHeader.menuOpen{ background: var(--header-bg); }
 
 /* cookie consent banner */
 .cookieBanner{ position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9999; }
@@ -983,19 +1159,24 @@ function buildSiteScript() {
 
   function setupAnalytics(){
     const id = String(ANALYTICS.gtmId || '').trim();
-    if(!id) return;
 
     const consent = getConsent();
     if(consent === 'accept'){
-      loadGtm(id);
+      if(id) loadGtm(id);
       return;
     }
     if(consent === 'reject'){
       return;
     }
 
-    if(ANALYTICS.cookieBanner) showCookieBanner();
-    else loadGtm(id);
+    // Brak decyzji: pokaż banner (nawet jeśli nie ma GTM)
+    if(ANALYTICS.cookieBanner) {
+      showCookieBanner();
+      return;
+    }
+
+    // Bez bannera: jeśli jest GTM, uruchom od razu
+    if(id) loadGtm(id);
   }
 
   function setupHeaderOffset(){
@@ -1012,6 +1193,15 @@ function buildSiteScript() {
   }
 }
 
+function setupTransparentHeaderOnScroll(){
+  const header = document.querySelector('.siteHeader');
+  if(!header) return;
+  const b = document.body;
+  if(!b.classList.contains('headerbg-transparent')) return;
+  // Jeśli użytkownik wybrał przezroczysty nagłówek, ma taki zostać — bez automatycznego przełączania po scrollu.
+  header.classList.remove('headerSolid');
+}
+
 function setupHamburger(){
     const header = document.querySelector('.siteHeader');
     if(!header) return;
@@ -1021,7 +1211,11 @@ function setupHamburger(){
     const brand = header.querySelector('.brand');
     if(!btn || !nav) return;
 
-    let isCollapsed = false;
+	    // Stabilizacja: przy układzie "header-center" łatwo o oscylacje (nav znika/pokazuje się i zmienia pomiary).
+	    // Trzymamy hysteresis + debouncing w RAF.
+		    const HYST = 120; // px "bufor" żeby hamburger nie migał na granicy
+	    let isCollapsed = header.classList.contains('forceHamburger');
+	    let raf = 0;
 
     function lockScroll(lock){
       document.body.style.overflow = lock ? 'hidden' : '';
@@ -1049,13 +1243,72 @@ function setupHamburger(){
       if(openNow) close(); else open();
     }
 
-    function needsHamburger(){
+
+    function measureNaturalWidth(node){
+      if(!node) return 0;
+      try{
+        const clone = node.cloneNode(true);
+        clone.style.position = 'absolute';
+        clone.style.visibility = 'hidden';
+        clone.style.left = '-9999px';
+        clone.style.top = '0';
+        clone.style.width = 'max-content';
+        clone.style.maxWidth = 'none';
+        clone.style.overflow = 'visible';
+        clone.style.whiteSpace = 'nowrap';
+        // nie pozwól linkom się kurczyć w pomiarze
+        try{
+          clone.querySelectorAll('a').forEach(a=>{
+            a.style.flex = '0 0 auto';
+            a.style.whiteSpace = 'nowrap';
+          });
+        }catch(e){}
+        document.body.appendChild(clone);
+        const w = Math.ceil(clone.getBoundingClientRect().width || clone.scrollWidth || 0);
+        clone.remove();
+        return w;
+      }catch(e){
+        return 0;
+      }
+    }
+
+	    function needsHamburger(){
       // Mobile: hamburger zawsze.
       if(window.matchMedia('(max-width: 760px)').matches) return true;
 
-      // Header "wycentrowany" ma na desktop osobny układ (2 rzędy + nav split),
-      // więc hamburger nie jest potrzebny (i pomiary byłyby mylące, bo .nav jest ukryte).
-      if(document.body.classList.contains('header-center')) return false;
+	      const isCenter = document.body.classList.contains('header-center');
+	      if(isCenter){
+	        // Mierzymy ZAWSZE w stanie "normalnym" (bez forceHamburger), żeby nie było pętli ON/OFF.
+	        const leftG = header.querySelector('.navGroup--left');
+	        const rightG = header.querySelector('.navGroup--right');
+	        const prevForce = header.classList.contains('forceHamburger');
+	        const prevMenu = header.classList.contains('menuOpen');
+
+	        header.classList.remove('menuOpen');
+	        header.classList.remove('forceHamburger');
+
+	        const stInner = getComputedStyle(inner);
+	        const gapC = (parseFloat(stInner.columnGap) || 44);
+	        const innerRect = inner.getBoundingClientRect();
+	        const brandRect = brand.getBoundingClientRect();
+	        const leftW = measureNaturalWidth(leftG);
+        const rightW = measureNaturalWidth(rightG);
+	        const groupOverflows = ((leftG && (leftW - leftG.clientWidth) > 2) || (rightG && (rightW - rightG.clientWidth) > 2));
+	        const needed = leftW + rightW + brandRect.width + (gapC * 2) + 20;
+	        const innerOverflows = (inner.scrollWidth - inner.clientWidth) > 2;
+
+	        // Restore
+	        if(prevForce) header.classList.add('forceHamburger');
+	        if(prevMenu) header.classList.add('menuOpen');
+
+	        if(groupOverflows) return true;
+	        if(innerOverflows) return true;
+	        // Hysteresis: jeśli już jesteśmy w hamburgerze, wyłącz go dopiero gdy jest wyraźnie więcej miejsca.
+	        if(isCollapsed) return needed > (innerRect.width - HYST);
+	        return needed > (innerRect.width + 1);
+	      }
+
+      
       if(!inner || !brand) return false;
 
       // Desktop/Tablet: hamburger dopiero gdy linki realnie nie mieszczą się obok brandu.
@@ -1076,11 +1329,7 @@ function setupHamburger(){
       const links = Array.from(nav.querySelectorAll('a'));
       const st = getComputedStyle(nav);
       const gap = (parseFloat(st.gap) || parseFloat(st.columnGap) || 14);
-      let natural = 0;
-      for(const a of links){
-        natural += a.getBoundingClientRect().width;
-      }
-      natural += gap * Math.max(0, links.length - 1);
+      let natural = measureNaturalWidth(nav);
 
       // Ile miejsca zostaje na nav po prawej stronie brandu.
       const available = Math.max(0, innerRect.right - brandRect.right - 22); // oddech
@@ -1095,10 +1344,12 @@ function setupHamburger(){
       if(prevForce) header.classList.add('forceHamburger');
       if(prevMenu) header.classList.add('menuOpen');
 
-      return wrapsLine || clipped || innerOverflows;
+	      if(innerOverflows || wrapsLine) return true;
+	      if(isCollapsed) return natural > (available - HYST);
+	      return clipped;
     }
 
-    function applyCollapse(){
+	    function applyCollapse(){
       const should = needsHamburger();
       if(should === isCollapsed) return;
       isCollapsed = should;
@@ -1106,32 +1357,37 @@ function setupHamburger(){
       if(!should) close();
     }
 
+	    function scheduleCollapse(){
+	      if(raf) return;
+	      raf = requestAnimationFrame(()=>{ raf = 0; applyCollapse(); });
+	    }
+
     // Start
     applyCollapse();
     setBtn(false);
 
-    window.addEventListener('resize', ()=>{ applyCollapse(); }, { passive:true });
-    window.addEventListener('orientationchange', ()=>{ applyCollapse(); });
+	    window.addEventListener('resize', ()=>{ scheduleCollapse(); }, { passive:true });
+	    window.addEventListener('orientationchange', ()=>{ scheduleCollapse(); });
     // Po załadowaniu fontów układ może się zmienić
-    window.addEventListener('load', ()=>{ applyCollapse(); });
+	    window.addEventListener('load', ()=>{ scheduleCollapse(); });
     try{
       if(document.fonts && document.fonts.ready){
-        document.fonts.ready.then(()=>{ applyCollapse(); });
+	        document.fonts.ready.then(()=>{ scheduleCollapse(); });
       }
     }catch(e){}
 
     // Reaguj tez na zmiany w nawigacji (np. dodanie wielu sekcji bez zmiany szerokosci okna).
     try{
       if('ResizeObserver' in window){
-        const ro = new ResizeObserver(()=>{ applyCollapse(); });
-        ro.observe(header);
-        if(inner) ro.observe(inner);
+		        const ro = new ResizeObserver(()=>{ scheduleCollapse(); });
+		        // Nie obserwuj samego <header> — zmiana klas (forceHamburger) potrafi wywoływać pętlę i "wibracje".
+		        if(inner) ro.observe(inner);
         ro.observe(nav);
         ro.observe(brand);
       }
     }catch(e){}
     try{
-      const mo = new MutationObserver(()=>{ applyCollapse(); });
+	      const mo = new MutationObserver(()=>{ scheduleCollapse(); });
       mo.observe(nav, { childList:true, subtree:true, characterData:true });
     }catch(e){}
 
@@ -1660,6 +1916,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupLightbox();
     setupScrollReveal();
     setupHeaderOffset();
+    setupTransparentHeaderOnScroll();
       setupHamburger();
     setupFocusScroll();
   });
@@ -1727,7 +1984,9 @@ function renderHeroSection(mode) {
   const hero = ensureBlock("hero");
   const h = hero.data || {};
   const headline = escapeHtml(h.headline || "");
-  const sub = escapeHtml(h.subheadline || "");
+  const subRich = String(h.subheadlineRich || "").trim();
+  const subHtml = subRich ? subRich : escapeHtml(h.subheadline || "").replaceAll("\n","<br/>");
+  const subCls = subRich ? "muted richText" : "muted";
   const btnText = escapeHtml(h.primaryCtaText || "Zobacz");
   const target = h.primaryCtaTarget || "auto";
   const customUrl = String(h.primaryCtaUrl || "").trim();
@@ -1736,7 +1995,9 @@ function renderHeroSection(mode) {
   const heroImgs = assets.heroImages;
   const heroImgsMobile = assets.heroImagesMobile || [];
 
-  const enabled = enabledBlocksInOrder().filter(id => id !== "hero");
+  const enabledAll = enabledBlocksInOrder().filter(id => id !== "hero");
+  const enabled = enabledAll.filter(id => ensureBlock(id).showOnHomeZip !== false);
+
   const contactEnabled = enabledBlocksInOrder().includes("contact");
 
   let ctaHref = "#";
@@ -1781,7 +2042,7 @@ function renderHeroSection(mode) {
   <div class="heroFrame">
     <div class="heroInner">
       <h1>${headline}</h1>
-      <p>${sub}</p>
+      <div class="${subCls}">${subHtml}</div>
       <div class="heroActions">
         <a class="btn primary" href="${ctaHref}">${btnText}</a>
         <a class="btn" href="${mode==="single" ? "#contact" : "contact.html"}">Kontakt</a>
@@ -1826,11 +2087,14 @@ function renderBlockSection(id, mode) {
   if (id === "hero") return renderHeroSection(mode);
 
   if (editor === "text") {
-    const text = escapeHtml(cfg.data.text || "").replaceAll("\n", "<br/>");
+    const rich = String(cfg.data.richHtml || "").trim();
+    const hasRich = !!rich;
+    const html = hasRich ? rich : escapeHtml(cfg.data.text || "").replaceAll("\n", "<br/>");
+    const cls = hasRich ? "muted richText" : "muted";
     return `
 <section id="${id}" class="section">
   ${headingHtml}
-  <div class="muted">${text || "—"}</div>
+  <div class="${cls}">${html || "—"}</div>
 </section>`;
   }
 
@@ -1879,6 +2143,9 @@ function renderBlockSection(id, mode) {
     const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     // Embed size: affects stacked layout window width. Default 60% looks natural.
     const sz = clampNum(cfg.data.embedSize ?? 60, 45, 85);
+    const embedCls = (String(state.mediaLayout || "stack") === "split")
+      ? "embedSection embedSection--split"
+      : "embedSection embedSection--stack";
     const parts = items.map(it => {
       const p = parseSpotify(it.url || "");
       if (p.embedUrl) {
@@ -1903,7 +2170,7 @@ function renderBlockSection(id, mode) {
     }).filter(Boolean).join("");
 
     return `
-<section id="${id}" class="section">
+<section id="${id}" class="section ${embedCls}">
   ${headingHtml}
   <div class="grid embedGrid" style="--embed-max:${sz}%;">${parts || `<div class="muted">Wklej linki Spotify w generatorze.</div>`}</div>
 </section>`;
@@ -1913,6 +2180,9 @@ function renderBlockSection(id, mode) {
     const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     // Embed size: affects stacked layout window width. Default 60% looks natural.
     const sz = clampNum(cfg.data.embedSize ?? 60, 45, 85);
+    const embedCls = (String(state.mediaLayout || "stack") === "split")
+      ? "embedSection embedSection--split"
+      : "embedSection embedSection--stack";
     const parts = items.map(it => {
       const p = parseYouTube(it.url || "");
       if (p.embedUrl) {
@@ -1937,7 +2207,7 @@ function renderBlockSection(id, mode) {
     }).filter(Boolean).join("");
 
     return `
-<section id="${id}" class="section">
+<section id="${id}" class="section ${embedCls}">
   ${headingHtml}
   <div class="grid embedGrid" style="--embed-max:${sz}%;">${parts || `<div class="muted">Wklej linki YouTube w generatorze.</div>`}</div>
 </section>`;
@@ -1975,7 +2245,9 @@ function renderBlockSection(id, mode) {
     const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     const cards = items.map(it => {
       const t = escapeHtml(it.title || "");
-      const desc = escapeHtml(it.desc || "").replaceAll("\n","<br/>");
+      const descRich = String(it.descRich || "").trim();
+      const desc = descRich ? descRich : escapeHtml(it.desc || "").replaceAll("\n","<br/>");
+      const descCls = descRich ? "muted richText" : "muted";
       const tags = escapeHtml(it.tags || "");
       const link = normalizeHttpUrlLoose(it.link || "");
       return `
@@ -2004,7 +2276,7 @@ function renderBlockSection(id, mode) {
     <div style="font-weight:900;">${escapeHtml(it.name || "—")}</div>
     <div class="muted">${escapeHtml(it.price || "")}</div>
   </div>
-  <div class="muted" style="margin-top:8px;">${escapeHtml(it.desc || "").replaceAll("\n","<br/>")}</div>
+  <div class="${String(it.descRich||"").trim()? "muted richText":"muted"}" style="margin-top:8px;">${String(it.descRich||"").trim()? String(it.descRich).trim(): escapeHtml(it.desc || "").replaceAll("\n","<br/>")}</div>
 </div>`).join("");
 
     return `
@@ -2018,7 +2290,9 @@ function renderBlockSection(id, mode) {
 
   if (editor === "newsletter") {
     const title = escapeHtml(cfg.data.title || "Zapisz się");
-    const desc = escapeHtml(cfg.data.desc || "").replaceAll("\n","<br/>");
+    const descRich = String(cfg.data.descRich || "").trim();
+    const desc = descRich ? descRich : escapeHtml(cfg.data.desc || "").replaceAll("\n","<br/>");
+    const descCls = descRich ? "muted richText" : "muted";
     const btn = escapeHtml(cfg.data.btn || "Dołącz");
     const url = normalizeHttpUrlLoose(cfg.data.url || "");
 
@@ -2028,7 +2302,7 @@ function renderBlockSection(id, mode) {
   <div class="embedWrap">
     <div class="embedCard">
       <div style="font-weight:900;">${title}</div>
-      ${desc ? `<div class="muted" style="margin-top:8px;">${desc}</div>` : ``}
+      ${desc ? `<div class="${descCls}" style="margin-top:8px;">${desc}</div>` : ``}
       ${url ? `<div style="margin-top:10px;"><a class="btn primary" href="${escapeHtml(url)}" target="_blank" rel="noopener">${btn}</a></div>` : `<div class="muted" style="margin-top:10px;">Brak linku do zapisu.</div>`}
     </div>
   </div>
@@ -2043,7 +2317,9 @@ function renderBlockSection(id, mode) {
       const url = normalizeHttpUrlLoose(it.url || "");
       const img = (it.img || "").trim();
       const alt = escapeHtml(it.alt || name || `Produkt ${i+1}`);
-      const desc = escapeHtml(it.desc || "").replaceAll("\n","<br/>");
+      const descRich = String(it.descRich || "").trim();
+      const desc = descRich ? descRich : escapeHtml(it.desc || "").replaceAll("\n","<br/>");
+      const descCls = descRich ? "muted richText" : "muted";
       return `
 <div class="storeCard">
   ${img ? `<img class="storeImg" src="${escapeHtml(img)}" alt="${alt}" />` : `<div class="storeImg" aria-hidden="true"></div>`}
@@ -2106,9 +2382,12 @@ function renderBlockSection(id, mode) {
     const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     const rows = items.map(it => {
       const link = normalizeHttpUrlLoose(it.link || "");
+      const qRich = String(it.quoteRich || "").trim();
+      const qHtml = qRich ? qRich : escapeHtml(it.quote || "—").replaceAll("\n"," ");
+      const qCls = qRich ? "richText" : "";
       return `
 <div style="padding:12px 0; border-bottom:1px solid rgba(127,127,127,.18);">
-  <div style="font-weight:900;">„${escapeHtml(it.quote || "—").replaceAll("\n"," ")}”</div>
+  <div class="${qCls}" style="font-weight:900;">${qHtml}</div>
   <div class="muted" style="margin-top:8px;">— ${escapeHtml(it.who || "")}</div>
   ${link ? `<div style="margin-top:10px;"><a class="btn" href="${escapeHtml(link)}" target="_blank" rel="noopener">Źródło</a></div>` : ``}
 </div>`;
@@ -2124,8 +2403,12 @@ function renderBlockSection(id, mode) {
   
 if (editor === "epk") {
     const d = cfg.data || {};
-    const bioRaw = String(d.shortBio || "").trim();
-    const bio = escapeHtml(bioRaw).replaceAll("\n","<br/>");
+	    // Raw bio used only to decide whether we should render the "Bio" section.
+	    // `bio` below is already HTML (either rich HTML or escaped plain text).
+	    const bioRaw = String(d.shortBioRich || d.shortBio || "").trim();
+    const bioRich = String(d.shortBioRich || "").trim();
+    const bio = bioRich ? bioRich : escapeHtml(String(d.shortBio || "").trim()).replaceAll("\n","<br/>");
+    const bioCls = bioRich ? "muted richText" : "muted";
 
     const pressItems = Array.isArray(d.pressLinks) ? d.pressLinks : [];
     const dlItems = Array.isArray(d.downloadLinks) ? d.downloadLinks : [];
@@ -2198,7 +2481,7 @@ if (editor === "epk") {
     ${hasBio ? `
     <div>
       <h3 style="margin:0 0 10px 0;">Bio</h3>
-      <div class="muted">${bio}</div>
+      <div class="${bioCls}">${bio}</div>
     </div>` : ``}
     <div>
       ${hasPressLinks ? `<h3 style="margin:0 0 10px 0;">Linki prasowe</h3><div>${pressLinks}</div>` : ``}
@@ -2501,6 +2784,7 @@ function buildStylePreviewHtml(opts = {}) {
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<script>document.documentElement.classList.add('kpo-preload');</script>
 <meta name="referrer" content="strict-origin-when-cross-origin"/>
 <title>${escapeHtml(pageTitle)}</title>
 ${buildFontLinks()}
@@ -2519,6 +2803,34 @@ ${headCss}
     <div class="footer">© ${escapeHtml(state.siteName || 'Artysta')}</div>
   </main>
 ${footJs}
+<script>(function(){
+  const root = document.documentElement;
+  function raf2(fn){ requestAnimationFrame(()=>requestAnimationFrame(fn)); }
+  function done(){
+    if(done._) return; done._ = true;
+    // zostaw jeszcze odrobinę bufora na stabilizację układu
+    raf2(()=>setTimeout(()=>root.classList.remove('kpo-preload'), 120));
+  }
+  let pending = 0;
+  function wait(p){
+    pending++;
+    Promise.resolve(p).catch(()=>{}).then(()=>{
+      pending--;
+      if(pending<=0) done();
+    });
+  }
+  // zawsze czekamy na load (obrazy/fonty mogą zmienić szerokość nagłówka)
+  wait(new Promise(res=>{
+    if(document.readyState === 'complete') res();
+    else window.addEventListener('load', res, { once:true });
+  }));
+  // czekamy na fonty, jeśli przeglądarka wspiera
+  if(document.fonts && document.fonts.ready){
+    wait(document.fonts.ready);
+  }
+  // awaryjny timeout: nie trzymaj preload w nieskończoność
+  setTimeout(()=>{ if(!done._) done(); }, 1800);
+})();</script>
 </body>
 </html>`.trim();
 }
@@ -2689,6 +3001,7 @@ function buildSingleHtml(opts = {}) {
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<script>document.documentElement.classList.add('kpo-preload');</script>
 <title>${escapeHtml(pageTitle)}</title>
 ${buildHeadMetaTags(pageTitle, inlineAssets)}
 ${buildFontLinks()}
@@ -2702,6 +3015,34 @@ ${headCss}
     ${buildFooterHtml("single")}
   </main>
 ${footJs}
+<script>(function(){
+  const root = document.documentElement;
+  function raf2(fn){ requestAnimationFrame(()=>requestAnimationFrame(fn)); }
+  function done(){
+    if(done._) return; done._ = true;
+    // zostaw jeszcze odrobinę bufora na stabilizację układu
+    raf2(()=>setTimeout(()=>root.classList.remove('kpo-preload'), 120));
+  }
+  let pending = 0;
+  function wait(p){
+    pending++;
+    Promise.resolve(p).catch(()=>{}).then(()=>{
+      pending--;
+      if(pending<=0) done();
+    });
+  }
+  // zawsze czekamy na load (obrazy/fonty mogą zmienić szerokość nagłówka)
+  wait(new Promise(res=>{
+    if(document.readyState === 'complete') res();
+    else window.addEventListener('load', res, { once:true });
+  }));
+  // czekamy na fonty, jeśli przeglądarka wspiera
+  if(document.fonts && document.fonts.ready){
+    wait(document.fonts.ready);
+  }
+  // awaryjny timeout: nie trzymaj preload w nieskończoność
+  setTimeout(()=>{ if(!done._) done(); }, 1800);
+})();</script>
 </body>
 </html>`.trim();
 }
@@ -2730,7 +3071,9 @@ function buildZipFiles(opts = {}) {
   const baseTitle = String(state.metaTitle || "").trim() || String(state.siteName || "").trim() || "Portfolio";
 
   // index.html
-  const enabled = enabledBlocksInOrder().filter(id => id !== "hero");
+  const enabledAll = enabledBlocksInOrder().filter(id => id !== "hero");
+  const enabled = enabledAll.filter(id => ensureBlock(id).showOnHomeZip !== false);
+
 
   // Home in ZIP: HERO jest pełnoekranowy i niezależny od układu treści.
   const indexHero = buildSectionsHtml(["hero"], "single");
@@ -2742,6 +3085,7 @@ function buildZipFiles(opts = {}) {
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<script>document.documentElement.classList.add('kpo-preload');</script>
 <title>${escapeHtml(baseTitle)}</title>
 ${buildHeadMetaTags(baseTitle, inlineAssets)}
 ${buildFontLinks()}
@@ -2755,6 +3099,34 @@ ${headCss}
     ${buildFooterHtml("zip")}
   </main>
 ${footJs}
+<script>(function(){
+  const root = document.documentElement;
+  function raf2(fn){ requestAnimationFrame(()=>requestAnimationFrame(fn)); }
+  function done(){
+    if(done._) return; done._ = true;
+    // zostaw jeszcze odrobinę bufora na stabilizację układu
+    raf2(()=>setTimeout(()=>root.classList.remove('kpo-preload'), 120));
+  }
+  let pending = 0;
+  function wait(p){
+    pending++;
+    Promise.resolve(p).catch(()=>{}).then(()=>{
+      pending--;
+      if(pending<=0) done();
+    });
+  }
+  // zawsze czekamy na load (obrazy/fonty mogą zmienić szerokość nagłówka)
+  wait(new Promise(res=>{
+    if(document.readyState === 'complete') res();
+    else window.addEventListener('load', res, { once:true });
+  }));
+  // czekamy na fonty, jeśli przeglądarka wspiera
+  if(document.fonts && document.fonts.ready){
+    wait(document.fonts.ready);
+  }
+  // awaryjny timeout: nie trzymaj preload w nieskończoność
+  setTimeout(()=>{ if(!done._) done(); }, 1800);
+})();</script>
 </body>
 </html>`.trim();
 
@@ -2762,7 +3134,7 @@ ${footJs}
   const baseFirst = new Map();
   const basePage = new Map();
 
-  enabled.forEach((id) => {
+  enabledAll.forEach((id) => {
     const base = baseBlockId(id);
     if (base === "epk" && !isEpkRenderable()) return;
     if (!baseFirst.has(base)) baseFirst.set(base, id);
@@ -2782,6 +3154,7 @@ ${footJs}
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<script>document.documentElement.classList.add('kpo-preload');</script>
 <title>${escapeHtml(pageTitle)}</title>
 ${buildHeadMetaTags(pageTitle, inlineAssets)}
 ${buildFontLinks()}
@@ -2794,6 +3167,34 @@ ${headCss}
     ${buildFooterHtml("zip")}
   </main>
 ${footJs}
+<script>(function(){
+  const root = document.documentElement;
+  function raf2(fn){ requestAnimationFrame(()=>requestAnimationFrame(fn)); }
+  function done(){
+    if(done._) return; done._ = true;
+    // zostaw jeszcze odrobinę bufora na stabilizację układu
+    raf2(()=>setTimeout(()=>root.classList.remove('kpo-preload'), 120));
+  }
+  let pending = 0;
+  function wait(p){
+    pending++;
+    Promise.resolve(p).catch(()=>{}).then(()=>{
+      pending--;
+      if(pending<=0) done();
+    });
+  }
+  // zawsze czekamy na load (obrazy/fonty mogą zmienić szerokość nagłówka)
+  wait(new Promise(res=>{
+    if(document.readyState === 'complete') res();
+    else window.addEventListener('load', res, { once:true });
+  }));
+  // czekamy na fonty, jeśli przeglądarka wspiera
+  if(document.fonts && document.fonts.ready){
+    wait(document.fonts.ready);
+  }
+  // awaryjny timeout: nie trzymaj preload w nieskończoność
+  setTimeout(()=>{ if(!done._) done(); }, 1800);
+})();</script>
 </body>
 </html>`.trim();
   }
@@ -2817,6 +3218,7 @@ ${footJs}
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<script>document.documentElement.classList.add('kpo-preload');</script>
 <title>${escapeHtml(pageTitle)}</title>
 ${buildHeadMetaTags(pageTitle, inlineAssets)}
 ${buildFontLinks()}
@@ -2829,6 +3231,34 @@ ${headCss}
     ${buildFooterHtml("zip")}
   </main>
 ${footJs}
+<script>(function(){
+  const root = document.documentElement;
+  function raf2(fn){ requestAnimationFrame(()=>requestAnimationFrame(fn)); }
+  function done(){
+    if(done._) return; done._ = true;
+    // zostaw jeszcze odrobinę bufora na stabilizację układu
+    raf2(()=>setTimeout(()=>root.classList.remove('kpo-preload'), 120));
+  }
+  let pending = 0;
+  function wait(p){
+    pending++;
+    Promise.resolve(p).catch(()=>{}).then(()=>{
+      pending--;
+      if(pending<=0) done();
+    });
+  }
+  // zawsze czekamy na load (obrazy/fonty mogą zmienić szerokość nagłówka)
+  wait(new Promise(res=>{
+    if(document.readyState === 'complete') res();
+    else window.addEventListener('load', res, { once:true });
+  }));
+  // czekamy na fonty, jeśli przeglądarka wspiera
+  if(document.fonts && document.fonts.ready){
+    wait(document.fonts.ready);
+  }
+  // awaryjny timeout: nie trzymaj preload w nieskończoność
+  setTimeout(()=>{ if(!done._) done(); }, 1800);
+})();</script>
 </body>
 </html>`.trim();
   }
@@ -2982,29 +3412,57 @@ function _previewApplyHtml(html, label){
 }
 
 function rebuildPreview(force=false) {
-  syncStateFromSettingsInputs();
-
-  // Style preview (components demo)
-  if (state.previewMode === "style") {
-    zipPreviewFiles = null;
-    zipPreviewCurrent = "style-preview.html";
-    previewSetHtml(buildStylePreviewHtml({ inlineAssets: true, preview: true }), "Styl preview");
-    return;
+  // Nie pozwalamy, żeby błąd w generowaniu podglądu uwalił cały generator.
+  try {
+    syncStateFromSettingsInputs();
+  } catch (e) {
+    try { console.error(e); } catch(_){ }
   }
 
-  // Normal page preview
-  if (state.exportMode === "single") {
-    zipPreviewFiles = null;
-    zipPreviewCurrent = "index.html";
-    previewSetHtml(buildSingleHtml({ inlineAssets: true, preview: true }), "index.html");
-    return;
+  try {
+    // Style preview (components demo)
+    if (state.previewMode === "style") {
+      zipPreviewFiles = null;
+      zipPreviewCurrent = "style-preview.html";
+      previewSetHtml(buildStylePreviewHtml({ inlineAssets: true, preview: true }), "Styl preview");
+      return;
+    }
+
+    // Normal page preview
+    if (state.exportMode === "single") {
+      zipPreviewFiles = null;
+      zipPreviewCurrent = "index.html";
+      previewSetHtml(buildSingleHtml({ inlineAssets: true, preview: true }), "index.html");
+      return;
+    }
+
+    // ZIP preview: build inline pages
+    zipPreviewFiles = buildZipFiles({ inlineAssets: true, preview: true });
+
+    if (!zipPreviewFiles[zipPreviewCurrent]) zipPreviewCurrent = "index.html";
+    previewSetHtml(zipPreviewFiles[zipPreviewCurrent] || "", zipPreviewCurrent);
+  } catch (e) {
+    try { console.error(e); } catch(_){ }
+    const msg = (e && (e.stack || e.message)) ? String(e.stack || e.message) : String(e);
+    const safe = (typeof escapeHtml === 'function') ? escapeHtml(msg) : msg;
+    const html = `<!doctype html><html lang="pl"><head><meta charset="utf-8"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<script>document.documentElement.classList.add('kpo-preload');</script>
+      <title>Podgląd: błąd</title>
+      <style>
+        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:24px;line-height:1.45;}
+        .card{max-width:900px;margin:0 auto;border:1px solid #ddd;border-radius:16px;padding:18px;}
+        h1{font-size:18px;margin:0 0 10px;}
+        pre{white-space:pre-wrap;background:#f6f6f6;border-radius:12px;padding:12px;overflow:auto;}
+        .hint{opacity:.75;font-size:13px;margin-top:10px;}
+      </style>
+    </head><body><div class="card">
+      <h1>Podgląd nie wygenerował się — błąd w generatorze</h1>
+      <pre>${safe}</pre>
+      <div class="hint">Tip: jeśli to się powtarza, kliknij „Reset”, albo wyczyść draft w przeglądarce (localStorage) i spróbuj ponownie.</div>
+    </div></body></html>`;
+    previewSetHtml(html, "ERROR");
   }
-
-  // ZIP preview: build inline pages
-  zipPreviewFiles = buildZipFiles({ inlineAssets: true, preview: true });
-
-  if (!zipPreviewFiles[zipPreviewCurrent]) zipPreviewCurrent = "index.html";
-  previewSetHtml(zipPreviewFiles[zipPreviewCurrent] || "", zipPreviewCurrent);
 }
 
 /* ==========================

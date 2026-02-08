@@ -287,6 +287,81 @@ body{
 /* Oddech między nagłówkiem sekcji a treścią (wszystkie sekcje: Projekt / Styl / Bloki / itd.) */
 .panel__section[open] > summary{ margin-bottom: 12px; }
 
+/* KPO / NGEU footer pinned to the bottom of the left panel */
+.panel__foot{
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  padding: 10px 12px;
+
+  /* KPO footer: keep it readable in dark UI without touching official logotypes */
+  background: #0a0c12;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.45);
+}
+
+/* marks */
+
+.panel__foot .kpoMarksBox{
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  border-radius: 12px;
+  padding: 6px 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.panel__foot .kpoMarks{
+  display:block;
+  width: 100%;
+  margin: 0;
+}
+.panel__foot .kpoMarks img{
+  display:block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 40px; /* bigger + readable */
+}
+
+/* text + button */
+.panel__foot .kpoMiniText{
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #e9eef7;
+  font-size: 12.5px;
+  line-height: 1.25;
+}
+.panel__foot .kpoLine{
+  opacity: .92;
+  flex: 1;
+  min-width: 0;
+}
+.panel__foot .kpoBtn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #e9eef7;
+  text-decoration: none;
+  font-size: 12px;
+  line-height: 1;
+}
+.panel__foot .kpoBtn:hover{ opacity: 1; background: rgba(255, 255, 255, 0.14); }
+
+/* on narrow panels: switch to vertical mark and allow it to be taller */
+@media (max-width: 420px){
+  .panel__foot .kpoMarks img{ max-height: 64px; }
+}
+
+.app.isPanelCollapsed .panel__foot{ display:none; }
+
 /* section padding is handled by .panel__section; do not pad only the first child */
 
 .field{ display:grid; gap:5px; margin: 8px 0; }
@@ -298,7 +373,7 @@ input, textarea, select{
   border:1px solid rgba(255,255,255,.12);
   background: rgba(0,0,0,.32);
   color: var(--text);
-  padding: 8px 10px;
+  padding: 6px 8px;
   outline:none;
 }
 textarea{ resize: vertical; }
@@ -308,7 +383,10 @@ input:focus, textarea:focus, select:focus{
   box-shadow: 0 0 0 4px rgba(109,40,217,.18);
 }
 
-.grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+.grid2{ display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:10px; align-items:start; }
+.grid2 > *{ min-width:0; }
+.span2{ grid-column: 1 / -1; }
+
 
 .toggleRow{
   display:flex;
@@ -346,7 +424,7 @@ input:focus, textarea:focus, select:focus{
   border:1px solid rgba(255,255,255,.12);
   background: rgba(0,0,0,.32);
   color: var(--text);
-  padding: 8px 10px;
+  padding: 6px 8px;
   cursor:pointer;
 }
 .customSelect__btn:hover{ border-color: rgba(255,255,255,.18); background: rgba(0,0,0,.38); }
@@ -393,6 +471,9 @@ input:focus, textarea:focus, select:focus{
   border-color: rgba(109,40,217,.55);
   box-shadow: 0 0 0 4px rgba(109,40,217,.12);
 }
+.blockItem--disabled{
+  opacity: .72;
+}
 .blockLabel{
   display:flex; align-items:center; gap:10px;
   cursor:pointer;
@@ -410,7 +491,7 @@ input:focus, textarea:focus, select:focus{
   background: rgba(255,255,255,.06);
   color: var(--text);
   border-radius: 12px;
-  padding: 8px 10px;
+  padding: 6px 8px;
   cursor:pointer;
 }
 .iconBtn:hover{ background: rgba(255,255,255,.10); }
@@ -474,17 +555,19 @@ input:focus, textarea:focus, select:focus{
 .btnGhost{ --ctlBg: rgba(255,255,255,.04); --ctlBgHover: rgba(255,255,255,.08); --ctlBgActive: rgba(255,255,255,.10); }
 
 .btn--primary{
-  --ctlBorder: rgba(109,40,217,.55);
-  --ctlBg: linear-gradient(180deg, rgba(109,40,217,.95), rgba(109,40,217,.55));
-  --ctlBgHover: linear-gradient(180deg, rgba(109,40,217,1), rgba(109,40,217,.65));
-  --ctlBgActive: linear-gradient(180deg, rgba(109,40,217,1), rgba(109,40,217,.72));
+  /* Subtelny akcent (bez "gamingowych" gradientów) – spójny z resztą UI */
+  --ctlBorder: rgba(109,40,217,.38);
+  --ctlBg: rgba(109,40,217,.12);
+  --ctlBgHover: rgba(109,40,217,.16);
+  --ctlBgActive: rgba(109,40,217,.20);
 }
 
 .btn--danger{
-  --ctlBorder: rgba(225,29,72,.45);
-  --ctlBg: linear-gradient(180deg, rgba(225,29,72,.35), rgba(225,29,72,.18));
-  --ctlBgHover: linear-gradient(180deg, rgba(225,29,72,.45), rgba(225,29,72,.22));
-  --ctlBgActive: linear-gradient(180deg, rgba(225,29,72,.55), rgba(225,29,72,.28));
+  /* Nadal wyraźne "uważaj", ale bez krzykliwej czerwieni */
+  --ctlBorder: rgba(225,29,72,.34);
+  --ctlBg: rgba(225,29,72,.10);
+  --ctlBgHover: rgba(225,29,72,.14);
+  --ctlBgActive: rgba(225,29,72,.18);
 }
 
 .itemList{ display:grid; gap: var(--uiListGap); margin-top: 10px; }
@@ -553,6 +636,9 @@ input:focus, textarea:focus, select:focus{
 .preview__title{ display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
 .preview__title span{ color: var(--muted); font-size: 12px; }
 
+/* Zachowujemy tryb "Styl" w kodzie, ale ukrywamy przycisk w UI (debug/legacy). */
+#btnPreviewStyle{ display:none !important; }
+
 .preview__controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .seg{
   display:inline-flex;
@@ -565,7 +651,7 @@ input:focus, textarea:focus, select:focus{
   border:0;
   background: transparent;
   color: var(--text);
-  padding: 8px 10px;
+  padding: 6px 8px;
   min-height: 34px;
   cursor:pointer;
   font-weight: 900;
@@ -702,7 +788,8 @@ input:focus, textarea:focus, select:focus{
   .app.isPanelCollapsed{ grid-template-columns: 1fr; grid-template-rows: 56px minmax(0, 1fr); }
   .panel{ border-right:0; border-bottom:1px solid var(--stroke); min-height: 0; }
   .preview{ min-height: 0; }
-  .grid2{ grid-template-columns: 1fr; }
+  .grid2{ display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:10px; align-items:start; }
+.grid2 > *{ min-width:0; }
   .panel__actions{ grid-template-columns: 1fr; }
   .itemGrid2{ grid-template-columns: 1fr; }
 }
@@ -713,7 +800,7 @@ input:focus, textarea:focus, select:focus{
 .modalCard{ position: relative; width: min(760px, calc(100vw - 28px)); margin: 10vh auto 0; background: var(--panel); border: 1px solid var(--stroke); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
 .modalHead{ display:flex; align-items:center; justify-content:space-between; padding: 14px 14px; border-bottom: 1px solid var(--stroke); background: rgba(255,255,255,.04); }
 .modalTitle strong{ font-size: 14px; letter-spacing: .2px; }
-.modalClose{ padding: 8px 10px; }
+.modalClose{ padding: 6px 8px; }
 
 
 /* Issues / warnings modal */
@@ -815,7 +902,7 @@ input:focus, textarea:focus, select:focus{
   margin-top: 6px;
   font-size: 12px;
   line-height: 1.35;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.04);
@@ -1017,3 +1104,285 @@ input:focus, textarea:focus, select:focus{
 }
 
 .zipProgress__sep { opacity: 0.6; }
+
+/* ==========================
+   Rich text editor (About)
+========================== */
+
+.rtTextWrap{ position: relative; }
+.rtTextWrap textarea{ padding-right: 70px; position: relative; z-index: 1; }
+
+.rtEditBtn{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 44px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.95);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: .2px;
+  z-index: 3;
+}
+
+.rtEditBtn:hover{ background: rgba(255,255,255,0.14); }
+.rtEditBtn:active{ transform: translateY(1px); }
+.rtEditBtn:focus{ outline: 2px solid rgba(106,224,255,0.55); outline-offset: 2px; }
+
+.rtUnderRow{ display:flex; justify-content:flex-end; margin-top:8px; }
+.rtEditUnder{ padding: 6px 10px; }
+
+dialog.rtDialog{
+  width: min(880px, calc(100vw - 24px));
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 16px;
+  padding: 0;
+  background: #0f141a;
+  color: #fff;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+}
+
+dialog.rtDialog::backdrop{ background: rgba(0,0,0,0.55); }
+
+.rtDialog__form{ margin: 0; }
+.rtDialog__header{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.rtDialog__x{
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  cursor:pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+.rtDialog__x:hover{ background: rgba(255,255,255,0.10); }
+
+.rtToolbar{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.rtBtn{
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  border-radius: 12px;
+  padding: 6px 8px;
+  font-size: 13px;
+  cursor:pointer;
+}
+.rtBtn:hover{ background: rgba(255,255,255,0.10); }
+.rtBtn--list .rtIcon{ width: 22px; text-align:center; font-weight: 900; opacity: .95; }
+.rtBtn--list .rtLbl{ opacity: .92; }
+.rtSep{ width:1px; background: rgba(255,255,255,0.16); margin: 0 4px; }
+
+.rtDialog__body{ padding: 12px 14px; }
+.rtEditor{
+  min-height: 46vh;
+  max-height: 60vh;
+  overflow:auto;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+}
+.rtEditor:focus{ outline: 2px solid rgba(106,224,255,0.40); outline-offset: 2px; }
+
+.rtDialog__footer{
+  display:flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+
+/* === KPO / NGEU funding information (compliance footer) === */
+.kpoFooter{
+  margin: 14px 16px 18px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+}
+.kpoFooter__inner{
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.kpoFooter__logos{
+  flex: 0 0 auto;
+  max-width: 520px;
+}
+.kpoFooter__logos img{
+  display:block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.92);
+  padding: 8px;
+}
+.kpoFooter__text{
+  flex: 1 1 auto;
+  min-width: 240px;
+}
+.kpoFooter__title{
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: 0.92;
+  margin-bottom: 6px;
+}
+.kpoFooter__details summary{
+  cursor: pointer;
+  font-size: 13px;
+  opacity: 0.92;
+  user-select: none;
+}
+.kpoFooter__detailsBody{
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+.kpoFooter__detailsBody p{ margin: 6px 0; }
+@media (max-width: 980px){
+  .kpoFooter__inner{ flex-direction: column; }
+  .kpoFooter__logos{ max-width: 380px; }
+}
+
+
+
+.dragGhost{
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.92;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  border-radius: 14px;
+}
+/* Drag ghost is a visual preview only — hide UI action icons/handles inside it. */
+.dragGhost .blockActions,
+.dragGhost .dragHandle{
+  display: none !important;
+}
+body.is-reordering{ user-select:none; }
+.dragHandle{ touch-action:none; }
+/* ===== Drag & drop helpers ===== */
+.blockItem.is-dragging { opacity: 0.25; height: 0 !important; max-height: 0 !important; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; gap: 0 !important; }
+.blockItem.drop-before { outline: 2px solid rgba(255,255,255,0.18); outline-offset: -2px; }
+.blockItem.drop-after { outline: 2px solid rgba(255,255,255,0.18); outline-offset: -2px; }
+.blockItem.drop-after::after {
+  content: "";
+  display: block;
+  height: 2px;
+  background: rgba(255,255,255,0.18);
+  margin-top: 6px;
+}
+.dragHandle { cursor: grab; }
+.dragHandle:active { cursor: grabbing; }
+.dragHandle--left{
+  min-width: 34px;
+}
+
+/* Drop zones for uploads */
+.dropZone {
+  position: relative;
+  border: 1px dashed rgba(255,255,255,0.22);
+  border-radius: 12px;
+  padding: 12px 12px;
+  background: rgba(255,255,255,0.03);
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.dropZone--over {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.35);
+}
+.dropZone__title {
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.2;
+}
+.dropZone__sub {
+  font-size: 11px;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+.dropZone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* SEO single-file status (favicon / OG) — like gallery row */
+.seoFileEmpty{
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 0;
+  display: block;
+}
+
+/* SEO single-file row: wygląda jak w galerii (nazwa + Usuń) */
+.seoFileRow{
+  margin-top: 6px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--uiCardBg);
+}
+.seoFileRow__name{
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--text);
+  /* ważne: nie rozpychaj kolumny (1/2 panelu), tylko zawijaj w jej obrębie */
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.seoFileRow > button{
+  flex: 0 0 auto;
+}
+
+
+/* ===== Drag & drop helpers ===== */
+.blockPlaceholder{
+  /* height set inline to match dragged item */
+  box-sizing: border-box;
+  border-radius: 12px;
+  margin: 0;
+  background: rgba(255,255,255,0.05);
+  border: 1px dashed rgba(109,40,217,.55);
+}
+

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Generator strony artysty</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20260207-rt3" />
 </head>
 <body>
   <div class="app" id="appRoot">
@@ -65,7 +65,7 @@
         </button>
       </div>
 
-      <details class="panel__section" open>
+      <details id="secProject" class="panel__section" open>
         <summary>Projekt</summary>
 
         <div class="grid2">
@@ -141,6 +141,26 @@
           <button type="button" class="colorDot" data-accent="#0f172a" aria-label="Grafit"></button>
         </div>
 
+        <!-- Colorwash-only: background color (shown only when template=Colorwash) -->
+        <div id="bgColorControls" class="isHiddenControl">
+          <div class="grid2">
+            <label class="field">
+              <span>Tło: kolor</span>
+              <input id="bgColor" type="color" value="#fef3c7" />
+            </label>
+            <div></div>
+          </div>
+
+          <div class="quickColors" aria-label="Szybkie kolory tła">
+            <button type="button" class="colorDot" data-bg="#fef3c7" aria-label="Krem"></button>
+            <button type="button" class="colorDot" data-bg="#fee2e2" aria-label="Róż pastel"></button>
+            <button type="button" class="colorDot" data-bg="#dbeafe" aria-label="Błękit pastel"></button>
+            <button type="button" class="colorDot" data-bg="#dcfce7" aria-label="Mięta pastel"></button>
+            <button type="button" class="colorDot" data-bg="#ede9fe" aria-label="Lawenda"></button>
+            <button type="button" class="colorDot" data-bg="#ffedd5" aria-label="Brzoskwinia"></button>
+          </div>
+        </div>
+
         
 
         
@@ -149,70 +169,10 @@
           <summary>Zaawansowane</summary>
           <div class="grid2">
             <label class="field">
-              <span>Układ nagłówka</span>
-              <select id="headerLayout">
-                <option value="left" selected>Lewy</option>
-                <option value="center">Wycentrowany</option>
-              </select>
-            </label>
-
-            <label class="field">
-              <span>Tło nagłówka</span>
-              <select id="headerBg">
-                <option value="solid" selected>Standard</option>
-                <option value="transparent">Przezroczysty (nakładka)</option>
-              </select>
-            </label>
-
-            <label class="field">
-              <span>Szerokość treści</span>
-              <select id="contentWidth">
-                <option value="normal" selected>Normal</option>
-                <option value="wide">Szeroki</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="grid2">
-            <label class="field">
-              <span>Akcent: typ</span>
-              <select id="accentType">
-                <option value="underline" selected>Underline</option>
-                <option value="pill">Pills</option>
-                <option value="outline">Outline</option>
-                <option value="gradient">Gradient / Glow</option>
-              </select>
-            </label>
-            <div></div>
-          </div>
-
-          <div class="grid2">
-            <label class="field">
-              <span>Szerokość headera</span>
-              <select id="headerWidth">
-                <option value="normal" selected>Normal</option>
-                <option value="wide">Szeroki</option>
-                <option value="full">Pełna szerokość</option>
-              </select>
-            </label>
-
-            <label class="field">
-              <span>Szerokość HERO</span>
-              <select id="heroWidth">
-                <option value="normal" selected>Normal</option>
-                <option value="wide">Szeroki</option>
-                <option value="full">Pełna szerokość</option>
-              </select>
-            </label>
-          </div>
-
-          
-          <div class="grid2">
-            <label class="field">
               <span>Czcionka</span>
               <select id="fontPreset">
                 <option value="inter" selected>Inter (czytelna)</option>
-                <option value="space">Space Grotesk (design)</option>
+                <option value="space">Manrope (design)</option>
                 <option value="plex">IBM Plex Sans (klasyczna)</option>
                 <option value="system">System (domyślna)</option>
                 <option value="editorial">Editorial (serif nagłówki)</option>
@@ -227,10 +187,7 @@
                 <option value="compact">Kompakt</option>
               </select>
             </label>
-          </div>
 
-          
-          <div class="grid2">
             <label class="field">
               <span>Obramowanie</span>
               <select id="borders">
@@ -248,9 +205,17 @@
                 <option value="lg">Duże</option>
               </select>
             </label>
-          </div>
 
-          <div class="grid2">
+            <label class="field">
+              <span>Akcent: typ</span>
+              <select id="accentType">
+                <option value="underline" selected>Underline</option>
+                <option value="pill">Pills</option>
+                <option value="outline">Outline</option>
+                <option value="gradient">Gradient / Glow</option>
+              </select>
+            </label>
+
             <label class="field">
               <span>Separatory</span>
               <select id="sectionDividers">
@@ -259,10 +224,7 @@
                 <option value="block">Blok</option>
               </select>
             </label>
-            <div></div>
-          </div>
 
-          <div class="grid2">
             <label class="field">
               <span>Animacje</span>
               <select id="motion">
@@ -279,9 +241,50 @@
                 <option value="focus">Focus</option>
               </select>
             </label>
-          </div>
 
-          <div class="grid2">
+            <label class="field">
+              <span>Układ nagłówka</span>
+              <select id="headerLayout">
+                <option value="left" selected>Lewy</option>
+                <option value="center">Wycentrowany</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Tło nagłówka</span>
+              <select id="headerBg">
+                <option value="solid" selected>Standard</option>
+                <option value="pill">Pill (pływający)</option>
+                <option value="transparent">Przezroczysty (nakładka)</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Szerokość headera</span>
+              <select id="headerWidth">
+                <option value="normal" selected>Normal</option>
+                <option value="wide">Szeroki</option>
+                <option value="full">Pełna szerokość</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Szerokość HERO</span>
+              <select id="heroWidth">
+                <option value="normal" selected>Normal</option>
+                <option value="wide">Szeroki</option>
+                <option value="full">Pełna szerokość</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Szerokość treści</span>
+              <select id="contentWidth">
+                <option value="normal" selected>Normal</option>
+                <option value="wide">Szeroki</option>
+              </select>
+            </label>
+
             <label class="field">
               <span>Układ treści</span>
               <select id="sectionTitleAlign">
@@ -290,7 +293,7 @@
               </select>
             </label>
 
-            <label class="field">
+            <label class="field span2">
               <span>Media (YouTube/Spotify)</span>
               <select id="mediaLayout">
                 <option value="stack" selected>Jeden pod drugim</option>
@@ -298,7 +301,7 @@
               </select>
             </label>
           </div>
-        </details>
+</details>
 
         <div class="grid2" style="margin-top:10px;">
           <label class="field">
@@ -315,7 +318,7 @@
         </div>
       </details>
 
-      <details class="panel__section">
+      <details id="secSeo" class="panel__section">
         <summary>SEO / link podgląd</summary>
 
         <label class="field">
@@ -336,23 +339,39 @@
         <div class="grid2">
           <label class="field">
             <span>Favicon (ikona)</span>
-            <input id="faviconUpload" type="file" accept=".ico,image/x-icon,image/vnd.microsoft.icon,image/png,image/svg+xml,.png,.ico,.svg" />
+            <div class="dropZone" data-drop="faviconUpload">
+              <div class="dropZone__title">Upuść faviconę</div>
+              <div class="dropZone__sub">…albo kliknij, aby wybrać plik</div>
+              <input id="faviconUpload" type="file" accept=".ico,image/x-icon,image/vnd.microsoft.icon,image/png,image/svg+xml,.png,.ico,.svg" />
+            </div>
+            <div id="faviconEmpty" class="seoFileEmpty">Brak pliku</div>
+            <div id="faviconRow" class="seoFileRow" hidden>
+              <div class="seoFileRow__name" id="faviconName"></div>
+              <button type="button" class="btnSmall btn--ghost" id="faviconRemove">Usuń</button>
+            </div>
           </label>
           <label class="field">
             <span>OG image (podgląd linku)</span>
-            <input id="ogImageUpload" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" />
+            <div class="dropZone" data-drop="ogImageUpload">
+              <div class="dropZone__title">Upuść OG image</div>
+              <div class="dropZone__sub">…albo kliknij, aby wybrać plik</div>
+              <input id="ogImageUpload" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" />
+            </div>
+            <div id="ogImageEmpty" class="seoFileEmpty">Brak pliku</div>
+            <div id="ogImageRow" class="seoFileRow" hidden>
+              <div class="seoFileRow__name" id="ogImageName"></div>
+              <button type="button" class="btnSmall btn--ghost" id="ogImageRemove">Usuń</button>
+            </div>
           </label>
         </div>
 
               </details>
 
-      <details class="panel__section">
+      <details id="secAnalytics" class="panel__section">
         <summary>Analityka / pixele</summary>
-
         <label class="field">
           <span>Google Tag Manager (GTM)</span>
           <input id="gtmId" type="text" placeholder="GTM-XXXXXXX" />
-          <small>GTM uruchomi się dopiero po akceptacji cookies.</small>
         </label>
 
         <div class="toggleRow" style="margin-top:10px;">
@@ -360,20 +379,22 @@
           <div class="toggleText">Banner cookies (zgoda/odrzucenie)</div>
         </div>
 
-        <div class="toggleRow" style="margin-top:10px;">
-          <input id="privacyAuto" type="checkbox" checked />
-          <div class="toggleText">Gotowa polityka prywatności (generuj automatycznie)</div>
-        </div>
-        <div class="hint">Gdy włączone, generator doda gotową politykę w eksporcie i podepnie link w bannerze cookies.</div>
-
         <label class="field" style="margin-top:10px;">
-          <span>Własny link do polityki (opcjonalnie)</span>
-          <input id="privacyUrl" type="text" placeholder="privacy.html / #privacy / https://..." />
-          <small>Używane tylko gdy wyłączysz automatyczne generowanie.</small>
+          <span>Polityka prywatności</span>
+          <select id="privacyMode">
+            <option value="auto">Gotowa (generuj automatycznie)</option>
+            <option value="custom">Własna (link)</option>
+          </select>
         </label>
+
+        <label class="field" id="privacyUrlWrap" style="margin-top:10px; display:none;">
+          <span>Link do polityki</span>
+          <input id="privacyUrl" type="text" placeholder="Wklej link..." />
+        </label>
+
       </details>
 
-      <details class="panel__section" open>
+      <details id="secBlocks" class="panel__section">
         <summary>Bloki strony</summary>
 
         <label class="field" style="margin:0;">
@@ -388,14 +409,14 @@
 
               </details>
 
-      <details class="panel__section" open>
+      <details id="secEditor" class="panel__section">
         <summary>Edycja bloku</summary>
         <div id="blockEditor" class="blockEditor">
           <div class="emptyEditor">Wybierz blok z listy powyżej.</div>
         </div>
       </details>
 
-      <details class="panel__section" open>
+      <details id="secActions" class="panel__section">
         <summary>Akcje</summary>
         <div class="panel__actions panel__actions--pills">
           <button class="btnSmall" id="issuesPill" type="button" title="Pokaż listę problemów / ostrzeżeń">Problemy: 0</button>
@@ -414,17 +435,30 @@
           <button id="btnDownload" class="btn btn--primary" type="button">Pobierz</button>
         </div>
       </details>
+
+      <!-- KPO / NGEU – stała stopka panelu (widoczna bez szukania po zakładkach) -->
+      <div class="panel__foot" aria-label="Informacja o finansowaniu KPO">
+        <div class="kpoMarksBox"><picture class="kpoMarks">
+          <source media="(max-width: 420px)" srcset="assets/kpo/kpo_rp_ngeu_pion_rgb.png" />
+          <img
+            src="assets/kpo/kpo_rp_ngeu_poziom_rgb.png"
+            alt="Zestawienie znaków: Krajowy Plan Odbudowy, barwy Rzeczypospolitej Polskiej, NextGenerationEU"
+            loading="lazy"
+          />
+        </picture></div>
+
+        <div class="kpoMiniText">
+          <div class="kpoLine">Przedsięwzięcie finansowane przez Unię Europejską – NextGenerationEU (KPO).</div>
+          <a class="kpoBtn" href="kpo.html" target="_blank" rel="noopener">Szczegóły</a>
+        </div>
+      </div>
     </aside>
 
     <main class="preview">
       <div class="preview__bar">
         <div class="preview__title">
           <strong>Podgląd</strong>
-          <div class="seg" role="group" aria-label="Tryb podglądu" style="margin-left:10px;">
-            <button id="btnPreviewPage" type="button" class="segBtn">Strona</button>
-            <button id="btnPreviewStyle" type="button" class="segBtn">Styl</button>
-          </div>
-          <span id="previewPageLabel" class="pill" style="margin-left:8px;">index.html</span>
+          <span id="previewPageLabel" class="pill" style="margin-left:10px;">index.html</span>
         </div>
 
         <div class="preview__controls" aria-label="Kontrolki podglądu">
@@ -467,13 +501,40 @@
     </button>
   </div>
 
+
+  <footer class="kpoFooter" aria-label="Informacja o finansowaniu KPO">
+    <div class="kpoFooter__inner">
+      <div class="kpoFooter__logos">
+        <picture>
+          <source media="(max-width: 520px)" srcset="assets/kpo/kpo_rp_ngeu_pion_rgb.png">
+          <img src="assets/kpo/kpo_rp_ngeu_poziom_rgb.png"
+               alt="Zestawienie znaków: Krajowy Plan Odbudowy, barwy Rzeczypospolitej Polskiej, NextGenerationEU"
+               loading="lazy">
+        </picture>
+      </div>
+      <div class="kpoFooter__text">
+        <div class="kpoFooter__title">Przedsięwzięcie jest realizowane dzięki wsparciu z Krajowego Planu Odbudowy i Zwiększania Odporności oraz finansowane przez Unię Europejską w ramach NextGenerationEU.</div>
+        <details class="kpoFooter__details">
+          <summary>Informacje o przedsięwzięciu</summary>
+          <div class="kpoFooter__detailsBody">
+            <p><strong>Tytuł:</strong> Szablon strony internetowej i pomoc medialna dla artystów z ograniczonymi zasobami – bezpłatne wsparcie w budowaniu obecności w sieci, dostępne dla każdego</p>
+            <p><strong>Cel:</strong> zwiększenie obecności online wykluczonych cyfrowo artystów.</p>
+            <p><strong>Grupa docelowa:</strong> artyści (muzycy, graficy i inni twórcy).</p>
+            <p><strong>Wartość przedsięwzięcia:</strong> 36 000 zł brutto. <strong>Dofinansowanie z UE (KPO/NGEU):</strong> 36 000 zł brutto.</p>
+            <p><strong>Termin realizacji:</strong> do 28.02.2026.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </footer>
+
   <!-- Local JSZip (no CDN dependency) -->
   <script src="vendor/jszip.min.js"></script>
   <script src="js/00_core.js"></script>
   <script src="js/10_state.js"></script>
   <script src="js/20_content.js"></script>
-  <script src="js/30_ui.js"></script>
-  <script src="js/40_output.js"></script>
+  <script src="js/30_ui.js?v=20260207-rt3"></script>
+  <script src="js/40_output.js?v=20260207-rt3"></script>
   <script src="js/50_init.js"></script>
   <div id="toastHost" aria-live="polite" aria-atomic="true"></div>
   <div id="zipProgress" class="zipProgress" hidden>

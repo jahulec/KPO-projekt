@@ -74,7 +74,7 @@ function bindSettings() {
   });
 
   // settings that should NOT rerender UI on each key
-  ["accent","siteName","metaTitle","metaDescription","metaKeywords","gtmId","privacyUrl"].forEach(id => {
+  ["accent","bgColor","siteName","metaTitle","metaDescription","metaKeywords","gtmId","privacyUrl"].forEach(id => {
     $(id).addEventListener("input", () => {
       syncStateFromSettingsInputs();
       contentDraftChanged();
@@ -111,7 +111,7 @@ function bindSettings() {
     requestPreviewRebuild('content');
   });
 
-  if ($("privacyAuto")) $("privacyAuto").addEventListener("change", () => {
+  if ($("privacyMode")) $("privacyMode").addEventListener("change", () => {
     syncStateFromSettingsInputs();
     saveDraft();
     requestPreviewRebuild('content');
@@ -218,8 +218,22 @@ function bindSettings() {
       if (!c) return;
       state.accent = c;
       if ($("accent")) $("accent").value = c;
-      contentDraftChanged();
-      // contentChanged will schedule preview rebuild depending on LIVE mode
+      // kropki mają działać jak picker: zapis + odświeżenie podglądu
+      contentChanged();
+    });
+  });
+
+  // Colorwash background quick colors (only shown in Colorwash)
+  document.querySelectorAll('.colorDot[data-bg]').forEach((dot) => {
+    const c0 = dot.getAttribute('data-bg');
+    if (c0) { dot.style.background = c0; }
+    dot.addEventListener('click', () => {
+      const c = dot.getAttribute('data-bg');
+      if (!c) return;
+      state.bgColor = c;
+      if ($("bgColor")) $("bgColor").value = c;
+      // kropki mają działać jak picker: zapis + odświeżenie podglądu
+      contentChanged();
     });
   });
 
@@ -313,9 +327,10 @@ function bindSettings() {
       const dataUrl = await readFileAsDataUrl(file);
       if (!dataUrl) return;
       const mime = file.type || (parseDataUrl(dataUrl)?.mime || (isIcoFile(file) ? 'image/x-icon' : 'image/svg+xml'));
-      assets.favicon = { id: "single_favicon", dataUrl, mime, bytes: inBytes };
+      assets.favicon = { id: "single_favicon", name: file.name || "favicon", dataUrl, mime, bytes: inBytes };
       await persistSingleAsset(assets.favicon, "single_favicon", { kind: "favicon" });
       contentDraftChanged();
+      refreshSeoSinglesUI();
       fav.value = '';
       return;
     }
@@ -328,11 +343,62 @@ function bindSettings() {
       _single: 1,
     });
     if (!norm.dataUrl) return;
-    assets.favicon = { id: "single_favicon", dataUrl: norm.dataUrl, mime: norm.mime, bytes: norm.bytes, width: norm.width, height: norm.height };
+    assets.favicon = { id: "single_favicon", name: file.name || "favicon", dataUrl: norm.dataUrl, mime: norm.mime, bytes: norm.bytes, width: norm.width, height: norm.height };
     await persistSingleAsset(assets.favicon, "single_favicon", { kind: "favicon" });
     contentChanged();
+    refreshSeoSinglesUI();
     fav.value = '';
   });
+
+  // SEO: drop-zone (favicon)
+  const favDZ = document.querySelector('[data-drop="faviconUpload"]');
+  if (fav && favDZ && typeof bindDropZone === 'function') {
+    bindDropZone(favDZ, async (files) => {
+      const f = (files && files[0]) ? files[0] : null;
+      if (!f) return;
+      // emulate input selection
+      // we re-run the same handler by assigning a FileList is not reliable; call logic directly instead
+      // Trigger change handler path by temporarily setting a manual property is not worth it.
+      // So: call the same code as in the change handler (inline below).
+
+      const rem = remainingMediaBudgetBytes() + assetBytes(assets.favicon);
+      const inBytes = Number(f.size || 0);
+      if (inBytes && rem && inBytes > rem) {
+        toast(`⚠ Limit zasobów: brak miejsca na faviconę (${formatBytes(inBytes)}). Zostało: ${formatBytes(rem)}.`, 'warn', 5200);
+        return;
+      }
+
+      if (isLikelyHeic(f)) {
+        toast(`⚠ HEIC/HEIF nie jest wspierany jako favicona: ${f.name}. Użyj PNG/ICO/SVG.`, 'warn', 5200);
+        return;
+      }
+
+      if (isIcoFile(f) || isSvgFile(f)) {
+        const dataUrl = await readFileAsDataUrl(f);
+        if (!dataUrl) return;
+        const mime = f.type || (parseDataUrl(dataUrl)?.mime || (isIcoFile(f) ? 'image/x-icon' : 'image/svg+xml'));
+        assets.favicon = { id: "single_favicon", name: f.name || "favicon", dataUrl, mime, bytes: inBytes };
+        await persistSingleAsset(assets.favicon, "single_favicon", { kind: "favicon" });
+        contentDraftChanged();
+        refreshSeoSinglesUI();
+        fav.value = '';
+        return;
+      }
+
+      const norm = await normalizeImageFileToDataUrl(f, {
+        maxSide: 512,
+        maxOutputBytes: 350_000,
+        mime: "image/png",
+        _single: 1,
+      });
+      if (!norm.dataUrl) return;
+      assets.favicon = { id: "single_favicon", name: f.name || "favicon", dataUrl: norm.dataUrl, mime: norm.mime, bytes: norm.bytes, width: norm.width, height: norm.height };
+      await persistSingleAsset(assets.favicon, "single_favicon", { kind: "favicon" });
+      contentChanged();
+      refreshSeoSinglesUI();
+      fav.value = '';
+    });
+  }
 
   const og = $("ogImageUpload");
   if (og) og.addEventListener("change", async () => {
@@ -365,11 +431,65 @@ function bindSettings() {
       _single: 1,
     });
     if (!norm.dataUrl) return;
-    assets.ogImage = { id: "single_og", dataUrl: norm.dataUrl, mime: norm.mime, bytes: norm.bytes, width: norm.width, height: norm.height };
+    assets.ogImage = { id: "single_og", name: file.name || "og-image", dataUrl: norm.dataUrl, mime: norm.mime, bytes: norm.bytes, width: norm.width, height: norm.height };
     await persistSingleAsset(assets.ogImage, "single_og", { kind: "og" });
     contentChanged();
+    refreshSeoSinglesUI();
     og.value = '';
   });
+
+  // SEO: drop-zone (OG image)
+  const ogDZone = document.querySelector('[data-drop="ogImageUpload"]');
+  if (og && ogDZone && typeof bindDropZone === 'function') {
+    bindDropZone(ogDZone, async (files) => {
+      const f = (files && files[0]) ? files[0] : null;
+      if (!f) return;
+
+      const rem = remainingMediaBudgetBytes() + assetBytes(assets.ogImage);
+      const inBytes = Number(f.size || 0);
+      if (inBytes && rem && inBytes > rem) {
+        toast(`⚠ Limit zasobów: brak miejsca na OG image (${formatBytes(inBytes)}). Zostało: ${formatBytes(rem)}.`, 'warn', 5200);
+        return;
+      }
+
+      if (isLikelyHeic(f)) {
+        toast(`⚠ HEIC/HEIF nie jest wspierany jako OG image: ${f.name}. Użyj JPG/PNG.`, 'warn', 5200);
+        return;
+      }
+      if (isSvgFile(f) || isIcoFile(f)) {
+        toast(`⚠ OG image powinien być rastrowy (JPG/PNG).`, 'warn', 4200);
+        return;
+      }
+
+      const norm = await normalizeImageFileToDataUrl(f, {
+        maxSide: 2000,
+        maxOutputBytes: 1_000_000,
+        mime: "image/jpeg",
+        quality: 0.86,
+        _single: 1,
+      });
+      if (!norm.dataUrl) return;
+      assets.ogImage = { id: "single_og", name: f.name || "og-image", dataUrl: norm.dataUrl, mime: norm.mime, bytes: norm.bytes, width: norm.width, height: norm.height };
+      await persistSingleAsset(assets.ogImage, "single_og", { kind: "og" });
+      contentChanged();
+      refreshSeoSinglesUI();
+      og.value = '';
+    });
+  }
+
+  // SEO single file remove buttons
+  const favRem = $("faviconRemove");
+  if (favRem) favRem.addEventListener("click", async (e) => {
+    try{ e.preventDefault(); e.stopPropagation(); }catch(_){ }
+    await removeSeoSingle("favicon");
+  });
+  const ogRem = $("ogImageRemove");
+  if (ogRem) ogRem.addEventListener("click", async (e) => {
+    try{ e.preventDefault(); e.stopPropagation(); }catch(_){ }
+    await removeSeoSingle("og");
+  });
+
+
 
 
   $("btnDownload").addEventListener("click", async () => {
@@ -676,8 +796,66 @@ function closeCustomSelect(wrap){
   if (__openCustomSelect === wrap) __openCustomSelect = null;
 }
 
+/* ==========================
+   SEO singles UI (favicon / OG)
+========================== */
+
+function refreshSeoSinglesUI() {
+  const favEmpty = $("faviconEmpty");
+  const favRow = $("faviconRow");
+  const favName = $("faviconName");
+
+  const ogEmpty = $("ogImageEmpty");
+  const ogRow = $("ogImageRow");
+  const ogName = $("ogImageName");
+
+  const favOn = !!(assets && assets.favicon && assets.favicon.dataUrl);
+  if (favEmpty) {
+    favEmpty.hidden = favOn;
+    favEmpty.style.display = favOn ? "none" : "block";
+  }
+  if (favRow) {
+    favRow.hidden = !favOn;
+    favRow.style.display = favOn ? "flex" : "none";
+  }
+  if (favName) favName.textContent = favOn ? (assets.favicon.name || "favicon") : "";
+
+  const ogOn = !!(assets && assets.ogImage && assets.ogImage.dataUrl);
+  if (ogEmpty) {
+    ogEmpty.hidden = ogOn;
+    ogEmpty.style.display = ogOn ? "none" : "block";
+  }
+  if (ogRow) {
+    ogRow.hidden = !ogOn;
+    ogRow.style.display = ogOn ? "flex" : "none";
+  }
+  if (ogName) ogName.textContent = ogOn ? (assets.ogImage.name || "og-image") : "";
+}
+
+async function removeSeoSingle(kind) {
+  try {
+    if (kind === "favicon" && assets && assets.favicon) {
+      try { await mediaDel(assets.favicon.id || "single_favicon"); } catch(_) {}
+      assets.favicon = null;
+      contentChanged();
+      refreshSeoSinglesUI();
+      return;
+    }
+    if (kind === "og" && assets && assets.ogImage) {
+      try { await mediaDel(assets.ogImage.id || "single_og"); } catch(_) {}
+      assets.ogImage = null;
+      contentChanged();
+      refreshSeoSinglesUI();
+      return;
+    }
+  } catch (e) {
+    // keep app stable
+  }
+}
+
 async function init() {
   bindPanelToggle();
+  bindPanelDetailsPersistence();
   bindQuickDock();
   applyRolePreset(state.role);
 
@@ -686,6 +864,7 @@ async function init() {
     $("exportMode").value = state.exportMode;
     $("role").value = state.role;
     $("accent").value = state.accent;
+    if ($("bgColor")) $("bgColor").value = state.bgColor || "#fef3c7";
     $("siteName").value = state.siteName;
     if ($("accentType")) $("accentType").value = state.accentType;
     if ($("motion")) $("motion").value = state.motion;
@@ -704,6 +883,8 @@ async function init() {
     syncStyleCollectionButtons();
     syncThemeButtons();
     renderStyleUi();
+    // kontrolki zależne od szablonu (np. Colorwash: kolor tła)
+    try{ syncTemplateDependentStyleControls(); }catch(_){ }
   } else {
     hardLockHeroFirst();
   }
@@ -711,6 +892,7 @@ async function init() {
   updateSnapshotPill();
   setLiveStatus();
   bindSettings();
+  refreshSeoSinglesUI();
   installLivePreviewFallback();
   initCustomSelects(document);
   refreshCustomSelects();
@@ -721,6 +903,7 @@ async function init() {
   syncStyleCollectionButtons();
   syncThemeButtons();
   renderStyleUi();
+  try{ syncTemplateDependentStyleControls(); }catch(_){ }
   // first render
   syncStateFromSettingsInputs();
   renderBlocksList();

@@ -12,6 +12,7 @@ const SNAPSHOT_LIST_LIMIT = 20;
 const ZIP_ROOT_FOLDER = "strona-artysta";
 const PANEL_COLLAPSED_KEY = "artist_site_generator_v9_panel_collapsed";
 const PANEL_SCROLLTOP_KEY = "artist_site_generator_v9_panel_scrolltop";
+const PANEL_DETAILS_KEY = "artist_site_generator_v9_panel_details";
 const LEGACY_STORAGE_KEY = "artist_site_generator_v6_draft";
 const LEGACY_SNAPSHOT_KEY = "artist_site_generator_v6_snapshot";
 const LEGACY_PANEL_COLLAPSED_KEY = "artist_site_generator_v6_panel_collapsed";
@@ -265,6 +266,25 @@ function setPreviewDevice(device) {
   });
 }
 
+function freezePreviewAnimations(durationMs = 650) {
+  const iframe = $("previewFrame");
+  if (!iframe) return;
+  try {
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+    const root = doc.documentElement;
+    if (!root) return;
+    root.classList.add("kpo-preload"); // reuse preview CSS: disables transitions/animations
+    // clear previous timer
+    try {
+      if (freezePreviewAnimations._t) clearTimeout(freezePreviewAnimations._t);
+    } catch (e) {}
+    freezePreviewAnimations._t = setTimeout(() => {
+      try { root.classList.remove("kpo-preload"); } catch (e) {}
+    }, Math.max(0, Number(durationMs) || 0));
+  } catch (e) {}
+}
+
 function setPanelCollapsed(collapsed, persist = true) {
   const app = document.querySelector(".app");
   if (!app) return;
@@ -272,6 +292,9 @@ function setPanelCollapsed(collapsed, persist = true) {
   // ScrollTop musimy złapać PRZED zmianą klas (po zwinięciu panel ma overflow:hidden i scrollTop bywa zerowany).
   const panel = document.querySelector(".panel");
   const prevScrollTop = panel ? (panel.scrollTop || 0) : 0;
+
+    // Zmiana szerokości podglądu potrafi odpalać animacje (np. hamburger). Tymczasowo je blokujemy.
+  freezePreviewAnimations(750);
 
   app.classList.toggle("isPanelCollapsed", !!collapsed);
 
@@ -330,6 +353,52 @@ function bindPanelToggle() {
     setPanelCollapsed(!isCollapsed, true);
   });
 }
+
+
+function bindPanelDetailsPersistence() {
+  // Persist open/close state for main panel sections (ids on <details>). 
+  // Important: persist ONLY user-initiated toggles (click on <summary>), not programmatic opens (np. focus z listy błędów).
+  const details = Array.from(document.querySelectorAll('.panel .panel__section[id]'));
+  if (!details.length) return;
+
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(PANEL_DETAILS_KEY) || '{}') || {}; } catch (e) { saved = {}; }
+
+  // Restore
+  for (const d of details) {
+    const id = d.id;
+    if (!id) continue;
+    if (Object.prototype.hasOwnProperty.call(saved, id)) {
+      try { d.open = !!saved[id]; } catch (e) {}
+    }
+  }
+
+  // Track user toggles
+  let lastUserToggleId = null;
+  for (const d of details) {
+    const sum = d.querySelector(':scope > summary');
+    if (sum) {
+      sum.addEventListener('click', () => { lastUserToggleId = d.id || null; }, true);
+    }
+  }
+
+  function persistIfUser(det) {
+    if (!det || !det.id) return;
+    if (det.id != lastUserToggleId) return;
+    lastUserToggleId = null;
+
+    const out = {};
+    for (const d of details) {
+      if (d.id) out[d.id] = !!d.open;
+    }
+    try { localStorage.setItem(PANEL_DETAILS_KEY, JSON.stringify(out)); } catch (e) {}
+  }
+
+  for (const d of details) {
+    d.addEventListener('toggle', () => persistIfUser(d));
+  }
+}
+
 
 /* ==========================
    Quick actions dock (collapsed panel)
@@ -524,23 +593,34 @@ const STYLE_CATALOG = {
     {
       id: "editorial",
       name: "Editorial / Magazine",
-      desc: "Serif, hierarchia, dużo światła",
+      desc: "Serif + linie: jak magazyn",
       thumb: "linear-gradient(135deg, #ffffff, #e5e7eb)",
       preset: {
         theme: "minimalist",
-        headerLayout: "center",
-        contentWidth: "normal",
+        fontPreset: "editorial",
+        accent: "#9f1239",
+        accentType: "underline",
+
+        headerLayout: "left",
+        headerBg: "solid",
         headerWidth: "normal",
+
         heroWidth: "normal",
-        mediaLayout: "stack",
+        contentWidth: "normal",
+
         density: "comfortable",
         borders: "thin",
-        radius: "md",
+        radius: "0",
         sectionDividers: "line",
-        accentType: "underline",
         motion: "subtle",
         scrollMode: "normal",
         sectionHeadersAlign: "left",
+        mediaLayout: "stack",
+      },
+      blockPreset: {
+        gallery: { layout: "grid", cols: 4, masonryCols: 3 },
+        spotify: { embedSize: 75 },
+        youtube: { embedSize: 75 },
       },
       variants: [
         { id: "classic", label: "Classic", preset: {} },
@@ -548,53 +628,77 @@ const STYLE_CATALOG = {
         { id: "compact", label: "Compact", preset: { density: "compact" } },
       ],
     },
+
     {
       id: "cinematic",
       name: "Cinematic Dark",
-      desc: "Ciemny, pełnoekranowy hero, minimal",
+      desc: "Ciemny landing, full-bleed HERO",
       thumb: "linear-gradient(135deg, #0b1020, #111827)",
       preset: {
         theme: "modern",
+        fontPreset: "space",
+        accent: "#14b8a6",
+        accentType: "gradient",
+
         headerLayout: "left",
-        contentWidth: "wide",
+        headerBg: "transparent",
         headerWidth: "full",
+
         heroWidth: "full",
-        mediaLayout: "split",
+        contentWidth: "normal",
+
         density: "normal",
         borders: "none",
         radius: "md",
         sectionDividers: "none",
-        accentType: "gradient",
-        motion: "subtle",
+        motion: "strong",
         scrollMode: "normal",
         sectionHeadersAlign: "left",
+        mediaLayout: "split",
+      },
+      blockPreset: {
+        gallery: { layout: "masonry", cols: 4, masonryCols: 3 },
+        spotify: { embedSize: 60 },
+        youtube: { embedSize: 60 },
       },
       variants: [
         { id: "standard", label: "Standard", preset: {} },
         { id: "tight", label: "Tight", preset: { density: "compact" } },
-        { id: "glow", label: "Glow", preset: { accentType: "gradient" } },
+        { id: "glow", label: "Glow", preset: { motion: "strong" } },
       ],
     },
+
     {
       id: "brutalist",
       name: "Brutalist Type",
-      desc: "Mocna typografia i linie",
+      desc: "Grube linie, zero ozdobników",
       thumb: "linear-gradient(135deg, #f8fafc, #111827)",
       preset: {
         theme: "minimalist",
+        fontPreset: "plex",
+        accent: "#dc2626",
+        accentType: "outline",
+
         headerLayout: "left",
-        contentWidth: "wide",
-        headerWidth: "wide",
+        headerBg: "solid",
+        headerWidth: "full",
+
         heroWidth: "wide",
-        mediaLayout: "split",
+        contentWidth: "normal",
+
         density: "compact",
         borders: "thick",
         radius: "0",
-        sectionDividers: "line",
-        accentType: "outline",
+        sectionDividers: "block",
         motion: "off",
         scrollMode: "normal",
         sectionHeadersAlign: "left",
+        mediaLayout: "stack",
+      },
+      blockPreset: {
+        gallery: { layout: "grid", cols: 6, masonryCols: 3 },
+        spotify: { embedSize: 55 },
+        youtube: { embedSize: 55 },
       },
       variants: [
         { id: "poster", label: "Poster", preset: {} },
@@ -602,26 +706,38 @@ const STYLE_CATALOG = {
         { id: "compact", label: "Compact", preset: { density: "compact" } },
       ],
     },
+
     {
       id: "neon",
       name: "Neon Club",
-      desc: "Glow, gradienty, nocny vibe",
+      desc: "Glow, pill header, nocny vibe",
       thumb: "linear-gradient(135deg, #0b1020, #4c1d95)",
       preset: {
         theme: "modern",
-        headerLayout: "left",
-        contentWidth: "normal",
-        headerWidth: "full",
+        fontPreset: "space",
+        accent: "#a855f7",
+        accentType: "gradient",
+
+        headerLayout: "center",
+        headerBg: "pill",
+        headerWidth: "wide",
+
         heroWidth: "full",
-        mediaLayout: "split",
-        density: "comfortable",
+        contentWidth: "wide",
+
+        density: "normal",
         borders: "thin",
         radius: "lg",
         sectionDividers: "none",
-        accentType: "gradient",
         motion: "strong",
         scrollMode: "normal",
-        sectionHeadersAlign: "left",
+        sectionHeadersAlign: "center",
+        mediaLayout: "split",
+      },
+      blockPreset: {
+        gallery: { layout: "masonry", cols: 4, masonryCols: 4 },
+        spotify: { embedSize: 60 },
+        youtube: { embedSize: 60 },
       },
       variants: [
         { id: "club", label: "Club", preset: {} },
@@ -629,26 +745,38 @@ const STYLE_CATALOG = {
         { id: "outline", label: "Outline", preset: { accentType: "outline" } },
       ],
     },
+
     {
       id: "soft",
       name: "Soft Pastel",
-      desc: "Miękkie tła, oddech, karty",
+      desc: "Miękko, karty, dużo oddechu",
       thumb: "linear-gradient(135deg, #fdf2f8, #ecfeff)",
       preset: {
         theme: "minimalist",
-        headerLayout: "center",
-        contentWidth: "normal",
+        fontPreset: "inter",
+        accent: "#ec4899",
+        accentType: "pill",
+
+        headerLayout: "left",
+        headerBg: "pill",
         headerWidth: "normal",
+
         heroWidth: "wide",
-        mediaLayout: "stack",
+        contentWidth: "normal",
+
         density: "comfortable",
         borders: "thin",
         radius: "lg",
-        sectionDividers: "block",
-        accentType: "pill",
+        sectionDividers: "none",
         motion: "subtle",
         scrollMode: "normal",
         sectionHeadersAlign: "center",
+        mediaLayout: "stack",
+      },
+      blockPreset: {
+        gallery: { layout: "grid", cols: 3, masonryCols: 3 },
+        spotify: { embedSize: 80 },
+        youtube: { embedSize: 80 },
       },
       variants: [
         { id: "cards", label: "Cards", preset: {} },
@@ -656,26 +784,38 @@ const STYLE_CATALOG = {
         { id: "line", label: "Line", preset: { sectionDividers: "line" } },
       ],
     },
+
     {
       id: "swiss",
       name: "Swiss Grid",
-      desc: "Siatka, ostre linie, minimal",
+      desc: "Minimal, siatka, równe linie",
       thumb: "linear-gradient(135deg, #ffffff, #0f172a)",
       preset: {
         theme: "minimalist",
+        fontPreset: "system",
+        accent: "#2563eb",
+        accentType: "underline",
+
         headerLayout: "left",
+        headerBg: "solid",
+        headerWidth: "normal",
+
+        heroWidth: "wide",
         contentWidth: "wide",
-        headerWidth: "wide",
-        heroWidth: "normal",
-        mediaLayout: "split",
-        density: "normal",
+
+        density: "compact",
         borders: "thin",
         radius: "0",
         sectionDividers: "line",
-        accentType: "underline",
         motion: "off",
         scrollMode: "normal",
         sectionHeadersAlign: "left",
+        mediaLayout: "split",
+      },
+      blockPreset: {
+        gallery: { layout: "grid", cols: 4, masonryCols: 3 },
+        spotify: { embedSize: 60 },
+        youtube: { embedSize: 60 },
       },
       variants: [
         { id: "grid", label: "Grid", preset: {} },
@@ -683,53 +823,78 @@ const STYLE_CATALOG = {
         { id: "compact", label: "Compact", preset: { density: "compact" } },
       ],
     },
+
     {
       id: "rounded",
       name: "Rounded Modern",
-      desc: "Zaokrąglone elementy, nowocześnie",
+      desc: "Nowoczesne karty, miękkie UI",
       thumb: "linear-gradient(135deg, #e0e7ff, #ffffff)",
       preset: {
         theme: "minimalist",
-        headerLayout: "left",
-        contentWidth: "normal",
-        headerWidth: "normal",
-        heroWidth: "normal",
-        mediaLayout: "split",
-        density: "comfortable",
-        borders: "thin",
-        radius: "lg",
-        sectionDividers: "none",
+        fontPreset: "inter",
+        accent: "#16a34a",
         accentType: "pill",
+
+        headerLayout: "left",
+        headerBg: "solid",
+        headerWidth: "wide",
+
+        heroWidth: "wide",
+        contentWidth: "normal",
+
+        density: "normal",
+        borders: "none",
+        radius: "lg",
+        sectionDividers: "block",
         motion: "subtle",
         scrollMode: "normal",
         sectionHeadersAlign: "left",
+        mediaLayout: "stack",
+      },
+      blockPreset: {
+        gallery: { layout: "grid", cols: 3, masonryCols: 3 },
+        spotify: { embedSize: 70 },
+        youtube: { embedSize: 70 },
       },
       variants: [
         { id: "smooth", label: "Smooth", preset: {} },
         { id: "outline", label: "Outline", preset: { accentType: "outline" } },
-        { id: "tight", label: "Tight", preset: { density: "normal" } },
+        { id: "tight", label: "Tight", preset: { density: "compact" } },
       ],
     },
+
     {
       id: "colorwash",
       name: "Colorwash",
-      desc: "Tła sekcji w kolorach, miękko",
+      desc: "Sekcje jak plansze, ciepły vibe",
       thumb: "linear-gradient(135deg, #fef3c7, #bfdbfe)",
       preset: {
         theme: "minimalist",
+        fontPreset: "inter",
+        accent: "#f59e0b",
+        bgColor: "#fef3c7",
+        accentType: "pill",
+
         headerLayout: "center",
-        contentWidth: "normal",
-        headerWidth: "normal",
+        headerBg: "transparent",
+        headerWidth: "wide",
+
         heroWidth: "wide",
-        mediaLayout: "stack",
+        contentWidth: "normal",
+
         density: "comfortable",
         borders: "none",
         radius: "lg",
         sectionDividers: "block",
-        accentType: "underline",
         motion: "subtle",
         scrollMode: "normal",
         sectionHeadersAlign: "center",
+        mediaLayout: "split",
+      },
+      blockPreset: {
+        gallery: { layout: "masonry", cols: 3, masonryCols: 3 },
+        spotify: { embedSize: 70 },
+        youtube: { embedSize: 70 },
       },
       variants: [
         { id: "soft", label: "Soft", preset: {} },
@@ -737,52 +902,76 @@ const STYLE_CATALOG = {
         { id: "pills", label: "Pills", preset: { accentType: "pill" } },
       ],
     },
+
     {
       id: "spotlight",
       name: "Spotlight Sections",
-      desc: "Aktywna sekcja 100%, reszta wygaszona",
+      desc: "Prowadzi wzrok: focus scroll",
       thumb: "linear-gradient(135deg, #111827, #f97316)",
       preset: {
         theme: "modern",
+        fontPreset: "editorial",
+        accent: "#f97316",
+        accentType: "gradient",
+
         headerLayout: "left",
+        headerBg: "transparent",
+        headerWidth: "full",
+
+        heroWidth: "full",
         contentWidth: "normal",
-        headerWidth: "wide",
-        heroWidth: "wide",
-        mediaLayout: "split",
+
         density: "normal",
-        borders: "thin",
+        borders: "none",
         radius: "md",
         sectionDividers: "none",
-        accentType: "gradient",
         motion: "subtle",
         scrollMode: "focus",
         sectionHeadersAlign: "left",
+        mediaLayout: "stack",
+      },
+      blockPreset: {
+        gallery: { layout: "masonry", cols: 3, masonryCols: 3 },
+        spotify: { embedSize: 75 },
+        youtube: { embedSize: 75 },
       },
       variants: [
         { id: "focus", label: "Focus", preset: { scrollMode: "focus" } },
         { id: "normal", label: "Normal", preset: { scrollMode: "normal" } },
       ],
     },
+
     {
       id: "square",
-      name: "Square Minimal",
-      desc: "Prosto i równo",
-      thumb: "linear-gradient(135deg, #ffffff, #e2e8f0)",
+      name: "Monochrome",
+      desc: "Czarno-białe: kontrast i typografia",
+      thumb: "linear-gradient(135deg, #0b0f19, #ffffff)",
       preset: {
         theme: "minimalist",
+        fontPreset: "system",
+        accent: "#111827",
+        accentType: "underline",
+
         headerLayout: "left",
-        contentWidth: "normal",
+        headerBg: "solid",
         headerWidth: "normal",
+
         heroWidth: "normal",
-        mediaLayout: "stack",
-        density: "compact",
+        contentWidth: "normal",
+
+        density: "normal",
         borders: "thin",
         radius: "0",
-        sectionDividers: "line",
-        accentType: "underline",
+        sectionDividers: "none",
         motion: "off",
         scrollMode: "normal",
         sectionHeadersAlign: "left",
+        mediaLayout: "stack",
+      },
+      blockPreset: {
+        gallery: { layout: "grid", cols: 4, masonryCols: 3 },
+        spotify: { embedSize: 65 },
+        youtube: { embedSize: 65 },
       },
       variants: [
         { id: "standard", label: "Standard", preset: {} },
@@ -940,13 +1129,18 @@ function applyStylePreset(preset) {
     if (k in state) state[k] = v;
   }
   if ($("accent")) $("accent").value = state.accent;
+  if ($("bgColor")) $("bgColor").value = state.bgColor;
+  if ($("fontPreset")) $("fontPreset").value = state.fontPreset;
   if ($("sectionTitleAlign")) $("sectionTitleAlign").value = state.sectionHeadersAlign;
   if ($("accentType")) $("accentType").value = state.accentType;
   if ($("motion")) $("motion").value = state.motion;
   if ($("scrollMode")) $("scrollMode").value = state.scrollMode;
   if ($("mediaLayout")) $("mediaLayout").value = state.mediaLayout;
   if ($("headerLayout")) $("headerLayout").value = state.headerLayout;
+  if ($("headerBg")) $("headerBg").value = state.headerBg;
   if ($("contentWidth")) $("contentWidth").value = state.contentWidth;
+  if ($("headerWidth")) $("headerWidth").value = state.headerWidth;
+  if ($("heroWidth")) $("heroWidth").value = state.heroWidth;
   if ($("density")) $("density").value = state.density;
   if ($("borders")) $("borders").value = state.borders;
   if ($("radius")) $("radius").value = state.radius;
@@ -954,6 +1148,34 @@ function applyStylePreset(preset) {
 
   syncStyleCollectionButtons();
   syncThemeButtons();
+
+  // pokaż/ukryj kontrolki zależne od szablonu
+  syncTemplateDependentStyleControls();
+}
+
+function syncTemplateDependentStyleControls(){
+  const wrap = $("bgColorControls");
+  if (wrap) {
+    const isCW = String(state.template || "") === "colorwash";
+    wrap.classList.toggle("isHiddenControl", !isCW);
+  }
+}
+
+function applyBlockPresetForStyle(entry){
+  const p = entry && entry.blockPreset;
+  if (!p) return;
+  const blocks = state.blocks || {};
+  for (const blockId of Object.keys(blocks)) {
+    const base = String(blockId || "").split("__")[0];
+    const bp = p[base];
+    if (!bp) continue;
+    const cfg = blocks[blockId];
+    if (!cfg) continue;
+    if (!cfg.data || typeof cfg.data !== 'object') cfg.data = {};
+    for (const [k, v] of Object.entries(bp)) {
+      cfg.data[k] = v;
+    }
+  }
 }
 
 function selectStyleTemplate(templateId) {
@@ -964,12 +1186,14 @@ function selectStyleTemplate(templateId) {
 
   applyStylePreset(entry.preset);
 
+  // Style może chcieć narzucić domyślne zachowanie bloków (np. galeria: grid/masonry, rozmiar embedów).
+  // Celowo: zmiana stylu ma realnie zmieniać wygląd, więc aktualizujemy ustawienia bloków.
+  applyBlockPresetForStyle(entry);
+
   // Warianty usunięte: jeden szablon = jeden preset.
   state.templateVariant = "";
 
   renderStyleUi();
-  if ($("headerWidth")) $("headerWidth").value = state.headerWidth;
-  if ($("heroWidth")) $("heroWidth").value = state.heroWidth;
   contentChanged();
 }
 

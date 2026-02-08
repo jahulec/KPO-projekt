@@ -19,6 +19,22 @@ function moveBlock(blockId, dir) {
   hardLockHeroFirst();
 }
 
+// Drag & drop reorder helper (used by blocks list)
+function reorderBlockToIndex(blockId, newIdx) {
+  if (isLockedBlock(blockId)) return;
+  const idx = state.order.indexOf(blockId);
+  if (idx < 0) return;
+  // hero is always index 0; do not allow moving into position 0
+  newIdx = Math.max(1, Math.min(newIdx, state.order.length - 1));
+  if (newIdx === idx) return;
+
+  const arr = [...state.order];
+  const [item] = arr.splice(idx, 1);
+  arr.splice(newIdx, 0, item);
+  state.order = arr;
+  hardLockHeroFirst();
+}
+
 function toggleBlock(blockId, enabled) {
   if (BLOCKS[blockId]?.locked) return;
   ensureBlock(blockId).enabled = enabled;

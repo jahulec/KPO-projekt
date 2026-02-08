@@ -16,7 +16,7 @@ const state = {
   templateVariant: "",
   accentType: "underline",
   headerLayout: "left",       // left | center
-  headerBg: "solid",          // solid | transparent (nakładka)
+  headerBg: "solid",          // solid | pill | transparent (nakładka)
   contentWidth: "normal",     // normal | wide
   headerWidth: "normal",      // normal | wide | full
   heroWidth: "normal",        // normal | wide | full
@@ -34,6 +34,8 @@ const state = {
   theme: "minimalist",
   template: "square",
   accent: "#6d28d9",
+  // używane głównie w szablonie Colorwash (kolor tła strony / canvas)
+  bgColor: "#fef3c7",
 
   sectionHeadersAlign: "left",
   siteName: "Moje Portfolio",
@@ -46,6 +48,7 @@ const state = {
   /* Analityka */
   gtmId: "",
   cookieBanner: true,
+  privacyMode: "auto",
   privacyAuto: true,
   privacyUrl: "",
 
@@ -415,6 +418,7 @@ function buildPayload() {
 
     gtmId: state.gtmId,
     cookieBanner: !!state.cookieBanner,
+    privacyMode: String(state.privacyMode || (state.privacyAuto ? "auto" : "custom")),
     privacyAuto: !!state.privacyAuto,
     privacyUrl: state.privacyUrl,
 
@@ -476,13 +480,37 @@ function applyPayload(payload, setStatusText = true) {
 
   state.gtmId = d.gtmId ?? state.gtmId;
   state.cookieBanner = (typeof d.cookieBanner === 'boolean') ? d.cookieBanner : state.cookieBanner;
-  state.privacyAuto = (typeof d.privacyAuto === 'boolean') ? d.privacyAuto : (typeof state.privacyAuto === 'boolean' ? state.privacyAuto : true);
+
+  // Privacy mode (new): auto | custom (migrate from legacy privacyAuto + privacyUrl)
+  if (typeof d.privacyMode !== 'undefined') {
+    state.privacyMode = String(d.privacyMode || 'auto');
+  } else {
+    const legacyAuto = (typeof d.privacyAuto === 'boolean') ? d.privacyAuto : (typeof state.privacyAuto === 'boolean' ? state.privacyAuto : true);
+    const legacyUrl = String(d.privacyUrl ?? state.privacyUrl ?? '').trim();
+    state.privacyMode = legacyAuto ? 'auto' : (legacyUrl ? 'custom' : 'custom');
+  }
+  state.privacyAuto = (state.privacyMode !== 'custom'); // keep legacy field in sync
   state.privacyUrl = d.privacyUrl ?? state.privacyUrl;
 
   state.previewDevice = d.previewDevice ?? state.previewDevice;
 
   state.order = Array.isArray(d.order) ? d.order : state.order;
   state.blocks = d.blocks ?? state.blocks;
+
+  // Migration fix: older buggy hero editor used paths like hero.subheadline* (nested object).
+  try {
+    const blocks = state.blocks || {};
+    Object.keys(blocks).forEach(k => {
+      const blk = blocks[k];
+      if (!blk || blk.type !== 'hero' || !blk.data) return;
+      const h = blk.data;
+      const nested = h && h.hero && typeof h.hero === 'object' ? h.hero : null;
+      if (!nested) return;
+      if ((h.subheadline == null || h.subheadline === '') && typeof nested.subheadline === 'string') h.subheadline = nested.subheadline;
+      if ((h.subheadlineRich == null || h.subheadlineRich === '') && typeof nested.subheadlineRich === 'string') h.subheadlineRich = nested.subheadlineRich;
+    });
+  } catch (e) {}
+
   state.activeBlockId = d.activeBlockId ?? state.activeBlockId;
 
   $("exportMode").value = state.exportMode;
@@ -517,7 +545,7 @@ function applyPayload(payload, setStatusText = true) {
 
   if ($("gtmId")) $("gtmId").value = state.gtmId;
   if ($("cookieBanner")) $("cookieBanner").checked = !!state.cookieBanner;
-  if ($("privacyAuto")) $("privacyAuto").checked = !!state.privacyAuto;
+  if ($("privacyMode")) $("privacyMode").value = (state.privacyMode === "custom" ? "custom" : "auto");
   if ($("privacyUrl")) $("privacyUrl").value = state.privacyUrl;
   syncPrivacySettingsUi();
 
@@ -1114,7 +1142,9 @@ function ensureBlock(blockId) {
       // default: hero hidden in menu; duplicates hidden in menu
       showInHeader: (!isHero && !isDup),
       // default: show H2 title for normal sections
-      showHeading: (!isHero)
+      showHeading: (!isHero),
+      // ZIP: include this block on index.html
+      showOnHomeZip: true
     };
   } else {
     // migrate older drafts
@@ -1159,19 +1189,20 @@ function applyRolePreset(role) {
 }
 
 function syncPrivacySettingsUi(){
-  const cb = document.getElementById('privacyAuto');
-  const auto = cb ? !!cb.checked : true;
+  const sel = document.getElementById('privacyMode');
+  const mode = sel ? String(sel.value || 'auto') : (state.privacyAuto ? 'auto' : 'custom');
+
+  const wrap = document.getElementById('privacyUrlWrap');
   const input = document.getElementById('privacyUrl');
+
+  const isCustom = (mode === 'custom');
+
+  if (wrap) wrap.style.display = isCustom ? '' : 'none';
   if (input) {
-    input.disabled = auto;
-    if (auto) {
-      input.setAttribute('aria-disabled', 'true');
-      if (!String(input.value || '').trim()) input.placeholder = 'Generowane automatycznie';
-    } else {
-      input.removeAttribute('aria-disabled');
-      // Po wyłączeniu auto-polityki zawsze pokazuj wzór linka (na mobile placeholder potrafi zostać stary).
-      input.placeholder = 'privacy.html / #privacy / https://...';
-    }
+    input.disabled = !isCustom;
+    if (!isCustom) input.setAttribute('aria-disabled', 'true');
+    else input.removeAttribute('aria-disabled');
+    if (isCustom && !String(input.placeholder || '').trim()) input.placeholder = 'Wklej link...';
   }
 }
 
@@ -1208,6 +1239,9 @@ function syncStateFromSettingsInputs() {
 
   state.accent = $("accent").value;
 
+  // Colorwash background color (widoczne tylko w szablonie Colorwash)
+  if ($("bgColor")) state.bgColor = $("bgColor").value;
+
   // Nagłówki sekcji (jedno źródło prawdy)
   if ($("sectionTitleAlign")) state.sectionHeadersAlign = $("sectionTitleAlign").value;
 
@@ -1220,7 +1254,8 @@ function syncStateFromSettingsInputs() {
 
   if ($("gtmId")) state.gtmId = $("gtmId").value;
   if ($("cookieBanner")) state.cookieBanner = $("cookieBanner").checked;
-  if ($("privacyAuto")) state.privacyAuto = $("privacyAuto").checked;
+  if ($("privacyMode")) state.privacyMode = $("privacyMode").value;
+  state.privacyAuto = (String(state.privacyMode || 'auto') !== 'custom');
   if ($("privacyUrl")) state.privacyUrl = $("privacyUrl").value;
 
   syncPrivacySettingsUi();
@@ -1234,11 +1269,11 @@ function collectIssues() {
   const issues = [];
 
   // Ustawienia podstawowe
-  if (!String(state.siteName || "").trim()) issues.push("Ustawienia: brak nazwy strony (Site name).");
+  if (!String(state.siteName || "").trim()) issues.push("Ustawienia: brak nazwy strony.");
 
   // SEO (soft warnings)
-  if (!String(state.metaTitle || "").trim()) issues.push("SEO: brak tytułu (meta title).");
-  if (!String(state.metaDescription || "").trim()) issues.push("SEO: brak opisu (meta description).");
+  if (!String(state.metaTitle || "").trim()) issues.push("SEO: brak tytułu.");
+  if (!String(state.metaDescription || "").trim()) issues.push("SEO: brak opisu.");
 
   // Analityka / polityka (soft warnings)
   {
@@ -1246,16 +1281,20 @@ function collectIssues() {
     const priv = String(state.privacyUrl || "").trim();
     const autoPol = !!state.privacyAuto;
 
-    if (gtmId && !isValidGtmId(gtmId)) issues.push("Analityka: GTM ID wygląda na błędny (np. GTM-XXXXXXX).");
-    if (!autoPol && priv && !isProbablyPrivacyHref(priv)) issues.push("Analityka: link do polityki wygląda na błędny (np. privacy.html / #privacy / https://...).");
-    if (gtmId && !state.cookieBanner) issues.push("Analityka: GTM ustawione, ale banner cookies wyłączony (ryzyko RODO).");
+    const mode = String(state.privacyMode || (autoPol ? "auto" : "custom"));
+    const isCustom = (mode === "custom");
 
-    if (autoPol) {
+    if (gtmId && !isValidGtmId(gtmId)) issues.push("Analityka: GTM ID ma zły format.");
+    if (isCustom && !priv) issues.push("Analityka: brak linku do polityki.");
+    if (isCustom && priv && !isProbablyPrivacyHref(priv)) issues.push("Analityka: link do polityki ma zły format.");
+    if (gtmId && !state.cookieBanner) issues.push("Analityka: GTM włączone, ale banner cookies wyłączony.");
+
+    if (!isCustom) {
       const contactOn = enabledBlocksInOrder().includes("contact");
       const c = state.blocks?.contact?.data || {};
       const email = String(c.email || "").trim();
-      if (!contactOn) issues.push("Polityka: dodaj blok Kontakt (email) — w polityce podajemy dane administratora.");
-      else if (!email) issues.push("Polityka: uzupełnij email w bloku Kontakt (potrzebny w polityce).");
+      if (!contactOn) issues.push("Polityka: dodaj blok Kontakt i podaj email.");
+      else if (!email) issues.push("Polityka: uzupełnij email w bloku Kontakt.");
     }
   }
 
@@ -1460,8 +1499,8 @@ function inferIssueFocusId(text){
   if (t.startsWith("Ustawienia:")) return "siteName";
 
   if (t.startsWith("SEO:")) {
-    if (t.includes("meta title")) return "metaTitle";
-    if (t.includes("meta description")) return "metaDescription";
+    if (t.includes("brak tytułu")) return "metaTitle";
+    if (t.includes("brak opisu")) return "metaDescription";
     return "metaTitle";
   }
 
@@ -1474,7 +1513,7 @@ function inferIssueFocusId(text){
   if (t.startsWith("Polityka:")) {
     if (t.includes("dodaj blok Kontakt")) return "addBlockSelect";
     if (t.includes("uzupełnij email")) return "ed_contact_email";
-    return "privacyAuto";
+    return "privacyMode";
   }
 
   if (t.startsWith("HERO:")) return "ed_hero_cta_url";
@@ -1559,13 +1598,13 @@ function formatInlineIssueMessage(id, text){
   if (id === 'siteName' && t.startsWith('Ustawienia:')) return 'Wpisz nazwę / pseudonim.';
 
   // SEO (ostrzeżenia)
-  if (id === 'metaTitle' && t.startsWith('SEO: brak tytułu')) return 'Dodaj tytuł SEO (warto).';
-  if (id === 'metaDescription' && t.startsWith('SEO: brak opisu')) return 'Dodaj opis SEO (warto).';
+  if (id === 'metaTitle' && t.startsWith('SEO: brak tytułu')) return 'Dodaj tytuł SEO.';
+  if (id === 'metaDescription' && t.startsWith('SEO: brak opisu')) return 'Dodaj opis SEO.';
 
   // Analityka
-  if (id === 'gtmId' && t.includes('GTM ID')) return 'GTM ID ma zły format (np. GTM-XXXXXXX).';
+  if (id === 'gtmId' && t.includes('GTM ID')) return 'GTM ID ma zły format.';
   if (id === 'cookieBanner' && t.includes('banner cookies')) return 'Włącz banner cookies, jeśli używasz GTM.';
-  if (id === 'privacyUrl' && t.includes('link do polityki')) return 'Wpisz link: privacy.html / #privacy / https://...';
+  if (id === 'privacyUrl' && t.includes('link do polityki')) return 'Wpisz poprawny link do polityki.';
 
   // Polityka / kontakt
   if (id === 'addBlockSelect' && t.startsWith('Polityka: dodaj blok Kontakt')) return 'Dodaj blok „Kontakt” i uzupełnij email.';
@@ -1745,6 +1784,7 @@ const contentDraftChanged = debounce(() => {
   pushHistoryDebounced();
   saveDraft();
   updateIssuesPill();
+  try{ if (typeof refreshSeoSinglesUI === 'function') refreshSeoSinglesUI(); }catch(_){ }
   // bez odświeżania podglądu — commit jest na blur/Enter
 }, 180);
 
@@ -1752,6 +1792,7 @@ const contentChanged = debounce(() => {
   pushHistoryDebounced();
   saveDraft();
   updateIssuesPill();
+  try{ if (typeof refreshSeoSinglesUI === 'function') refreshSeoSinglesUI(); }catch(_){ }
   requestPreviewRebuild('content');
 }, 120);
 
@@ -1764,7 +1805,10 @@ function structureChanged(forcePreview = false) {
   pushHistory();
   saveDraft();
   updateIssuesPill();
+  try{ if (typeof refreshSeoSinglesUI === 'function') refreshSeoSinglesUI(); }catch(_){ }
 
   requestPreviewRebuild('structure', !!forcePreview);
 }
+
+    if (typeof state.blocks[blockId].showOnHomeZip === "undefined") state.blocks[blockId].showOnHomeZip = true;
 
