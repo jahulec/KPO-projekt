@@ -15,23 +15,39 @@ Przedsięwzięcie jest realizowane dzięki wsparciu z Krajowego Planu Odbudowy i
 
 Szczegóły: `kpo.html`
 
+---
 
 ## Opis
-Projekt pozwala na stworzenie statycznej strony internetowej w oparciu o wybrany profil, zestaw sekcji oraz styl. Generator buduje podgląd HTML i umożliwia eksport gotowych plików.
+Generator pozwala stworzyć statyczną stronę internetową artysty w oparciu o wybrany profil, zestaw sekcji oraz styl. Aplikacja buduje podgląd HTML i umożliwia eksport gotowych plików strony.
 
-## Jak używać
-1. Wybierz profil strony z listy.
-2. Zaznacz sekcje, które mają zostać wygenerowane.
-3. Wybierz styl.
-4. Uruchom podgląd.
-5. Wyeksportuj wygenerowane pliki.
+## Pobieranie
+- **Rekomendowane:** wejdź w zakładkę **Releases** i pobierz plik ZIP (asset wydania).
+- Alternatywnie możesz pobrać kod jako **Source code (zip)**, ale dla użytkowników końcowych lepszy jest ZIP z release.
+
+## Uruchomienie
+1. Rozpakuj ZIP.
+2. Otwórz `index.html` w przeglądarce (Chrome/Edge/Firefox).
+
+Generator działa lokalnie i nie wymaga serwera.
+
+## Dokumentacja
+- Strona dokumentacyjna: `docs/index.html`
+- Instrukcja PDF: `docs/instrukcja.pdf`
 
 ## Wymagania
-- JavaScript włączony w przeglądarce.
-- Możliwość hostowania strony na GitHub Pages lub innym serwerze.
+- Włączony JavaScript w przeglądarce.
 
 ## Offline (bez CDN)
-Ta wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
+Wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
 
+## Licencja
+Projekt jest udostępniony jako open source na licencji MIT — patrz plik `LICENSE`.
 
-
+## Struktura plików
+- `index.html` — aplikacja generatora
+- `js/` — logika (podzielona na moduły)
+- `style.css` — style UI generatora
+- `vendor/jszip.min.js` — JSZip (offline)
+- `docs/` — landing + instrukcja PDF
+- `assets/` — zasoby (w tym logotypy KPO)
+- `kpo.html` — informacje o finansowaniu (KPO / NextGenerationEU)
