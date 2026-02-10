@@ -25,12 +25,74 @@
   --ctlBgActive: rgba(255,255,255,.12);
   --ctlBorder: rgba(255,255,255,.10);
   --ctlFocus: rgba(109,40,217,.22);
+
+  /* UI prefs (generator) */
+  --uiBaseFs: 14px;
+  --uiLabelFs: 12px;
+  --uiFieldGap: 5px;
+  --uiFieldMarginY: 8px;
+  --uiInputPadY: 6px;
+  --uiInputPadX: 8px;
+  --uiInputRadius: 10px;
+
+  --uiSegMinH: 34px;
+  --uiSegPadY: 6px;
+  --uiSegPadX: 8px;
+
+  /* Top bar (preview controls) – skaluje się razem z UI */
+  --uiTopBarPadY: 8px;
+  --uiTopBarPadX: 12px;
+  --uiTopBarGap: 10px;
+  --uiTopBarCtlGap: 8px;
+
+  /* Range rows */
+  --uiRangeGap: 12px;
+
+  /* Settings menu layout */
+  --uiMenuLabelW: 118px;
+
+  --uiBtnH: 40px;
+  --uiBtnHSmall: 34px;
+  --uiBtnPadY: 10px;
+  --uiBtnPadX: 12px;
+  --uiBtnPadYSmall: 8px;
+  --uiBtnPadXSmall: 10px;
+
+  --uiPanelHeadPadY: 12px;
+  --uiPanelHeadPadX: 14px;
+
+  --uiPanelW: 420px;
+
+  /* Zwinięty panel (lewy pasek) – skaluje się razem z UI */
+  --uiCollapsedW: 56px;
+  --uiCollapsedPadY: 8px;
+  --uiCollapsedGap: 10px;
+  --uiCollapsedBtn: 40px;
+  --uiCollapsedRadius: 14px;
+  --uiCollapsedIcon: 18px;
+
+  --uiPlaceholder: rgba(233,238,252,.45);
+
+  --uiInputBg: rgba(0,0,0,.32);
+  --uiInputBgHover: rgba(0,0,0,.38);
+
+  --uiDropdownBg: rgba(13,17,26,.98);
+  --uiDropdownBorder: rgba(255,255,255,.14);
+  --uiDropdownShadow: 0 18px 50px rgba(0,0,0,.55);
+
+  /* Scrollbars */
+  --uiScrollTrack: rgba(0,0,0,.18);
+  --uiScrollThumb: rgba(233,238,252,.24);
+  --uiScrollThumbHover: rgba(233,238,252,.34);
+  --uiScrollThumbBorder: rgba(0,0,0,.18);
+
 }
 
 *{ box-sizing:border-box; }
 html,body{ height:100%; }
 html{ scrollbar-gutter: stable; }
 body{
+  font-size: var(--uiBaseFs);
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   color: var(--text);
@@ -42,44 +104,152 @@ body{
   overscroll-behavior: none;
 }
 
+/* UI theme + sizing */
+
+html[data-ui-theme="light"],
+html.uiThemeLight{
+  --bg: #f6f7fb;
+  --panel: #ffffff;
+  --text: #000000;
+  --muted: #000000;
+  --label: #000000;
+  --stroke: rgba(0,0,0,.10);
+  --card: rgba(0,0,0,.04);
+
+  --uiCardBg: rgba(0,0,0,.03);
+  --uiCardBorder: rgba(0,0,0,.12);
+  --uiHintBg: rgba(0,0,0,.03);
+  --uiHintBorder: rgba(0,0,0,.16);
+
+  --ctlBg: rgba(0,0,0,.03);
+  --ctlBgHover: rgba(0,0,0,.06);
+  --ctlBgActive: rgba(0,0,0,.08);
+  --ctlBorder: rgba(0,0,0,.14);
+  --ctlFocus: rgba(109,40,217,.18);
+
+  --uiPlaceholder: #000000;
+
+  --uiInputBg: rgba(0,0,0,.03);
+  --uiInputBgHover: rgba(0,0,0,.04);
+
+  --uiDropdownBg: #ffffff;
+  --uiDropdownBorder: rgba(0,0,0,.14);
+  --uiDropdownShadow: 0 18px 50px rgba(0,0,0,.16);
+
+  --uiScrollTrack: rgba(0,0,0,.06);
+  --uiScrollThumb: rgba(0,0,0,.22);
+  --uiScrollThumbHover: rgba(0,0,0,.30);
+  --uiScrollThumbBorder: rgba(0,0,0,.06);
+}
+
+
+html[data-ui-theme="light"] body,
+html.uiThemeLight body{
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.03), transparent 38%),
+    var(--bg);
+}
+
+
+html[data-ui-size="compact"],
+html.uiSizeCompact{
+  --uiBaseFs: 12.5px;
+  --uiLabelFs: 11.5px;
+  --uiFieldGap: 4px;
+  --uiFieldMarginY: 6px;
+  --uiInputPadY: 5px;
+  --uiInputPadX: 7px;
+
+  --uiSegMinH: 30px;
+  --uiSegPadY: 5px;
+  --uiSegPadX: 7px;
+
+  --uiBtnH: 36px;
+  --uiBtnHSmall: 30px;
+  --uiBtnPadY: 8px;
+  --uiBtnPadX: 10px;
+  --uiBtnPadYSmall: 6px;
+  --uiBtnPadXSmall: 9px;
+
+  --uiPanelHeadPadY: 10px;
+  --uiPanelHeadPadX: 12px;
+
+  --uiCardPad: 9px;
+  --uiListGap: 6px;
+}
+
+
+html[data-ui-size="large"],
+html.uiSizeLarge{
+  --uiBaseFs: 16px;
+  --uiLabelFs: 13px;
+  --uiFieldGap: 6px;
+  --uiFieldMarginY: 10px;
+  --uiInputPadY: 7px;
+  --uiInputPadX: 10px;
+
+  --uiSegMinH: 38px;
+  --uiSegPadY: 7px;
+  --uiSegPadX: 10px;
+
+  --uiBtnH: 44px;
+  --uiBtnHSmall: 38px;
+  --uiBtnPadY: 12px;
+  --uiBtnPadX: 14px;
+  --uiBtnPadYSmall: 10px;
+  --uiBtnPadXSmall: 12px;
+
+  --uiPanelHeadPadY: 14px;
+  --uiPanelHeadPadX: 16px;
+
+  --uiCardPad: 12px;
+  --uiListGap: 10px;
+}
+
+
 /* Scrollbars (panel + dropdown lists) */
 .panel,
 .customSelect__list{
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: rgba(233,238,252,.28) rgba(0,0,0,.18);
+  scrollbar-color: var(--uiScrollThumb) var(--uiScrollTrack);
 }
 .panel::-webkit-scrollbar,
 .customSelect__list::-webkit-scrollbar{ width: 10px; height: 10px; }
 .panel::-webkit-scrollbar-track,
-.customSelect__list::-webkit-scrollbar-track{ background: rgba(0,0,0,.18); }
+.customSelect__list::-webkit-scrollbar-track{ background: var(--uiScrollTrack); }
 .panel::-webkit-scrollbar-thumb,
 .customSelect__list::-webkit-scrollbar-thumb{
-  background: rgba(233,238,252,.24);
-  border: 2px solid rgba(0,0,0,.18);
+  background: var(--uiScrollThumb);
+  border: 2px solid var(--uiScrollThumbBorder);
   border-radius: 999px;
 }
 .panel::-webkit-scrollbar-thumb:hover,
-.customSelect__list::-webkit-scrollbar-thumb:hover{ background: rgba(233,238,252,.34); }
+.customSelect__list::-webkit-scrollbar-thumb:hover{ background: var(--uiScrollThumbHover); }
 
 .app{
   display:grid;
   /* Panel węższy i bardziej kompaktowy. */
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: var(--uiPanelW) 1fr;
   height:100vh;
   height:100dvh;
 }
 
 @media (max-width: 1100px){
-  .app{ grid-template-columns: 380px 1fr; }
+  .app{ --uiPanelW: 360px; }
 }
 
+/* Panel width presets */
+.app[data-panel-w="s"], .app.panelW_s{ --uiPanelW: 320px; }
+.app[data-panel-w="m"], .app.panelW_m{ --uiPanelW: 400px; }
+.app[data-panel-w="l"], .app.panelW_l{ --uiPanelW: 480px; }
+
 /* Collapsible left panel */
-.app.isPanelCollapsed{ grid-template-columns: 56px 1fr; }
+.app.isPanelCollapsed{ grid-template-columns: clamp(44px, var(--uiCollapsedW), 72px) 1fr; }
 .app.isPanelCollapsed .panel{
   /* Symetryczne marginesy góra/dół + perfekcyjne wycentrowanie przycisków. */
-  width:56px;
-  padding: 8px 0;
+  width: clamp(44px, var(--uiCollapsedW), 72px);
+  padding: var(--uiCollapsedPadY) 0;
   overflow: hidden;
   /* W trybie zwiniętym nie rezerwuj miejsca na gutter scrollbara (to optycznie przesuwa środek w lewo). */
   scrollbar-gutter: auto;
@@ -92,20 +262,20 @@ body{
 .app.isPanelCollapsed .panel__head p,
 .app.isPanelCollapsed .panel__head h1,
 .app.isPanelCollapsed .brandRow > div{ display:none; }
-.app.isPanelCollapsed .brandRow{ flex-direction:column; align-items:center; justify-content:center; gap:10px; width:100%; }
-.app.isPanelCollapsed .brandMark{ width:36px; height:36px; border-radius: 14px; }
-.app.isPanelCollapsed .panelToggle{ width:40px; height:40px; padding:0; border-radius: 14px; display:grid; place-items:center; margin-left:0; }
+.app.isPanelCollapsed .brandRow{ flex-direction:column; align-items:center; justify-content:center; gap: var(--uiCollapsedGap); width:100%; }
+.app.isPanelCollapsed .brandMark{ width: calc(clamp(32px, var(--uiCollapsedBtn), 44px) - 4px); height: calc(clamp(32px, var(--uiCollapsedBtn), 44px) - 4px); border-radius: clamp(10px, var(--uiCollapsedRadius), 16px); }
+.app.isPanelCollapsed .panelToggle{ width: clamp(32px, var(--uiCollapsedBtn), 44px); height: clamp(32px, var(--uiCollapsedBtn), 44px); padding:0; border-radius: clamp(10px, var(--uiCollapsedRadius), 16px); display:grid; place-items:center; margin-left:0; }
 /* Panel toggle ma zawsze tę samą optyczną ikonę (taki sam rozmiar dla rozwiń/zwiń) i ma być kwadratem. */
 .panelToggle{
-  width:40px;
-  height:40px;
+  width: clamp(32px, var(--uiBtnH), 44px);
+  height: clamp(32px, var(--uiBtnH), 44px);
   padding:0;
-  border-radius: 14px;
+  border-radius: clamp(10px, var(--uiCollapsedRadius), 16px);
   display:grid;
   place-items:center;
   font-size:0;
 }
-.panelToggle .qi{ width:18px; height:18px; display:block; }
+.panelToggle .qi{ width: clamp(14px, var(--uiCollapsedIcon), 20px); height: clamp(14px, var(--uiCollapsedIcon), 20px); display:block; }
 
 /* Quick actions dock (visible only when the panel is collapsed) */
 .quickDock{
@@ -122,21 +292,21 @@ body{
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:10px;
+  gap: var(--uiCollapsedGap);
 }
 
 .quickDock__btnMore{ margin-top: auto; }
 .quickDock__btn{
-  width:40px;
-  height:40px;
+  width: clamp(32px, var(--uiCollapsedBtn), 44px);
+  height: clamp(32px, var(--uiCollapsedBtn), 44px);
   padding:0;
-  border-radius: 14px;
+  border-radius: clamp(10px, var(--uiCollapsedRadius), 16px);
   font-size: 0;
 }
 
 .quickDock .qi{
-  width: 18px;
-  height: 18px;
+  width: clamp(14px, var(--uiCollapsedIcon), 20px);
+  height: clamp(14px, var(--uiCollapsedIcon), 20px);
   display:block;
 }
 
@@ -148,9 +318,9 @@ body{
 }
 
 /* LIVE indicator colors (ON = white, ECO = green, OFF = gray) */
-.quickDock__btnLive{ color: rgba(255,255,255,.92); }
+.quickDock__btnLive{ color: var(--text); }
 .quickDock__btnLive.isEco{ color: rgb(22,163,74); }
-.quickDock__btnLive.isOff{ color: rgba(255,255,255,.50); }
+.quickDock__btnLive.isOff{ color: var(--text); opacity:.55; }
 
 /* "Więcej" menu (overlay) */
 .quickMoreMenu{
@@ -159,11 +329,12 @@ body{
   min-width: 220px;
   max-width: min(280px, calc(100vw - 24px));
   padding: 8px;
-  border: 1px solid var(--stroke);
-  background: rgba(13,17,26,.98);
+  border: 1px solid var(--uiDropdownBorder);
+  background: var(--uiDropdownBg);
   border-radius: 14px;
-  box-shadow: 0 14px 50px rgba(0,0,0,.55);
+  box-shadow: var(--uiDropdownShadow);
 }
+
 .quickMoreMenu__item{
   width: 100%;
   display:flex;
@@ -182,9 +353,104 @@ body{
 }
 .quickMoreMenu__item:hover{ background: var(--ctlBgHover); border-color: var(--ctlBorder); }
 .quickMoreMenu__item:active{ background: var(--ctlBgActive); }
-.quickMoreMenu__danger{ color: rgba(255,255,255,.94); border-color: rgba(225,29,72,.22); }
+.quickMoreMenu__danger{ color: var(--text); border-color: rgba(225,29,72,.22); }
 .quickMoreMenu__danger:hover{ border-color: rgba(225,29,72,.45); }
-.quickMoreMenu__sep{ height: 1px; margin: 6px 4px; background: rgba(255,255,255,.10); }
+.quickMoreMenu__sep{ height: 1px; margin: 6px 4px; background: var(--stroke); }
+
+/* UI settings menu (top bar) */
+.uiMenu{
+  position: fixed;
+  z-index: 2500;
+  min-width: 320px;
+  max-width: min(420px, calc(100vw - 24px));
+  border: 1px solid var(--stroke);
+  background: var(--panel);
+  border-radius: 14px;
+  box-shadow: 0 18px 55px rgba(0,0,0,.45);
+  padding: 10px;
+}
+html[data-ui-theme="light"] .uiMenu,
+html.uiThemeLight .uiMenu{ box-shadow: 0 18px 55px rgba(0,0,0,.18); }
+
+.uiMenu__header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding: 2px 2px 8px;
+}
+.uiMenu__title{ font-weight: 950; letter-spacing: .2px; }
+.uiMenu__body{ display:grid; gap: 10px; }
+
+.uiMenu__row{
+  display:grid;
+  grid-template-columns: var(--uiMenuLabelW) 1fr;
+  gap: 10px;
+  align-items:center;
+}
+.uiMenu__label{
+  color: var(--muted);
+  font-size: var(--uiLabelFs);
+  font-weight: 800;
+  letter-spacing: .15px;
+}
+.uiMenu__row .seg{ width: 100%; }
+.uiMenu__row .segBtn{ flex: 1 1 0; }
+
+.uiMenu__footer{
+  display:flex;
+  justify-content:flex-end;
+  margin-top: 4px;
+}
+.uiMenu__hint{
+  color: var(--muted);
+  font-size: var(--uiLabelFs);
+  line-height: 1.35;
+  padding: 2px 2px 0;
+}
+
+/* UI scale slider (settings menu) */
+.uiMenu{ overflow: hidden; }
+.uiRange{
+  width: 100%;
+  accent-color: auto;
+  background: transparent;
+}
+.uiRange:focus{ outline: none; }
+.uiRange{ -webkit-appearance: none; appearance: none; height: var(--uiSegMinH); }
+.uiRange::-webkit-slider-runnable-track{
+  height: 8px;
+  background: var(--ctlBg);
+  border: 1px solid var(--ctlBorder);
+  border-radius: 999px;
+}
+.uiRange::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  margin-top: -6px;
+}
+.uiRange:focus-visible::-webkit-slider-thumb{ box-shadow: 0 0 0 4px var(--ctlFocus); }
+
+.uiRange::-moz-range-track{
+  height: 8px;
+  background: var(--ctlBg);
+  border: 1px solid var(--ctlBorder);
+  border-radius: 999px;
+}
+.uiRange::-moz-range-thumb{
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+}
+.uiRange:focus-visible::-moz-range-thumb{ box-shadow: 0 0 0 4px var(--ctlFocus); }
+
 
 .panel{
   border-right:1px solid var(--stroke);
@@ -204,7 +470,7 @@ body{
   top: 0;
   z-index: 60;
   margin: 0;
-  padding: 12px 14px;
+  padding: var(--uiPanelHeadPadY) var(--uiPanelHeadPadX);
   background: var(--panel);
   border: 0;
   border-bottom: 1px solid var(--stroke);
@@ -229,7 +495,7 @@ body{
 .panel__head h1{ margin:0; font-size: 16px; letter-spacing:.2px; }
 .panel__head p{ margin:6px 0 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.4; }
 
-.statusRow{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:12px; padding:10px; border:1px solid rgba(255,255,255,.08); border-radius: 0; background: rgba(0,0,0,.10); }
+.statusRow{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:12px; padding:10px; border:1px solid var(--uiCardBorder); border-radius: var(--uiCardRadius); background: var(--uiCardBg); }
 @media (max-width: 420px){ .statusRow{ grid-template-columns: 1fr; } }
 .statusRow .pill, .statusRow .pillBtn{ width:100%; justify-content:center; }
 
@@ -244,7 +510,7 @@ body{
   padding: 0 14px 18px;
   border-radius: 0;
   border: 0;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid var(--stroke);
   background: transparent;
   box-shadow: none;
   overflow: visible;
@@ -255,7 +521,7 @@ body{
   user-select:none;
   list-style:none;
   margin: 0 -14px;
-  padding: 12px 14px;
+  padding: var(--uiPanelHeadPadY) var(--uiPanelHeadPadX);
   font-weight: 900;
   font-size: 13px;
   letter-spacing:.25px;
@@ -263,9 +529,9 @@ body{
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  color: rgba(233,238,252,.97);
-  background: rgba(255,255,255,.035);
-  border-bottom: 1px solid rgba(255,255,255,.10);
+  color: var(--text);
+  background: var(--card);
+  border-bottom: 1px solid var(--stroke);
   /* Żeby po rozwinięciu nie „kleiło się” do treści i nie wyglądało jak najeżdżanie. */
   scroll-margin-top: 88px;
 }
@@ -295,9 +561,9 @@ body{
   padding: 10px 12px;
 
   /* KPO footer: keep it readable in dark UI without touching official logotypes */
-  background: #0a0c12;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.45);
+  background: var(--panel);
+  border-top: 1px solid var(--stroke);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.18);
 }
 
 /* marks */
@@ -306,7 +572,7 @@ body{
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(0, 0, 0, 0.10);
   border-radius: 12px;
-  padding: 6px 8px;
+  padding: var(--uiInputPadY) var(--uiInputPadX);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
 }
 
@@ -330,7 +596,7 @@ body{
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  color: #e9eef7;
+  color: var(--text);
   font-size: 12.5px;
   line-height: 1.25;
 }
@@ -345,15 +611,15 @@ body{
   justify-content: center;
   margin-top: 0;
   padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--ctlBorder);
+  background: var(--ctlBg);
   border-radius: 999px;
-  color: #e9eef7;
+  color: var(--text);
   text-decoration: none;
-  font-size: 12px;
+  font-size: var(--uiLabelFs);
   line-height: 1;
 }
-.panel__foot .kpoBtn:hover{ opacity: 1; background: rgba(255, 255, 255, 0.14); }
+.panel__foot .kpoBtn:hover{ opacity: 1; background: var(--ctlBgHover); }
 
 /* on narrow panels: switch to vertical mark and allow it to be taller */
 @media (max-width: 420px){
@@ -364,20 +630,20 @@ body{
 
 /* section padding is handled by .panel__section; do not pad only the first child */
 
-.field{ display:grid; gap:5px; margin: 8px 0; }
-.field span{ color: var(--label); font-size: 12px; font-weight: 650; letter-spacing:.15px; }
+.field{ display:grid; gap: var(--uiFieldGap); margin: var(--uiFieldMarginY) 0; }
+.field span{ color: var(--label); font-size: var(--uiLabelFs); font-weight: 650; letter-spacing:.15px; }
 
 input, textarea, select{
   width:100%;
-  border-radius: 10px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.32);
+  border-radius: var(--uiInputRadius);
+  border: 1px solid var(--stroke);
+  background: var(--uiInputBg);
   color: var(--text);
-  padding: 6px 8px;
+  padding: var(--uiInputPadY) var(--uiInputPadX);
   outline:none;
 }
 textarea{ resize: vertical; }
-input::placeholder, textarea::placeholder{ color: rgba(233,238,252,.45); }
+input::placeholder, textarea::placeholder{ color: var(--uiPlaceholder); }
 input:focus, textarea:focus, select:focus{
   border-color: rgba(109,40,217,.65);
   box-shadow: 0 0 0 4px rgba(109,40,217,.18);
@@ -405,8 +671,8 @@ input:focus, textarea:focus, select:focus{
   padding: var(--uiCardPad);
   border-radius: var(--uiCardRadius);
   border: 1px dashed var(--uiHintBorder);
-  color: rgba(233,238,252,.86);
-  font-size: 12px;
+  color: var(--muted);
+  font-size: var(--uiLabelFs);
   background: var(--uiHintBg);
 }
 
@@ -421,13 +687,13 @@ input:focus, textarea:focus, select:focus{
   justify-content:space-between;
   gap:10px;
   border-radius: 10px;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.32);
+  border: 1px solid var(--stroke);
+  background: var(--uiInputBg);
   color: var(--text);
-  padding: 6px 8px;
+  padding: var(--uiInputPadY) var(--uiInputPadX);
   cursor:pointer;
 }
-.customSelect__btn:hover{ border-color: rgba(255,255,255,.18); background: rgba(0,0,0,.38); }
+.customSelect__btn:hover{ border-color: rgba(109,40,217,.45); background: var(--uiInputBgHover); }
 .customSelect__btn:focus{ outline:none; border-color: rgba(109,40,217,.65); box-shadow: 0 0 0 4px rgba(109,40,217,.18); }
 .customSelect__value{ font-size: 13px; font-weight: 650; letter-spacing:.1px; }
 .customSelect__chev{ opacity:.75; transition: transform .15s ease; }
@@ -441,10 +707,10 @@ input:focus, textarea:focus, select:focus{
   z-index: 120;
   max-height: 280px;
   overflow:auto;
-  background: #0b101a;
-  border:1px solid rgba(255,255,255,.14);
+  background: var(--uiDropdownBg);
+  border:1px solid var(--uiDropdownBorder);
   border-radius: 12px;
-  box-shadow: 0 18px 50px rgba(0,0,0,.55);
+  box-shadow: var(--uiDropdownShadow);
   padding: 6px;
 }
 /* Bulletproof: jeśli JS ustawi atrybut `hidden`, lista ma zniknąć zawsze. */
@@ -453,10 +719,10 @@ input:focus, textarea:focus, select:focus{
   padding: 10px 10px;
   border-radius: 10px;
   cursor:pointer;
-  color: rgba(233,238,252,.92);
+  color: var(--text);
   font-size: 13px;
 }
-.customSelect__opt:hover{ background: rgba(255,255,255,.08); }
+.customSelect__opt:hover{ background: var(--ctlBgHover); }
 .customSelect__opt.isSelected{ background: rgba(109,40,217,.20); border:1px solid rgba(109,40,217,.35); }
 
 .addRow{ display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center; }
@@ -466,7 +732,12 @@ input:focus, textarea:focus, select:focus{
   display:grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
+  border: 1px solid var(--uiCardBorder);
+  background: var(--uiCardBg);
+  border-radius: var(--uiCardRadius);
+  padding: var(--uiCardPad);
 }
+
 .blockItem--active{
   border-color: rgba(109,40,217,.55);
   box-shadow: 0 0 0 4px rgba(109,40,217,.12);
@@ -482,19 +753,19 @@ input:focus, textarea:focus, select:focus{
 .blockLabel strong{ font-size: 13px; }
 .blockLabel small{ color: var(--muted); font-size: 11px; }
 
-.tog{ display:flex; align-items:center; gap:8px; color: var(--muted); font-size: 12px; }
+.tog{ display:flex; align-items:center; gap:8px; color: var(--muted); font-size: var(--uiLabelFs); }
 .tog input{ width:16px; height:16px; }
 
 .blockActions{ display:flex; gap:6px; align-items:center; }
 .iconBtn{
-  border: 1px solid var(--stroke);
-  background: rgba(255,255,255,.06);
+  border: 1px solid var(--ctlBorder);
+  background: var(--ctlBg);
   color: var(--text);
   border-radius: 12px;
-  padding: 6px 8px;
+  padding: var(--uiInputPadY) var(--uiInputPadX);
   cursor:pointer;
 }
-.iconBtn:hover{ background: rgba(255,255,255,.10); }
+.iconBtn:hover{ background: var(--ctlBgHover); }
 .iconBtn:disabled{ opacity:.45; cursor:not-allowed; }
 
 .blockEditor .emptyEditor{
@@ -547,9 +818,9 @@ input:focus, textarea:focus, select:focus{
 }
 :where(.btn,.btnSmall,.iconBtn):disabled:hover{ background: var(--ctlBg); }
 
-.btn{ --ctlH: 40px; --ctlRadius: 14px; --ctlPadY: 10px; --ctlPadX: 12px; }
-.btnSmall{ --ctlH: 34px; --ctlRadius: 12px; --ctlPadY: 8px; --ctlPadX: 10px; }
-.iconBtn{ --ctlH: 34px; --ctlRadius: 12px; --ctlPadY: 8px; --ctlPadX: 10px; }
+.btn{ --ctlH: var(--uiBtnH); --ctlRadius: 14px; --ctlPadY: var(--uiBtnPadY); --ctlPadX: var(--uiBtnPadX); }
+.btnSmall{ --ctlH: var(--uiBtnHSmall); --ctlRadius: 12px; --ctlPadY: var(--uiBtnPadYSmall); --ctlPadX: var(--uiBtnPadXSmall); }
+.iconBtn{ --ctlH: var(--uiBtnHSmall); --ctlRadius: 12px; --ctlPadY: var(--uiBtnPadYSmall); --ctlPadX: var(--uiBtnPadXSmall); }
 
 .btn--ghost,
 .btnGhost{ --ctlBg: rgba(255,255,255,.04); --ctlBgHover: rgba(255,255,255,.08); --ctlBgActive: rgba(255,255,255,.10); }
@@ -574,13 +845,17 @@ input:focus, textarea:focus, select:focus{
 .itemCard{
   display:grid;
   gap:10px;
+  border: 1px solid var(--uiCardBorder);
+  background: var(--uiCardBg);
+  border-radius: var(--uiCardRadius);
+  padding: var(--uiCardPad);
 }
 .itemCardTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.itemCardTop strong{ font-size: 12px; color: var(--muted); }
+.itemCardTop strong{ font-size: var(--uiLabelFs); color: var(--muted); }
 .itemGrid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
 .itemActions{ display:flex; gap:8px; justify-content:flex-end; }
 
-.rangeRow{ display:flex; align-items:center; gap:12px; }
+.rangeRow{ display:flex; align-items:center; gap: var(--uiRangeGap); }
 .rangeRow input[type="range"]{ flex:1; }
 .pill{
   min-width: 62px;
@@ -589,13 +864,13 @@ input:focus, textarea:focus, select:focus{
   justify-content:center;
   gap:8px;
   text-align:center;
-  min-height: 34px;
+  min-height: var(--uiSegMinH);
   border: 1px solid var(--stroke);
   background: var(--ctlBg);
   border-radius: 999px;
-  padding: 6px 10px;
+  padding: var(--uiSegPadY) var(--uiSegPadX);
   font-weight: 900;
-  font-size: 12px;
+  font-size: var(--uiLabelFs);
   letter-spacing: .2px;
   line-height: 1;
   user-select:none;
@@ -625,21 +900,21 @@ input:focus, textarea:focus, select:focus{
   min-width:0;
 }
 .preview__bar{
-  padding:8px 12px;
+  padding: var(--uiTopBarPadY) var(--uiTopBarPadX);
   border-bottom:1px solid var(--stroke);
   background: var(--panel);
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10px;
+  gap: var(--uiTopBarGap);
 }
-.preview__title{ display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
-.preview__title span{ color: var(--muted); font-size: 12px; }
+.preview__title{ display:flex; gap: var(--uiTopBarGap); align-items:baseline; flex-wrap:wrap; }
+.preview__title span{ color: var(--muted); font-size: var(--uiLabelFs); }
 
 /* Zachowujemy tryb "Styl" w kodzie, ale ukrywamy przycisk w UI (debug/legacy). */
 #btnPreviewStyle{ display:none !important; }
 
-.preview__controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.preview__controls{ display:flex; gap: var(--uiTopBarCtlGap); align-items:center; flex-wrap:wrap; }
 .seg{
   display:inline-flex;
   border: 1px solid var(--ctlBorder);
@@ -651,20 +926,26 @@ input:focus, textarea:focus, select:focus{
   border:0;
   background: transparent;
   color: var(--text);
-  padding: 6px 8px;
-  min-height: 34px;
+  padding: var(--uiSegPadY) var(--uiSegPadX);
+  min-height: var(--uiSegMinH);
   cursor:pointer;
   font-weight: 900;
-  font-size: 12px;
+  font-size: var(--uiLabelFs);
   letter-spacing: .2px;
   line-height: 1;
   user-select:none;
   -webkit-tap-highlight-color: transparent;
 }
-.segBtn + .segBtn{ border-left: 1px solid rgba(255,255,255,.08); }
+/* Ikony SVG używane wewnątrz przycisków segmentowanych (np. zębatka w pasku podglądu) */
+.segBtn .qi{
+  width: calc(var(--uiLabelFs) + 4px);
+  height: calc(var(--uiLabelFs) + 4px);
+  display: block;
+}
+.segBtn + .segBtn{ border-left: 1px solid var(--stroke); }
 .segBtn:hover{ background: var(--ctlBgHover); }
 .segBtn:active{ background: var(--ctlBgActive); transform: translateY(.5px); }
-.segBtn.isActive{ background: rgba(255,255,255,.12); }
+.segBtn.isActive{ background: var(--ctlBgActive); }
 .segBtn:focus{ outline:none; }
 .segBtn:focus-visible{ box-shadow: 0 0 0 4px var(--ctlFocus); }
 .segBtn:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
@@ -684,7 +965,7 @@ input:focus, textarea:focus, select:focus{
   text-align:center;
 }
 .field .segBtn + .segBtn{ border-left: 0; }
-.field .segBtn.isActive{ background: rgba(255,255,255,.14); }
+.field .segBtn.isActive{ background: var(--ctlBgActive); }
 
 
 /* ===== Styl / Szablony UI ===== */
@@ -703,8 +984,8 @@ input:focus, textarea:focus, select:focus{
 .tplCard{
   display:flex;
   gap: 10px;
-  align-items: stretch;
-  border: 1px solid rgba(255,255,255,.10);
+  align-items: center;
+  border: 1px solid var(--stroke);
   background: rgba(255,255,255,.04);
   border-radius: 12px;
   padding: 10px;
@@ -720,17 +1001,42 @@ input:focus, textarea:focus, select:focus{
 .tplCard:hover{ background: rgba(255,255,255,.06); }
 .tplCard.isActive{ outline: 2px solid rgba(255,255,255,.20); }
 
-.tplThumb{
-  width: 86px;
-  min-width: 86px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.03));
-  border: 1px solid rgba(255,255,255,.10);
+/* Style cards: no big color thumbnails. Use small monochrome icon tile. */
+.tplIcon{
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.03);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.tplIconSvg{
+  width: 24px;
+  height: 24px;
+  opacity: .92;
 }
 
 .tplMeta{ display:flex; flex-direction:column; gap:4px; min-width:0; }
 .tplName{ font-weight: 900; font-size: 13px; letter-spacing:.2px; line-height: 1.15; }
-.tplDesc{ font-size: 12px; opacity:.72; line-height: 1.25; }
+.tplDesc{ font-size: var(--uiLabelFs); opacity:.72; line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Keep the grid visually tidy: consistent card height */
+.tplCard{ min-height: 92px; }
+
+/* Slightly more compact and cleaner look for Basic templates */
+.templateGrid[data-collection="basic"]{ gap: 12px; }
+.templateGrid[data-collection="basic"] .tplCard{ padding: 12px; }
+.templateGrid[data-collection="basic"] .tplIcon{ width: 44px; height: 44px; min-width: 44px; border-radius: 11px; }
+.templateGrid[data-collection="basic"] .tplName{ font-size: 14px; }
+
 
 .chipRow{ display:flex; flex-wrap:wrap; gap:8px; }
 .chip{
@@ -740,7 +1046,7 @@ input:focus, textarea:focus, select:focus{
   padding: 7px 10px;
   border-radius: 999px;
   font-weight: 800;
-  font-size: 12px;
+  font-size: var(--uiLabelFs);
   cursor:pointer;
 }
 .chip:hover{ background: rgba(255,255,255,.06); }
@@ -759,7 +1065,7 @@ input:focus, textarea:focus, select:focus{
 
 .subDetails{
   margin-top: 10px;
-  border: 1px solid rgba(255,255,255,.10);
+  border: 1px solid var(--stroke);
   border-radius: 0;
   padding: 10px;
   background: rgba(255,255,255,.03);
@@ -826,7 +1132,7 @@ input:focus, textarea:focus, select:focus{
 .issuesModal__body{ padding: 14px 14px 16px; max-height: 62vh; overflow:auto; }
 .issuesModal__hint{
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--uiLabelFs);
   line-height: 1.5;
   margin-bottom: 10px;
   padding: var(--uiCardPad);
@@ -900,9 +1206,9 @@ input:focus, textarea:focus, select:focus{
 
 .fieldMsg{
   margin-top: 6px;
-  font-size: 12px;
+  font-size: var(--uiLabelFs);
   line-height: 1.35;
-  padding: 6px 8px;
+  padding: var(--uiInputPadY) var(--uiInputPadX);
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.04);
@@ -967,7 +1273,7 @@ input:focus, textarea:focus, select:focus{
 .snapModal__body{ padding: 14px 14px 16px; max-height: 62vh; overflow:auto; }
 .snapModal__hint{
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--uiLabelFs);
   line-height: 1.5;
   margin-bottom: 10px;
   padding: var(--uiCardPad);
@@ -991,7 +1297,7 @@ input:focus, textarea:focus, select:focus{
 }
 .snapRow__meta{ display:flex; flex-direction:column; gap: 2px; min-width: 0; }
 .snapRow__name{ font-weight: 800; white-space:nowrap; overflow:hidden; text-overflow: ellipsis; }
-.snapRow__time{ color: var(--muted); font-size: 12px; }
+.snapRow__time{ color: var(--muted); font-size: var(--uiLabelFs); }
 .snapRow__btns{ display:flex; gap: 8px; flex-shrink: 0; }
 
 
@@ -1119,9 +1425,9 @@ input:focus, textarea:focus, select:focus{
   width: 44px;
   height: 32px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.20);
-  background: rgba(255,255,255,0.10);
-  color: rgba(255,255,255,0.95);
+  border: 1px solid var(--ctlBorder);
+  background: var(--ctlBg);
+  color: var(--text);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1133,7 +1439,8 @@ input:focus, textarea:focus, select:focus{
   z-index: 3;
 }
 
-.rtEditBtn:hover{ background: rgba(255,255,255,0.14); }
+
+.rtEditBtn:hover{ background: var(--ctlBgHover); }
 .rtEditBtn:active{ transform: translateY(1px); }
 .rtEditBtn:focus{ outline: 2px solid rgba(106,224,255,0.55); outline-offset: 2px; }
 
@@ -1142,13 +1449,14 @@ input:focus, textarea:focus, select:focus{
 
 dialog.rtDialog{
   width: min(880px, calc(100vw - 24px));
-  border: 1px solid rgba(255,255,255,0.16);
+  border: 1px solid var(--stroke);
   border-radius: 16px;
   padding: 0;
-  background: #0f141a;
-  color: #fff;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
 }
+
 
 dialog.rtDialog::backdrop{ background: rgba(0,0,0,0.55); }
 
@@ -1158,41 +1466,43 @@ dialog.rtDialog::backdrop{ background: rgba(0,0,0,0.55); }
   align-items:center;
   justify-content: space-between;
   padding: 14px 14px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
+  border-bottom: 1px solid var(--stroke);
 }
 .rtDialog__x{
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
+  border: 1px solid var(--ctlBorder);
+  background: var(--ctlBg);
+  color: var(--text);
   cursor:pointer;
   font-size: 20px;
   line-height: 1;
 }
-.rtDialog__x:hover{ background: rgba(255,255,255,0.10); }
+
+.rtDialog__x:hover{ background: var(--ctlBgHover); }
 
 .rtToolbar{
   display:flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 10px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
+  border-bottom: 1px solid var(--stroke);
 }
 .rtBtn{
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
+  border: 1px solid var(--ctlBorder);
+  background: var(--ctlBg);
+  color: var(--text);
   border-radius: 12px;
-  padding: 6px 8px;
+  padding: var(--uiInputPadY) var(--uiInputPadX);
   font-size: 13px;
   cursor:pointer;
 }
-.rtBtn:hover{ background: rgba(255,255,255,0.10); }
+
+.rtBtn:hover{ background: var(--ctlBgHover); }
 .rtBtn--list .rtIcon{ width: 22px; text-align:center; font-weight: 900; opacity: .95; }
 .rtBtn--list .rtLbl{ opacity: .92; }
-.rtSep{ width:1px; background: rgba(255,255,255,0.16); margin: 0 4px; }
+.rtSep{ width:1px; background: var(--stroke); margin: 0 4px; }
 
 .rtDialog__body{ padding: 12px 14px; }
 .rtEditor{
@@ -1201,9 +1511,10 @@ dialog.rtDialog::backdrop{ background: rgba(0,0,0,0.55); }
   overflow:auto;
   padding: 12px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--stroke);
+  background: var(--uiInputBg);
 }
+
 .rtEditor:focus{ outline: 2px solid rgba(106,224,255,0.40); outline-offset: 2px; }
 
 .rtDialog__footer{
@@ -1211,7 +1522,7 @@ dialog.rtDialog::backdrop{ background: rgba(0,0,0,0.55); }
   justify-content: flex-end;
   gap: 10px;
   padding: 12px 14px 14px;
-  border-top: 1px solid rgba(255,255,255,0.12);
+  border-top: 1px solid var(--stroke);
 }
 
 
@@ -1220,8 +1531,8 @@ dialog.rtDialog::backdrop{ background: rgba(0,0,0,0.55); }
   margin: 14px 16px 18px;
   padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--uiCardBorder);
+  background: var(--uiCardBg);
 }
 .kpoFooter__inner{
   display: flex;
@@ -1317,7 +1628,7 @@ body.is-reordering{ user-select:none; }
 }
 .dropZone__title {
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--uiLabelFs);
   line-height: 1.2;
 }
 .dropZone__sub {
@@ -1357,7 +1668,7 @@ body.is-reordering{ user-select:none; }
   background: var(--uiCardBg);
 }
 .seoFileRow__name{
-  font-size: 12px;
+  font-size: var(--uiLabelFs);
   line-height: 1.2;
   color: var(--text);
   /* ważne: nie rozpychaj kolumny (1/2 panelu), tylko zawijaj w jej obrębie */
@@ -1386,3 +1697,15 @@ body.is-reordering{ user-select:none; }
   border: 1px dashed rgba(109,40,217,.55);
 }
 
+
+
+/* Light theme: enforce black text */
+html[data-ui-theme="light"],
+html.uiThemeLight{ color-scheme: light; }
+html[data-ui-theme="light"] *,
+html.uiThemeLight *{ color: #000 !important; }
+html[data-ui-theme="light"] input::placeholder,
+html[data-ui-theme="light"] textarea::placeholder,
+html.uiThemeLight input::placeholder,
+html.uiThemeLight textarea::placeholder{ color: #000 !important; opacity: 1 !important; }
+html[data-ui-theme="light"] .panel__foot{ box-shadow: none; }

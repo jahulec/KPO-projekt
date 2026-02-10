@@ -32,13 +32,14 @@ const state = {
 
   role: "musician",
   theme: "minimalist",
-  template: "square",
-  accent: "#6d28d9",
+  // Domyślnie: styl flagowy, uniwersalny dla profilu artysty.
+  template: "editorial",
+  accent: "#9f1239",
   // używane głównie w szablonie Colorwash (kolor tła strony / canvas)
   bgColor: "#fef3c7",
 
   sectionHeadersAlign: "left",
-  siteName: "Moje Portfolio",
+  siteName: "Nazwa artysty / zespołu",
   useLogoInHeader: false,
 
   metaTitle: "",
@@ -855,7 +856,7 @@ function _svgPlaceholderDataUrl(label, w = 1400, h = 900) {
   <rect width="100%" height="100%" fill="url(#g)"/>
   <rect x="40" y="40" width="${w-80}" height="${h-80}" fill="rgba(0,0,0,0.35)" stroke="rgba(255,255,255,0.25)"/>
   <text x="70" y="120" fill="#fff" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="46" font-weight="900">${t}</text>
-  <text x="70" y="170" fill="rgba(255,255,255,0.82)" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="22" font-weight="700">Przykładowy obraz — podmień na własny</text>
+  <text x="70" y="170" fill="rgba(255,255,255,0.82)" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="22" font-weight="700">Obraz poglądowy</text>
 </svg>`;
 
   // base64 (so ZIP export can pack it to /assets)
@@ -864,7 +865,7 @@ function _svgPlaceholderDataUrl(label, w = 1400, h = 900) {
 }
 
 async function generateSampleData() {
-  const ok = confirm("Wygenerować przykładowe dane? Nadpisze bieżący szkic (snapshot zostaje).");
+  const ok = confirm("Wczytać dane przykładowe? Bieżący szkic zostanie nadpisany (snapshoty bez zmian).");
   if (!ok) return;
 
   const role = ($("role")?.value || state.role || "musician");
@@ -888,7 +889,7 @@ async function generateSampleData() {
   const finalOrder = order.filter(x => x !== "hero");
   finalOrder.unshift("hero");
 
-  const siteName = "Przykładowy Artysta";
+  const siteName = "Nazwa artysty / zespołu";
 
   const blocks = {};
   const setBlock = (id, title, data = {}) => {
@@ -898,9 +899,9 @@ async function generateSampleData() {
   // HERO
   setBlock("hero", BLOCKS.hero.label, {
     headline: siteName,
-    subheadline: "Nowoczesny rock / alternatywa. Single, klipy, koncerty.",
-    primaryCtaText: "Zobacz więcej",
-    primaryCtaTarget: "auto",
+    subheadline: "Oficjalny profil artystyczny. Informacje, multimedia i wydarzenia.",
+    primaryCtaText: "Kontakt",
+    primaryCtaTarget: "contact",
     primaryCtaUrl: "",
   });
 
@@ -911,8 +912,8 @@ async function generateSampleData() {
     const ed = BLOCKS[id]?.editor;
 
     if (ed === "text") {
-      setBlock(id, id === "about" ? "O nas" : (BLOCKS[id]?.label || id), {
-        text: "Krótko: prawdziwe granie, bez udawania.\n\nTu wstaw 2–3 zdania o sobie: styl, inspiracje, osiągnięcia.\n\nNa dole zostawiliśmy kontakt i social media."
+      setBlock(id, id === "about" ? (BLOCKS.about?.label || "O artyście / zespole") : (BLOCKS[id]?.label || id), {
+        text: "Tekst poglądowy. Krótka biografia oraz opis twórczości."
       });
       continue;
     }
@@ -923,76 +924,74 @@ async function generateSampleData() {
     }
 
     if (ed === "embed_spotify") {
-      setBlock(id, "Muzyka", {
+      setBlock(id, "Spotify", {
         items: [
-          { url: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M" },
-          { url: "https://open.spotify.com/playlist/37i9dQZF1DX0XUsuxWHRQd" }
+          { url: "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT" }
         ]
       });
       continue;
     }
 
     if (ed === "embed_youtube") {
-      setBlock(id, "Wideo", {
+      setBlock(id, "YouTube", {
         items: [
-          { url: `<iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ?controls=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>` },
-          { url: "https://www.youtube.com/watch?v=9pIKakO0nR0" }
+          { url: `<iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ?controls=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>` }
         ]
       });
       continue;
     }
 
     if (ed === "store") {
-      setBlock(id, "Merch", {
+      setBlock(id, "Sklep", {
         items: [
-          { name: "Koszulka (czarna)", price: "79 zł", url: "https://example.com", img: "", alt: "Koszulka zespołu", desc: "Klasyczny krój. Rozmiary S–XL." },
-          { name: "CD – album", price: "49 zł", url: "https://example.com", img: "", alt: "Okładka płyty", desc: "Limitowana seria. Autograf na życzenie." },
-          { name: "Bilet – koncert", price: "59 zł", url: "https://example.com", img: "", alt: "Bilet na koncert", desc: "Wstęp od 18:00. Liczba miejsc ograniczona." }
+          { name: "Płyta (CD)", price: "49 zł", url: "https://example.com", img: "", alt: "Płyta (CD)", desc: "Opis poglądowy." },
+          { name: "Koszulka", price: "89 zł", url: "https://example.com", img: "", alt: "Koszulka", desc: "Opis poglądowy." },
+          { name: "Plakat", price: "39 zł", url: "https://example.com", img: "", alt: "Plakat", desc: "Opis poglądowy." }
         ]
       });
       continue;
     }
 
     if (ed === "events") {
-      setBlock(id, id === "exhibitions" ? "Występy" : "Wydarzenia", {
+      setBlock(id, "Wydarzenia", {
         items: [
-          { date: "17.01.2026", city: "Gdańsk", place: "Bramie Nizinnej", link: "https://example.com" },
-          { date: "24.01.2026", city: "Warszawa", place: "Klub (przykład)", link: "https://example.com" },
-          { date: "01.02.2026", city: "Kraków", place: "Scena (przykład)", link: "https://example.com" }
+          { date: "14.03.2026", city: "Warszawa", place: "Miejsce (przykład)", link: "https://example.com" },
+          { date: "28.03.2026", city: "Kraków", place: "Miejsce (przykład)", link: "https://example.com" },
+          { date: "11.04.2026", city: "Gdańsk", place: "Miejsce (przykład)", link: "https://example.com" }
         ]
       });
       continue;
     }
 
     if (ed === "projects") {
-      setBlock(id, id === "caseStudies" ? "Case studies" : "Projekty", {
+      setBlock(id, id === "caseStudies" ? (BLOCKS.caseStudies?.label || "Realizacje") : "Projekty", {
         items: [
-          { title: "Single: 'Przebudzenie'", desc: "Opis w 2 zdaniach. Co to za projekt i co jest w nim mocne.", tags: "single • 2026", link: "https://example.com" },
-          { title: "Teledysk", desc: "Klip, klimat, reżyseria.\nDodaj link do YouTube.", tags: "video", link: "https://example.com" },
-          { title: "Sesja zdjęciowa", desc: "3–4 zdjęcia promocyjne do pobrania w EPK.", tags: "press", link: "https://example.com" }
+          { title: "Realizacja 1", desc: "Opis poglądowy.", tags: "2025", link: "https://example.com" },
+          { title: "Realizacja 2", desc: "Opis poglądowy.", tags: "2026", link: "https://example.com" },
+          { title: "Realizacja 3", desc: "Opis poglądowy.", tags: "2026", link: "https://example.com" }
         ]
       });
       continue;
     }
 
     if (ed === "services") {
-      setBlock(id, "Usługi", {
+      setBlock(id, "Oferta", {
         items: [
-          { name: "Koncert klubowy", price: "od 2000 zł", desc: "Czas, skład, wymagania techniczne." },
-          { name: "Event firmowy", price: "wycena", desc: "Dopasowanie setu i czasu trwania." },
-          { name: "Współpraca", price: "", desc: "Feat, support, gościnny udział." }
+          { name: "Występ / koncert", price: "do ustalenia", desc: "Opis poglądowy." },
+          { name: "Współpraca", price: "do ustalenia", desc: "Opis poglądowy." },
+          { name: "Warsztaty", price: "do ustalenia", desc: "Opis poglądowy." }
         ]
       });
       continue;
     }
 
     if (ed === "simpleList") {
-      const title = id === "clients" ? "Klienci" : (id === "awards" ? "Nagrody" : (BLOCKS[id]?.label || id));
+      const title = id === "clients" ? "Partnerzy" : (id === "awards" ? "Wyróżnienia" : (BLOCKS[id]?.label || id));
       setBlock(id, title, {
         items: [
-          { text: "Przykładowa pozycja #1", link: "https://example.com" },
-          { text: "Przykładowa pozycja #2", link: "https://example.com" },
-          { text: "Przykładowa pozycja #3", link: "https://example.com" }
+          { text: "Pozycja 1 (przykład)", link: "https://example.com" },
+          { text: "Pozycja 2 (przykład)", link: "https://example.com" },
+          { text: "Pozycja 3 (przykład)", link: "https://example.com" }
         ]
       });
       continue;
@@ -1001,8 +1000,8 @@ async function generateSampleData() {
     if (ed === "publications") {
       setBlock(id, "Publikacje", {
         items: [
-          { title: "Wywiad", where: "Portal muzyczny", year: "2026", url: "https://example.com" },
-          { title: "Recenzja koncertu", where: "Magazyn", year: "2026", url: "https://example.com" }
+          { title: "Publikacja 1", where: "Źródło", year: "2026", url: "https://example.com" },
+          { title: "Publikacja 2", where: "Źródło", year: "2026", url: "https://example.com" }
         ]
       });
       continue;
@@ -1011,23 +1010,23 @@ async function generateSampleData() {
     if (ed === "testimonials") {
       setBlock(id, "Opinie", {
         items: [
-          { quote: "Świetna energia na żywo i bardzo dobry kontakt z publiką.", who: "Organizator", link: "https://example.com" },
-          { quote: "Nowocześnie, głośno i z emocją — tak ma być.", who: "Słuchacz", link: "https://example.com" }
+          { quote: "Opinia poglądowa.", who: "Osoba / instytucja", link: "https://example.com" },
+          { quote: "Opinia poglądowa.", who: "Osoba / instytucja", link: "https://example.com" }
         ]
       });
       continue;
     }
 
     if (ed === "epk") {
-      setBlock(id, "EPK / Press kit", {
-        shortBio: "Krótka notka (5–7 zdań): skład, gatunek, najważniejsze osiągnięcia, trasa.",
+      setBlock(id, "Materiały prasowe", {
+        shortBio: "Krótki opis dla mediów. Tekst poglądowy.",
         pressLinks: [
-          { name: "Recenzja", url: "https://example.com" },
-          { name: "Wywiad", url: "https://example.com" }
+          { name: "Informacja prasowa", url: "https://example.com" },
+          { name: "Wywiad / artykuł", url: "https://example.com" }
         ],
         downloadLinks: [
-          { name: "Stage plot (PDF)", url: "https://example.com" },
-          { name: "Rider techniczny", url: "https://example.com" }
+          { name: "EPK (PDF)", url: "https://example.com" },
+          { name: "Zdjęcia prasowe (ZIP)", url: "https://example.com" }
         ]
       });
       continue;
@@ -1035,9 +1034,9 @@ async function generateSampleData() {
 
     if (ed === "newsletter") {
       setBlock(id, "Newsletter", {
-        title: "Bądź na bieżąco",
-        desc: "Nowe utwory, koncerty i materiały zza kulis.",
-        btn: "Zapisz się",
+        title: "Newsletter",
+        desc: "Informacje o nowych materiałach i wydarzeniach.",
+        btn: "Zapisz",
         url: "https://example.com"
       });
       continue;
@@ -1045,23 +1044,25 @@ async function generateSampleData() {
 
     if (ed === "contact") {
       setBlock(id, "Kontakt", {
-        email: "kontakt@przyklad.pl",
-        phone: "+48 600 000 000",
-        city: "Kraków",
-        cta: "Napisz maila",
+        email: "kontakt@example.pl",
+        phone: "+48 000 000 000",
+        city: "Warszawa",
+        cta: "Kontakt",
         showMap: true,
-        mapAddress: "ul. Długa 1, 31-146 Kraków",
+        mapAddress: "Tamka 3, 00-349 Warszawa",
         mapEmbed: ""
       });
       continue;
     }
 
     if (ed === "social") {
-      setBlock(id, "Social media", {
+      setBlock(id, "Linki zewnętrzne", {
         items: [
-          { name: "Instagram", url: "https://instagram.com" },
-          { name: "YouTube", url: "https://youtube.com" },
-          { name: "Spotify", url: "https://open.spotify.com" }
+          { name: "YouTube", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+          { name: "Spotify", url: "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT" },
+          { name: "Instagram", url: "https://instagram.com/profil" },
+          { name: "Facebook", url: "https://facebook.com/profil" },
+          { name: "Strona", url: "https://example.com" }
         ]
       });
       continue;
@@ -1073,26 +1074,26 @@ async function generateSampleData() {
 
   // assets (demo)
   assets.heroImages = [
-    { dataUrl: _svgPlaceholderDataUrl("HERO — tło", 1600, 1000), alt: "HERO — tło" },
-    { dataUrl: _svgPlaceholderDataUrl("HERO — zdjęcie 1", 900, 900), alt: "HERO — zdjęcie 1" },
-    { dataUrl: _svgPlaceholderDataUrl("HERO — zdjęcie 2", 900, 900), alt: "HERO — zdjęcie 2" },
+    { dataUrl: _svgPlaceholderDataUrl("Zdjęcie promocyjne 01", 1600, 1000), alt: "Zdjęcie promocyjne 01" },
+    { dataUrl: _svgPlaceholderDataUrl("Zdjęcie promocyjne 02", 900, 900), alt: "Zdjęcie promocyjne 02" },
+    { dataUrl: _svgPlaceholderDataUrl("Zdjęcie promocyjne 03", 900, 900), alt: "Zdjęcie promocyjne 03" },
   ];
 
   assets.galleryImages = preset.includes('gallery') ? [
-    { dataUrl: _svgPlaceholderDataUrl("Galeria 01", 900, 900), alt: "Galeria 01" },
-    { dataUrl: _svgPlaceholderDataUrl("Galeria 02", 900, 900), alt: "Galeria 02" },
-    { dataUrl: _svgPlaceholderDataUrl("Galeria 03", 900, 900), alt: "Galeria 03" },
-    { dataUrl: _svgPlaceholderDataUrl("Galeria 04", 900, 900), alt: "Galeria 04" },
-    { dataUrl: _svgPlaceholderDataUrl("Galeria 05", 900, 900), alt: "Galeria 05" },
-    { dataUrl: _svgPlaceholderDataUrl("Galeria 06", 900, 900), alt: "Galeria 06" },
-    { dataUrl: _svgPlaceholderDataUrl("Galeria 07", 900, 900), alt: "Galeria 07" },
-    { dataUrl: _svgPlaceholderDataUrl("Galeria 08", 900, 900), alt: "Galeria 08" },
+    { dataUrl: _svgPlaceholderDataUrl("Portfolio 01", 900, 900), alt: "Portfolio 01" },
+    { dataUrl: _svgPlaceholderDataUrl("Portfolio 02", 900, 900), alt: "Portfolio 02" },
+    { dataUrl: _svgPlaceholderDataUrl("Portfolio 03", 900, 900), alt: "Portfolio 03" },
+    { dataUrl: _svgPlaceholderDataUrl("Portfolio 04", 900, 900), alt: "Portfolio 04" },
+    { dataUrl: _svgPlaceholderDataUrl("Portfolio 05", 900, 900), alt: "Portfolio 05" },
+    { dataUrl: _svgPlaceholderDataUrl("Portfolio 06", 900, 900), alt: "Portfolio 06" },
+    { dataUrl: _svgPlaceholderDataUrl("Portfolio 07", 900, 900), alt: "Portfolio 07" },
+    { dataUrl: _svgPlaceholderDataUrl("Portfolio 08", 900, 900), alt: "Portfolio 08" },
   ] : [];
 
   assets.epkPressPhotos = preset.includes('epk') ? [
-    { dataUrl: _svgPlaceholderDataUrl("Press photo 01", 1200, 800), alt: "Press photo 01" },
-    { dataUrl: _svgPlaceholderDataUrl("Press photo 02", 1200, 800), alt: "Press photo 02" },
-    { dataUrl: _svgPlaceholderDataUrl("Press photo 03", 1200, 800), alt: "Press photo 03" },
+    { dataUrl: _svgPlaceholderDataUrl("Zdjęcie prasowe 01", 1200, 800), alt: "Zdjęcie prasowe 01" },
+    { dataUrl: _svgPlaceholderDataUrl("Zdjęcie prasowe 02", 1200, 800), alt: "Zdjęcie prasowe 02" },
+    { dataUrl: _svgPlaceholderDataUrl("Zdjęcie prasowe 03", 1200, 800), alt: "Zdjęcie prasowe 03" },
   ] : [];
 
   assets.epkFiles = [];
@@ -1181,10 +1182,10 @@ function applyRolePreset(role) {
   state.activeBlockId = state.order.find(id => state.blocks[id]?.enabled) || "hero";
 
   const hero = ensureBlock("hero");
-  hero.data.headline = hero.data.headline ?? "Nowa strona artysty";
-  hero.data.subheadline = hero.data.subheadline ?? "Pokaż prace, materiały i kontakt. Estetycznie i bez korpo.";
-  hero.data.primaryCtaText = hero.data.primaryCtaText ?? "Zobacz";
-  hero.data.primaryCtaTarget = hero.data.primaryCtaTarget ?? "auto"; // auto | contact | custom
+  hero.data.headline = hero.data.headline ?? "Nazwa artysty / zespołu";
+  hero.data.subheadline = hero.data.subheadline ?? "Oficjalny profil artystyczny. Informacje, multimedia i wydarzenia.";
+  hero.data.primaryCtaText = hero.data.primaryCtaText ?? "Kontakt";
+  hero.data.primaryCtaTarget = hero.data.primaryCtaTarget ?? "contact"; // auto | contact | custom
   hero.data.primaryCtaUrl = hero.data.primaryCtaUrl ?? "";
 }
 
@@ -1202,7 +1203,7 @@ function syncPrivacySettingsUi(){
     input.disabled = !isCustom;
     if (!isCustom) input.setAttribute('aria-disabled', 'true');
     else input.removeAttribute('aria-disabled');
-    if (isCustom && !String(input.placeholder || '').trim()) input.placeholder = 'Wklej link...';
+    if (isCustom && !String(input.placeholder || '').trim()) input.placeholder = 'Wprowadź URL';
   }
 }
 
@@ -1395,7 +1396,7 @@ function collectIssues() {
         if (dateRaw) {
           const iso = toIsoDateLoose(dateRaw);
           if (!iso || !isValidIsoDateStrict(iso)) {
-            pushUrlIssue(`${label}: data wydarzenia wygląda na błędną (użyj np. 2026-01-19).`);
+            pushUrlIssue(`${label}: data wydarzenia wygląda na błędną (format: YYYY-MM-DD, przykładowo 2026-01-19).`);
           }
         }
         const link = String(it.link || "").trim();
@@ -1595,7 +1596,7 @@ function formatInlineIssueMessage(id, text){
   if (!t) return '';
 
   // Ustawienia
-  if (id === 'siteName' && t.startsWith('Ustawienia:')) return 'Wpisz nazwę / pseudonim.';
+  if (id === 'siteName' && t.startsWith('Ustawienia:')) return 'Wprowadź nazwę serwisu.';
 
   // SEO (ostrzeżenia)
   if (id === 'metaTitle' && t.startsWith('SEO: brak tytułu')) return 'Dodaj tytuł SEO.';
@@ -1604,14 +1605,14 @@ function formatInlineIssueMessage(id, text){
   // Analityka
   if (id === 'gtmId' && t.includes('GTM ID')) return 'GTM ID ma zły format.';
   if (id === 'cookieBanner' && t.includes('banner cookies')) return 'Włącz banner cookies, jeśli używasz GTM.';
-  if (id === 'privacyUrl' && t.includes('link do polityki')) return 'Wpisz poprawny link do polityki.';
+  if (id === 'privacyUrl' && t.includes('link do polityki')) return 'Wprowadź poprawny URL.';
 
   // Polityka / kontakt
-  if (id === 'addBlockSelect' && t.startsWith('Polityka: dodaj blok Kontakt')) return 'Dodaj blok „Kontakt” i uzupełnij email.';
-  if (id === 'ed_contact_email' && (t.startsWith('Kontakt: email') || t.startsWith('Polityka: uzupełnij email'))) return 'Wpisz poprawny email.';
+  if (id === 'addBlockSelect' && t.startsWith('Polityka: dodaj blok Kontakt')) return 'Dodaj blok „Kontakt” i uzupełnij adres e‑mail.';
+  if (id === 'ed_contact_email' && (t.startsWith('Kontakt: email') || t.startsWith('Polityka: uzupełnij email'))) return 'Wprowadź poprawny adres e‑mail.';
 
   // HERO CTA
-  if (id === 'ed_hero_cta_url' && t.startsWith('HERO:')) return 'Wpisz poprawny URL (z https://...).';
+  if (id === 'ed_hero_cta_url' && t.startsWith('HERO:')) return 'Wprowadź poprawny URL (https://...).';
 
   // Fallback: skróć prefix typu "X: ..."
   const m = t.match(/^([^:]{2,24}):\s*(.+)$/);
@@ -1718,7 +1719,7 @@ function ensureIssuesModal() {
         <button type="button" class="iconBtn modalClose" data-issues-close="1" aria-label="Zamknij">✕</button>
       </div>
       <div class="issuesModal__body">
-        <div class="issuesModal__hint">Błędy blokują eksport. Ostrzeżenia to podpowiedzi. Kliknij wpis, żeby przejść do pola.</div>
+        <div class="issuesModal__hint">Błędy blokują eksport. Ostrzeżenia nie blokują eksportu.</div>
         <ul class="issuesModal__list" id="issuesModalList"></ul>
       </div>
     </div>

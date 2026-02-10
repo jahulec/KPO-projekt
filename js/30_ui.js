@@ -608,13 +608,13 @@ function renderBlockEditor() {
              </div>
            `).join("")}
          </div>`
-      : `<div class="hint">Brak zdjęć mobile. Jeśli nie dodasz, telefon użyje wersji desktop.</div>`;
+      : `<div class="hint">Brak plików (mobile).</div>`;
 
     specific = `
       ${fieldRow("Nagłówek (H1)", `<input id="ed_hero_headline" type="text" value="${escapeHtml(h.headline || "")}" />`)}
       ${fieldRow("Opis", `<textarea id="ed_hero_sub" data-path="subheadline" data-rich-path="subheadlineRich" rows="4">${escapeHtml(h.subheadline || "")}</textarea>`)}
       <div class="grid2">
-        ${fieldRow("Tekst przycisku", `<input id="ed_hero_cta_text" type="text" value="${escapeHtml(h.primaryCtaText || "Zobacz")}" />`)}
+        ${fieldRow("Tekst przycisku", `<input id="ed_hero_cta_text" type="text" value="${escapeHtml(h.primaryCtaText || "Kontakt")}" />`)}
         ${fieldRow("Cel przycisku", `
           <select id="ed_hero_cta_target">
             <option value="auto" ${h.primaryCtaTarget==="auto"?"selected":""}>Automatycznie</option>
@@ -627,22 +627,22 @@ function renderBlockEditor() {
         ${fieldRow("Własny URL", `<input id="ed_hero_cta_url" type="url" value="${escapeHtml(h.primaryCtaUrl || "")}" placeholder="https://..." />`)}
       </div>
 
-      ${fieldRow("Zdjęcia HERO (upload, multi)", `<div class="dropZone" data-drop="ed_hero_images">
-  <div class="dropZone__title">Upuść zdjęcia HERO (desktop)</div>
-  <div class="dropZone__sub">…albo kliknij, aby wybrać pliki</div>
+      ${fieldRow("Zdjęcia HERO (upload)", `<div class="dropZone" data-drop="ed_hero_images">
+  <div class="dropZone__title">Dodaj pliki (desktop)</div>
+  <div class="dropZone__sub">Wybierz pliki</div>
   <input id="ed_hero_images" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple />
 </div>`,
-        "1 zdjęcie = tło. 2+ zdjęcia = mini-galeria w HERO. JPG/PNG/WebP (HEIC nie). Obrazy są automatycznie zmniejszane i kompresowane."
+        "JPG/PNG/WebP. Pliki są automatycznie optymalizowane."
       )}
       <div class="hint" style="margin-top:-6px;">Mobile: ${assets.heroImagesMobile.length || 0} (opcjonalnie)</div>
       <div style="display:grid; gap:10px;">
         <div class="dropZone" data-drop="ed_hero_images_mobile">
-  <div class="dropZone__title">Upuść zdjęcia HERO (mobile)</div>
-  <div class="dropZone__sub">…albo kliknij, aby wybrać pliki</div>
+  <div class="dropZone__title">Dodaj pliki (mobile)</div>
+  <div class="dropZone__sub">Wybierz pliki</div>
   <input id="ed_hero_images_mobile" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple />
 </div>
       </div>
-      <div class="hint">Jeśli dodasz zdjęcia, telefon użyje pierwszego jako tła HERO.</div>
+      <div class="hint">Jeśli dodasz pliki, urządzenia mobilne użyją pierwszego jako tła.</div>
       ${heroInfoMobile}
       ${heroInfo}
     `;
@@ -653,8 +653,7 @@ function renderBlockEditor() {
     // Use the actual block id from renderBlockEditor scope: `id`.
     const baseIdOf = (bid) => String(bid || "").split("__")[0];
     const hasRich = String(cfg.data.richHtml || "").trim().length > 0;
-    const hint = hasRich ? "Aktywne formatowanie. Kliknij przycisk w rogu pola. Edycja tekstu wyłączy formatowanie." : "";
-    specific = fieldRow("Treść", `<textarea id="ed_text" data-path="text" data-rich-path="richHtml" rows="7">${escapeHtml(cfg.data.text || "")}</textarea>`, hint);
+    specific = fieldRow("Treść", `<textarea id="ed_text" data-path="text" data-rich-path="richHtml" rows="7">${escapeHtml(cfg.data.text || "")}</textarea>`, "");
   }
 
   if (def.editor === "gallery") {
@@ -709,10 +708,10 @@ function renderBlockEditor() {
       </div>
 
       ${fieldRow("Wgraj zdjęcia", `<div class="dropZone" data-drop="ed_gallery_upload">
-  <div class="dropZone__title">Upuść zdjęcia do galerii</div>
-  <div class="dropZone__sub">…albo kliknij, aby wybrać pliki</div>
+  <div class="dropZone__title">Dodaj pliki</div>
+  <div class="dropZone__sub">Wybierz pliki</div>
   <input id="ed_gallery_upload" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple />
-</div>`, "JPG/PNG/WebP (HEIC nie). Obrazy są automatycznie zmniejszane i kompresowane.")}
+</div>`, "JPG/PNG/WebP. Pliki są automatycznie optymalizowane.")}
       ${thumbs}
     `;
   }
@@ -732,7 +731,7 @@ function renderBlockEditor() {
       + listEditor(cfg.data.items, "items", "Link", [
           { key: "url", label: "Link Spotify", type: "url", placeholder: "https://open.spotify.com/..." }
         ])
-      + `<div class="hint">Najpewniej działa pełny link <strong>open.spotify.com</strong> (skróty typu <strong>spoti.fi</strong> mogą nie osadzić).</div>`;
+      ;
   }
 
   if (def.editor === "embed_youtube") {
@@ -747,17 +746,17 @@ function renderBlockEditor() {
         </div>
       `)
       + listEditor(cfg.data.items, "items", "Wpis", [
-          { key: "url", label: "Wklej kod iframe lub link", type: "textarea", placeholder: "Wklej iframe z YouTube (Udostępnij → Umieść) albo zwykły link" }
+          { key: "url", label: "Źródło", type: "textarea", placeholder: "Wklej iframe lub URL" }
         ])
-      + `<div class="hint">Najpewniej działa wklejony <strong>iframe</strong> z YouTube. Link też zadziała, ale jeśli autor zablokował osadzanie — player się nie wyświetli.</div>`;
+      ;
   }
 
   if (def.editor === "events") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     specific = listEditor(cfg.data.items, "items", "Wydarzenie", [
       { key: "date", label: "Data", type: "date" },
-      { key: "city", label: "Miasto", type: "text", placeholder: "Kraków" },
-      { key: "place", label: "Miejsce", type: "text", placeholder: "Klub / galeria" },
+      { key: "city", label: "Miasto", type: "text", placeholder: "Miasto" },
+      { key: "place", label: "Lokalizacja", type: "text", placeholder: "Lokalizacja" },
       { key: "link", label: "Link", type: "url", placeholder: "https://..." },
     ]);
   }
@@ -767,8 +766,8 @@ function renderBlockEditor() {
     specific = listEditor(cfg.data.items, "items", "Projekt", [
       { key: "title", label: "Tytuł", type: "text" },
       { key: "link", label: "Link", type: "url" },
-      { key: "desc", label: "Opis", type: "textarea", placeholder: "1–3 zdania" },
-      { key: "tags", label: "Tagi", type: "text", placeholder: "np. okładki, live, klip" },
+      { key: "desc", label: "Opis", type: "textarea", placeholder: "Krótki opis" },
+      { key: "tags", label: "Tagi", type: "text", placeholder: "tag1, tag2" },
     ]);
   }
 
@@ -776,7 +775,7 @@ function renderBlockEditor() {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     specific = listEditor(cfg.data.items, "items", "Usługa", [
       { key: "name", label: "Nazwa", type: "text" },
-      { key: "price", label: "Cena (opcjonalnie)", type: "text", placeholder: "od 500 zł" },
+      { key: "price", label: "Cena (opcjonalnie)", type: "text", placeholder: "500 zł" },
       { key: "desc", label: "Opis", type: "textarea" },
     ]);
   }
@@ -784,14 +783,14 @@ function renderBlockEditor() {
   if (def.editor === "store") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     specific = listEditor(cfg.data.items, "items", "Produkt", [
-      { key: "name", label: "Nazwa", type: "text", placeholder: "Koszulka / płyta / bilet" },
-      { key: "price", label: "Cena", type: "text", placeholder: "np. 79 zł" },
-      { key: "url", label: "Link 'Kup'", type: "url", placeholder: "https://..." },
+      { key: "name", label: "Nazwa", type: "text", placeholder: "Produkt 1" },
+      { key: "price", label: "Cena", type: "text", placeholder: "123 zł" },
+      { key: "url", label: "Link", type: "url", placeholder: "https://..." },
       { key: "img", label: "Zdjęcie (URL)", type: "url", placeholder: "https://... (opcjonalnie)" },
       { key: "alt", label: "Alt", type: "text", placeholder: "Opis zdjęcia" },
-      { key: "desc", label: "Opis (krótko)", type: "textarea", placeholder: "1–2 zdania" },
+      { key: "desc", label: "Opis", type: "textarea", placeholder: "Krótki opis" },
     ])
-    + `<div class="hint">Najprościej: dodaj produkty i podepnij linki do swojego sklepu (Stage24 / Bandcamp / WooCommerce / Allegro itp.).</div>`;
+    ;
   }
 
   if (def.editor === "simpleList") {
@@ -807,7 +806,7 @@ function renderBlockEditor() {
     specific = listEditor(cfg.data.items, "items", "Publikacja", [
       { key: "title", label: "Tytuł", type: "text" },
       { key: "year", label: "Rok", type: "text", placeholder: "2025" },
-      { key: "where", label: "Gdzie", type: "text", placeholder: "Magazyn / wydawnictwo" },
+      { key: "where", label: "Źródło", type: "text", placeholder: "Nazwa źródła" },
       { key: "url", label: "Link", type: "url" },
     ]);
   }
@@ -822,9 +821,9 @@ function renderBlockEditor() {
   }
 
   if (def.editor === "newsletter") {
-    cfg.data.title = cfg.data.title ?? "Zapisz się";
-    cfg.data.desc = cfg.data.desc ?? "Dostaniesz nowe rzeczy jako pierwszy.";
-    cfg.data.btn = cfg.data.btn ?? "Dołącz";
+    cfg.data.title = cfg.data.title ?? "Subskrypcja";
+    cfg.data.desc = cfg.data.desc ?? "Informacje o aktualizacjach (poglądowe).";
+    cfg.data.btn = cfg.data.btn ?? "Zapisz się";
     cfg.data.url = cfg.data.url ?? "";
 
     specific = `
@@ -848,7 +847,7 @@ function renderBlockEditor() {
             ${assets.epkPressPhotos.map((img, i) => `
               <div class="itemCard uiCard">
                 <div class="itemCardTop">
-                  <strong>Press photo #${i+1}</strong>
+                  <strong>Zdjęcie #${i+1}</strong>
                   <button class="btnSmall" type="button" data-remove-epkphoto="${i}">Usuń</button>
                 </div>
                 <label class="field" style="margin:10px 0 0 0;">
@@ -858,10 +857,10 @@ function renderBlockEditor() {
               </div>
             `).join("")}
          </div>`
-      : `<div class="hint">Brak zdjęć prasowych. Wgraj poniżej.</div>`;
+      : `<div class="hint">Brak zdjęć.</div>`;
 
     const filesInfo = assets.epkFiles.length
-      ? `<div class="hint">Pliki presspack: ${assets.epkFiles.length}</div>
+      ? `<div class="hint">Pliki: ${assets.epkFiles.length}</div>
          <div class="itemList">
            ${assets.epkFiles.map((f, i) => `
              <div class="itemCard uiCard">
@@ -872,7 +871,7 @@ function renderBlockEditor() {
              </div>
            `).join("")}
          </div>`
-      : `<div class="hint">Brak plików. Wgraj poniżej.</div>`;
+      : `<div class="hint">Brak plików.</div>`;
 
     specific = `
       ${fieldRow("Krótki opis (bio)", `<textarea id="ed_epk_bio" data-path="shortBio" data-rich-path="shortBioRich" rows="6">${escapeHtml(cfg.data.shortBio)}</textarea>`)}
@@ -884,22 +883,22 @@ function renderBlockEditor() {
 
       ${fieldRow("Linki do pobrania (opcjonalnie)", "", "")}
       ${listEditor(cfg.data.downloadLinks, "downloadLinks", "Plik", [
-        { key: "name", label: "Nazwa", type: "text", placeholder: "Press kit PDF" },
+        { key: "name", label: "Nazwa", type: "text", placeholder: "Plik PDF" },
         { key: "url", label: "URL", type: "url", placeholder: "https://..." },
       ])}
 
-      ${fieldRow("Zdjęcia prasowe (upload)", `<div class="dropZone" data-drop="ed_epk_photos">
-  <div class="dropZone__title">Upuść zdjęcia prasowe (EPK)</div>
-  <div class="dropZone__sub">…albo kliknij, aby wybrać pliki</div>
+      ${fieldRow("Zdjęcia (upload)", `<div class="dropZone" data-drop="ed_epk_photos">
+  <div class="dropZone__title">Dodaj pliki</div>
+  <div class="dropZone__sub">Wybierz pliki</div>
   <input id="ed_epk_photos" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple />
-</div>`, "Do ZIP trafią do assets/press/. JPG/PNG/WebP (HEIC nie). Obrazy są automatycznie zmniejszane i kompresowane.")}
+</div>`, "JPG/PNG/WebP. Pliki trafiają do assets/press/.")}
       ${photosInfo}
 
-      ${fieldRow("Pliki presspack (upload)", `<div class="dropZone" data-drop="ed_epk_files">
-  <div class="dropZone__title">Upuść pliki presspack (PDF/ZIP)</div>
-  <div class="dropZone__sub">…albo kliknij, aby wybrać pliki</div>
+      ${fieldRow("Pliki (upload)", `<div class="dropZone" data-drop="ed_epk_files">
+  <div class="dropZone__title">Dodaj pliki</div>
+  <div class="dropZone__sub">Wybierz pliki</div>
   <input id="ed_epk_files" type="file" accept=".pdf,.zip,.png,.jpg,.jpeg,.webp" multiple />
-</div>`, "Do ZIP trafią do assets/press/. JPG/PNG/WebP (HEIC nie). Obrazy są automatycznie zmniejszane i kompresowane.")}
+</div>`, "Pliki trafiają do assets/press/.")}
       ${filesInfo}
     `;
   }
@@ -908,30 +907,30 @@ function renderBlockEditor() {
     cfg.data.email = cfg.data.email ?? "";
     cfg.data.phone = cfg.data.phone ?? "";
     cfg.data.city = cfg.data.city ?? "";
-    cfg.data.cta = cfg.data.cta ?? "Napisz do mnie";
+    cfg.data.cta = cfg.data.cta ?? "Kontakt";
     cfg.data.showMap = typeof cfg.data.showMap === "boolean" ? cfg.data.showMap : false;
     cfg.data.mapAddress = cfg.data.mapAddress ?? "";
     cfg.data.mapEmbed = cfg.data.mapEmbed ?? "";
     specific = `
       <div class="grid2">
-        ${fieldRow("Email", `<input id="ed_contact_email" type="email" value="${escapeHtml(cfg.data.email)}" placeholder="mail@..." />`)}
+        ${fieldRow("Email", `<input id="ed_contact_email" type="email" value="${escapeHtml(cfg.data.email)}" placeholder="kontakt@..." />`)}
         ${fieldRow("Telefon", `<input id="ed_contact_phone" type="text" value="${escapeHtml(cfg.data.phone)}" placeholder="+48 ..." />`)}
       </div>
       <div class="grid2">
-        ${fieldRow("Miasto", `<input id="ed_contact_city" type="text" value="${escapeHtml(cfg.data.city)}" placeholder="Kraków" />`)}
+        ${fieldRow("Miasto", `<input id="ed_contact_city" type="text" value="${escapeHtml(cfg.data.city)}" placeholder="Miasto" />`)}
         ${fieldRow("Tekst CTA", `<input id="ed_contact_cta" type="text" value="${escapeHtml(cfg.data.cta)}" />`)}
       </div>
       <div class="divider"></div>
-      ${fieldRow("Mapa", `<label class="chk"><input id="ed_contact_showMap" type="checkbox" ${cfg.data.showMap?"checked":""}/> <span>Pokaż mapę pod danymi kontaktu</span></label>`, "W praktyce: studio, sala prób, biuro, punkt odbioru merchu.")}
-      ${fieldRow("Adres (prosto)", `<input id="ed_contact_mapAddress" type="text" value="${escapeHtml(cfg.data.mapAddress)}" placeholder="np. ul. Długa 1, Kraków" />`, "Jeśli nie wklejasz iframe — generator zrobi mapę po adresie.")}
-      ${fieldRow("Kod iframe z Google Maps (opcjonalnie)", `<textarea id="ed_contact_mapEmbed" rows="4" placeholder="Wklej iframe (Udostępnij → Umieść mapę)">${escapeHtml(cfg.data.mapEmbed)}</textarea>`, "Najpewniejsze osadzanie. Jeśli wkleisz iframe — użyjemy jego src.")}
+      ${fieldRow("Mapa", `<label class="chk"><input id="ed_contact_showMap" type="checkbox" ${cfg.data.showMap?"checked":""}/> <span>Pokaż mapę</span></label>`)}
+      ${fieldRow("Adres", `<input id="ed_contact_mapAddress" type="text" value="${escapeHtml(cfg.data.mapAddress)}" placeholder="Adres" />`)}
+      ${fieldRow("Iframe (opcjonalnie)", `<textarea id="ed_contact_mapEmbed" rows="4" placeholder="Iframe (opcjonalnie)">${escapeHtml(cfg.data.mapEmbed)}</textarea>`)}
     `;
   }
 
   if (def.editor === "social") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     specific = listEditor(cfg.data.items, "items", "Profil", [
-      { key: "name", label: "Nazwa", type: "text", placeholder: "Instagram" },
+      { key: "name", label: "Nazwa", type: "text", placeholder: "Nazwa" },
       { key: "url", label: "URL", type: "url", placeholder: "https://..." },
     ]);
   }

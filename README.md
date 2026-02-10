@@ -1,4 +1,4 @@
-# Generator Portfolio Artysty
+# Generator stron dla artystów
 
 ## Finansowanie (KPO / NextGenerationEU)
 
@@ -17,14 +17,14 @@ Szczegóły: `kpo.html`
 
 
 ## Opis
-Projekt pozwala artystom na stworzenie własnej strony internetowej. Użytkownik wybiera rolę artysty (muzyk, grafik itp.), sekcje do dodania na stronie (portfolio, kalendarz koncertów, sklep, biografia) i styl strony. Następnie generuje się podgląd strony HTML, który można pobrać i załadować na serwer.
+Projekt pozwala na stworzenie statycznej strony internetowej w oparciu o wybrany profil, zestaw sekcji oraz styl. Generator buduje podgląd HTML i umożliwia eksport gotowych plików.
 
 ## Jak używać
-1. Wybierz rolę artysty z listy.
-2. Zaznacz sekcje, które chcesz mieć na swojej stronie.
-3. Wybierz styl strony.
-4. Kliknij "Generuj podgląd", aby zobaczyć, jak będzie wyglądała Twoja strona.
-5. Pobierz wygenerowany kod HTML/CSS.
+1. Wybierz profil strony z listy.
+2. Zaznacz sekcje, które mają zostać wygenerowane.
+3. Wybierz styl.
+4. Uruchom podgląd.
+5. Wyeksportuj wygenerowane pliki.
 
 ## Wymagania
 - JavaScript włączony w przeglądarce.
@@ -34,7 +34,4 @@ Projekt pozwala artystom na stworzenie własnej strony internetowej. Użytkownik
 Ta wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
 
 
----
 
-**Uwaga (refactor):** `scripts.js` został podzielony na pliki w katalogu `js/`.
-Oryginał zostawiony jako `scripts.legacy.js`.

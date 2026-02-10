@@ -577,7 +577,7 @@ body.herow-full #hero.hero{
 .hero .kicker{ display:inline-flex; align-items:center; gap:10px; font-weight:900; opacity:.95; }
 .kdot{ width:10px; height:10px; background: var(--accent); }
 .hero h1{ margin: 10px 0 10px 0; font-size: 52px; letter-spacing:-.6px; overflow-wrap:anywhere; word-break:break-word; }
-.hero p{ margin: 0 0 18px 0; font-size: 16px; opacity:.88; overflow-wrap:anywhere; }
+.hero p{ margin: 0 0 22px 0; font-size: 16px; opacity:.88; overflow-wrap:anywhere; }
 .heroActions{ display:flex; gap:10px; flex-wrap:wrap; }
 /* HERO slider (2+ images) */
 .heroSliderBar{
@@ -714,6 +714,19 @@ body.scroll-focus main .section.isActive{ opacity: 1; transform: scale(1); }
 body.scroll-focus main .section.isPrev{ opacity: .12; }
 body.scroll-focus main .section.isNext{ opacity: .36; }
 
+/* Mobile: focus-scroll męczy i łatwo wygląda jak "disabled".
+   Na telefonie zachowujemy normalny scroll (tylko desktop ma mocny fokus). */
+@media (max-width: 900px){
+  body.scroll-focus main .section,
+  body.scroll-focus main .section.isActive,
+  body.scroll-focus main .section.isPrev,
+  body.scroll-focus main .section.isNext{
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
 
 /* lightbox */
 .lbOverlay{ position:fixed; inset:0; background: rgba(0,0,0,.86); display:none; align-items:center; justify-content:center; padding: 18px; z-index: 9999; }
@@ -782,10 +795,10 @@ body.tpl-spotlight .sectionTitle{
   letter-spacing: -0.35px;
 }
 
-/* Swiss: grid-like titles */
+/* Swiss: grid + sans (unikamy "dev" monospace vibe) */
 body.tpl-swiss .sectionTitle,
 body.tpl-swiss .nav a{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
 }
 
 /* Neon: techy nav */
@@ -819,21 +832,42 @@ body.tpl-brutalist .btn{ border-radius: 0; }
 body.tpl-brutalist .hero{ border-radius: 0; }
 body.tpl-brutalist .hero h1{ text-transform: uppercase; font-size: 54px; letter-spacing:-.4px; }
 
+/* Swiss: subtelna siatka w tle (premium, ale nienachalnie) */
+body.tpl-swiss{
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--line-soft), transparent 76%) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--line-soft), transparent 76%) 1px, transparent 1px);
+  background-size: 96px 96px;
+  background-position: -2px -2px;
+}
+body.theme-modern.tpl-swiss{
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.07) 1px, transparent 1px);
+}
+
 body.tpl-swiss .nav a{ font-weight: 900; letter-spacing:.45px; }
 body.tpl-swiss .sectionTitle{ text-transform: uppercase; letter-spacing: .9px; font-size: 18px; }
 body.tpl-swiss .hero h1{ font-size: 50px; letter-spacing:-.5px; }
-body.tpl-swiss .btn{ border-radius: 10px; }
+body.tpl-swiss .btn{ border-radius: 0; }
 
 body.tpl-collage .section{ background: var(--card-bg); padding: var(--section-pad); border-radius: var(--radius); border: var(--border-w) solid var(--line-soft); box-shadow: 0 18px 60px rgba(0,0,0,.08); }
 body.theme-modern.tpl-collage .section{ box-shadow: 0 22px 70px rgba(0,0,0,.50); }
 body.tpl-collage .galleryGrid a:nth-child(odd){ transform: rotate(-.6deg); }
 body.tpl-collage .galleryGrid a:nth-child(even){ transform: rotate(.6deg); }
+@media (max-width: 900px){
+  body.tpl-collage .galleryGrid a{ transform: none !important; }
+}
 body.tpl-collage .storeCard{ box-shadow: 0 14px 50px rgba(0,0,0,.08); }
 body.theme-modern.tpl-collage .storeCard{ box-shadow: 0 18px 60px rgba(0,0,0,.45); }
 
 body.tpl-photofirst .hero{ min-height: 78vh; padding: 34px; }
 body.tpl-photofirst .heroInner{ max-width: 86ch; }
 body.tpl-photofirst .heroGallery{ grid-template-columns: repeat(8, 1fr); }
+body.tpl-photofirst .hero h1{ font-size: 60px; letter-spacing:-.9px; }
+body.tpl-photofirst .galleryGrid{ gap: 18px; }
+body.tpl-photofirst .galleryGrid a{ border-radius: calc(var(--radius) + 6px); }
 @media (max-width: 900px){ body.tpl-photofirst .heroGallery{ grid-template-columns: repeat(4,1fr);} }
 
 /* mobile: slightly smaller hero title so it fits nicely */
@@ -1490,6 +1524,8 @@ function setupHamburger(){
   function setupFocusScroll(){
   const body = document.body;
   if(!body.classList.contains('scroll-focus')) return;
+  // Na mobile nie uruchamiamy logiki fokusowania (działa tylko na desktop).
+  if(window.matchMedia && window.matchMedia('(max-width: 900px)').matches) return;
 
   const sections = Array.from(document.querySelectorAll('main .section'));
   if(!sections.length) return;
@@ -1584,7 +1620,7 @@ function setupHamburger(){
       const el = document.querySelector(href);
       if(el){
         e.preventDefault();
-        const isFocus = document.body.classList.contains('scroll-focus');
+        const isFocus = document.body.classList.contains('scroll-focus') && !(window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
         el.scrollIntoView({ behavior: prefersReduced() ? 'auto' : 'smooth', block: isFocus ? 'center' : 'start' });
         setNavActive(href);
       }
@@ -2162,7 +2198,7 @@ function renderBlockSection(id, mode) {
 	<div class="embedWrap embedWrap--spotify">
   <div class="embedCard">
     <div style="font-weight:900;">Spotify</div>
-    <div class="muted" style="margin-top:6px;">Tego linku nie da się osadzić. Wklej pełny link <strong>open.spotify.com</strong>.</div>
+    <div class="muted" style="margin-top:6px;">Tego źródła nie da się osadzić.</div>
   </div>
 </div>`;
       }
@@ -2199,7 +2235,7 @@ function renderBlockSection(id, mode) {
 	<div class="embedWrap embedWrap--youtube">
   <div class="embedCard">
     <div style="font-weight:900;">YouTube</div>
-    <div class="muted" style="margin-top:6px;">Tego linku nie da się osadzić jako player. Użyj pełnego linku lub wklej iframe.</div>
+    <div class="muted" style="margin-top:6px;">Tego źródła nie da się osadzić jako player.</div>
   </div>
 </div>`;
       }
@@ -2442,7 +2478,7 @@ if (editor === "epk") {
       ? `<div class="galleryGrid js-lightbox-group">${assets.epkPressPhotos.map((img, i) => {
           const o = imgObj(img);
           const u = imageHrefForRender(o, "press", i);
-          const alt = escapeHtml(o.alt || `Press photo ${i+1}`);
+          const alt = escapeHtml(o.alt || `Zdjęcie ${i+1}`);
           return `<a href="${u}" data-lightbox="press"><img src="${u}" alt="${alt}"/></a>`;
         }).join("")}</div>`
       : "";
@@ -2650,7 +2686,7 @@ function buildStylePreviewHtml(opts = {}) {
   const headCss = inlineAssets ? `<style>${css}</style>` : `<link rel="stylesheet" href="style.css"/>`;
   const footJs = inlineAssets ? `<script>${js}</script>` : `<script src="site.js"></script>`;
 
-  const pageTitle = `Styl • ${String(state.siteName || 'Artysta').trim() || 'Artysta'}`;
+  const pageTitle = `Styl • ${String(state.siteName || 'Nazwa artysty / zespołu').trim() || 'Nazwa artysty / zespołu'}`;
 
   const heroBg = `url('${_svgPlaceholderDataUrl('HERO', 1600, 1000)}')`;
   const thumbs = Array.from({length: 3}).map((_,i) => ({
@@ -2743,13 +2779,13 @@ function buildStylePreviewHtml(opts = {}) {
 </section>`;
 
   const storeItems = Array.from({length: 3}).map((_,i)=>({
-    img: _svgPlaceholderDataUrl(`Merch ${i+1}`, 1200, 900),
+    img: _svgPlaceholderDataUrl(`Produkt ${i+1}`, 1200, 900),
     name: `Produkt ${i+1}`,
-    price: `${(i+1)*49} PLN`,
+    price: `${(i+1)*49} zł`,
   }));
   const storeHtml = `
 <section id="store" class="section">
-  <h2 class="sectionTitle">Sklep / merch</h2>
+  <h2 class="sectionTitle">Sklep</h2>
   <div class="storeGrid">
     ${storeItems.map(it => `
       <div class="storeCard">
@@ -2760,7 +2796,7 @@ function buildStylePreviewHtml(opts = {}) {
             <div class="storePrice">${escapeHtml(it.price)}</div>
           </div>
           <div class="storeDesc">Krótki opis produktu. Link, warianty, dostępność.</div>
-          <div class="storeActions"><a class="btn primary" href="#">Kup</a></div>
+          <div class="storeActions"><a class="btn primary" href="#">Zobacz</a></div>
         </div>
       </div>
     `).join('')}
@@ -2771,8 +2807,8 @@ function buildStylePreviewHtml(opts = {}) {
   const contactHtml = `
 <section id="contact" class="section">
   <h2 class="sectionTitle">Kontakt</h2>
-  <div class="muted">Email: <strong>kontakt@artysta.pl</strong><br/>Telefon: <strong>+48 600 000 000</strong><br/>Miasto: <strong>Warszawa</strong></div>
-  <div style="margin-top:12px;"><a class="btn primary" href="mailto:kontakt@artysta.pl">Napisz</a></div>
+  <div class="muted">Email: <strong>kontakt@example.pl</strong><br/>Telefon: <strong>+48 600 000 000</strong><br/>Miasto: <strong>Warszawa</strong></div>
+  <div style="margin-top:12px;"><a class="btn primary" href="mailto:kontakt@example.pl">Wyślij wiadomość</a></div>
   <div class="mapWrap">
     <iframe class="mapEmbed" srcdoc="${mapSrcdoc}"></iframe>
   </div>
@@ -2800,7 +2836,7 @@ ${headCss}
     ${mediaHtml}
     ${storeHtml}
     ${contactHtml}
-    <div class="footer">© ${escapeHtml(state.siteName || 'Artysta')}</div>
+    <div class="footer">© ${escapeHtml(state.siteName || 'Nazwa artysty / zespołu')}</div>
   </main>
 ${footJs}
 <script>(function(){
@@ -2967,7 +3003,7 @@ function buildPrivacyPolicySectionHtml(){
 }
 
 function buildFooterHtml(mode){
-  const name = escapeHtml(state.siteName || "Artysta");
+  const name = escapeHtml(state.siteName || "Nazwa artysty / zespołu");
   if (!state.privacyAuto) {
     return `<div class="footer">© ${name}</div>`;
   }
@@ -3459,7 +3495,7 @@ function rebuildPreview(force=false) {
     </head><body><div class="card">
       <h1>Podgląd nie wygenerował się — błąd w generatorze</h1>
       <pre>${safe}</pre>
-      <div class="hint">Tip: jeśli to się powtarza, kliknij „Reset”, albo wyczyść draft w przeglądarce (localStorage) i spróbuj ponownie.</div>
+      <div class="hint">Jeżeli problem się powtarza, użyj funkcji „Reset” lub usuń dane robocze (localStorage).</div>
     </div></body></html>`;
     previewSetHtml(html, "ERROR");
   }

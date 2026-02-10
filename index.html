@@ -3,8 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Generator strony artysty</title>
-  <link rel="stylesheet" href="style.css?v=20260207-rt3" />
+  <title>Generator stron dla artystów</title>
+  <script>
+    (function(){
+      try{
+        var raw = localStorage.getItem("artist_site_generator_v9_ui_prefs");
+        var p = raw ? JSON.parse(raw) : {};
+        p = p || {};
+        var t = (p.uiTheme || p.theme || "");
+        var sc = (p.uiScale || "");
+        // Migracja: stary tryb "compact" -> 0.9
+        if (!sc && p.uiSize === "compact") sc = 0.9;
+        // Domyślnie: 80% (bez wpływu na podgląd strony).
+        if (!sc) sc = 0.8;
+        if (t) document.documentElement.dataset.uiTheme = t;
+        if (sc) document.documentElement.dataset.uiScale = String(sc);
+      }catch(e){}
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css?v=20260209-ui1" />
 </head>
 <body>
   <div class="app" id="appRoot">
@@ -12,8 +29,8 @@
       <div class="panel__head">
         <div class="brandRow">
           <div>
-            <h1>Generator strony artysty</h1>
-            <p>Edytujesz po lewej → podgląd po prawej. Szkic zapisuje się lokalnie.</p>
+            <h1>Generator stron dla artystów</h1>
+            <p>Dane projektu zapisywane lokalnie w przeglądarce.</p>
           </div>
 
           <button
@@ -70,7 +87,7 @@
 
         <div class="grid2">
           <label class="field">
-            <span>Tryb generowania</span>
+            <span>Format strony</span>
             <select id="exportMode">
               <option value="single" selected>Jedna strona (sekcje)</option>
               <option value="zip">ZIP (podstrony)</option>
@@ -78,24 +95,50 @@
           </label>
 
           <label class="field">
-            <span>Kategoria artysty</span>
+            <span>Profil strony</span>
             <select id="role">
-              <option value="musician" selected>Muzyk / zespół</option>
-              <option value="dj">DJ / producent</option>
-              <option value="photographer">Fotograf</option>
-              <option value="visual">Artysta wizualny</option>
-              <option value="designer">Grafik / designer</option>
-              <option value="filmmaker">Filmowiec / twórca wideo</option>
-              <option value="writer">Pisarz / poeta</option>
-              <option value="performer">Taniec / performance</option>
+              <option value="musician" selected>Muzyk / zespół (multimedia)</option>
+              <option value="dj">DJ / producent (multimedia)</option>
+              <option value="photographer">Fotografia (portfolio)</option>
+              <option value="visual">Sztuki wizualne (galeria + wyróżnienia)</option>
+              <option value="designer">Projektant / realizacje</option>
+              <option value="filmmaker">Film / wideo</option>
+              <option value="writer">Autor / publikacje</option>
+              <option value="performer">Scena / wydarzenia</option>
             </select>
           </label>
         </div>
 
         <div class="grid2">
           <label class="field">
-            <span>Nazwa / pseudonim</span>
-            <input id="siteName" type="text" placeholder="np. Tabula Rasa" value="Moje Portfolio" />
+            <span>Nazwa profilu</span>
+            <input id="siteName" type="text" placeholder="Wprowadź nazwę" value="Nazwa artysty / zespołu" />
+          </label>
+        </div>
+
+        <div class="grid2" style="margin-top:10px;">
+          <label class="field span2">
+            <span>Nagłówek</span>
+            <div class="toggleRow" style="margin-top:0;">
+              <input id="useLogoInHeader" type="checkbox" />
+              <div class="toggleText">Logo zamiast nazwy</div>
+            </div>
+          </label>
+        </div>
+
+        <div id="logoUploadWrap" class="isHiddenControl" style="margin-top:10px;">
+          <label class="field">
+            <span>Logo</span>
+            <div class="dropZone" data-drop="logoUpload">
+              <div class="dropZone__title">Dodaj plik</div>
+              <div class="dropZone__sub">Wybierz plik</div>
+              <input id="logoUpload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" />
+            </div>
+            <div id="logoEmpty" class="seoFileEmpty">Brak pliku</div>
+            <div id="logoRow" class="seoFileRow" hidden>
+              <div class="seoFileRow__name" id="logoName"></div>
+              <button type="button" class="btnSmall btn--ghost" id="logoRemove">Usuń</button>
+            </div>
           </label>
         </div>
 
@@ -303,45 +346,32 @@
           </div>
 </details>
 
-        <div class="grid2" style="margin-top:10px;">
-          <label class="field">
-            <span>Logo (opcjonalnie)</span>
-            <input id="logoUpload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" />
-          </label>
-          <label class="field">
-            <span>Nagłówek</span>
-            <div class="toggleRow" style="margin-top:0;">
-              <input id="useLogoInHeader" type="checkbox" />
-              <div class="toggleText">Logo zamiast nazwy</div>
-            </div>
-          </label>
-        </div>
       </details>
 
       <details id="secSeo" class="panel__section">
-        <summary>SEO / link podgląd</summary>
+        <summary>SEO / podgląd linku</summary>
 
         <label class="field">
           <span>Tytuł (karta przeglądarki)</span>
-          <input id="metaTitle" type="text" placeholder="np. Tabula Rasa — oficjalna strona" />
+          <input id="metaTitle" type="text" placeholder="Wprowadź tytuł" />
         </label>
 
         <label class="field">
           <span>Opis (meta description)</span>
-          <textarea id="metaDescription" rows="3" placeholder="Krótki opis do Google i linków (ok. 140–160 znaków)"></textarea>
+          <textarea id="metaDescription" rows="3" placeholder="Wprowadź opis"></textarea>
         </label>
 
         <label class="field">
-          <span>Słowa kluczowe (meta keywords)</span>
-          <input id="metaKeywords" type="text" placeholder="np. alt rock, zespół, koncerty, presskit (oddziel przecinkami)" />
+          <span>Słowa kluczowe (opcjonalnie)</span>
+          <input id="metaKeywords" type="text" placeholder="Wprowadź słowa kluczowe (oddziel przecinkami)" />
                   </label>
 
         <div class="grid2">
           <label class="field">
             <span>Favicon (ikona)</span>
             <div class="dropZone" data-drop="faviconUpload">
-              <div class="dropZone__title">Upuść faviconę</div>
-              <div class="dropZone__sub">…albo kliknij, aby wybrać plik</div>
+              <div class="dropZone__title">Dodaj plik</div>
+              <div class="dropZone__sub">Wybierz plik</div>
               <input id="faviconUpload" type="file" accept=".ico,image/x-icon,image/vnd.microsoft.icon,image/png,image/svg+xml,.png,.ico,.svg" />
             </div>
             <div id="faviconEmpty" class="seoFileEmpty">Brak pliku</div>
@@ -353,8 +383,8 @@
           <label class="field">
             <span>OG image (podgląd linku)</span>
             <div class="dropZone" data-drop="ogImageUpload">
-              <div class="dropZone__title">Upuść OG image</div>
-              <div class="dropZone__sub">…albo kliknij, aby wybrać plik</div>
+              <div class="dropZone__title">Dodaj plik</div>
+              <div class="dropZone__sub">Wybierz plik</div>
               <input id="ogImageUpload" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" />
             </div>
             <div id="ogImageEmpty" class="seoFileEmpty">Brak pliku</div>
@@ -368,7 +398,7 @@
               </details>
 
       <details id="secAnalytics" class="panel__section">
-        <summary>Analityka / pixele</summary>
+        <summary>Analityka</summary>
         <label class="field">
           <span>Google Tag Manager (GTM)</span>
           <input id="gtmId" type="text" placeholder="GTM-XXXXXXX" />
@@ -376,7 +406,7 @@
 
         <div class="toggleRow" style="margin-top:10px;">
           <input id="cookieBanner" type="checkbox" checked />
-          <div class="toggleText">Banner cookies (zgoda/odrzucenie)</div>
+          <div class="toggleText">Baner cookies (zgoda)</div>
         </div>
 
         <label class="field" style="margin-top:10px;">
@@ -389,7 +419,7 @@
 
         <label class="field" id="privacyUrlWrap" style="margin-top:10px; display:none;">
           <span>Link do polityki</span>
-          <input id="privacyUrl" type="text" placeholder="Wklej link..." />
+          <input id="privacyUrl" type="text" placeholder="Wprowadź URL" />
         </label>
 
       </details>
@@ -431,7 +461,7 @@
           <button id="btnReset" class="btn btn--danger" type="button">Reset szkicu</button>
         </div>
         <div class="panel__actions">
-          <button id="btnSampleData" class="btn" type="button">Przykładowe dane</button>
+          <button id="btnSampleData" class="btn" type="button">Dane przykładowe</button>
           <button id="btnDownload" class="btn btn--primary" type="button">Pobierz</button>
         </div>
       </details>
@@ -471,6 +501,15 @@
             <button type="button" class="segBtn" id="btnUndo" title="Cofnij (Ctrl+Z)">↶</button>
             <button type="button" class="segBtn" id="btnRedo" title="Ponów (Ctrl+Y)">↷</button>
           </div>
+          <div class="seg" role="group" aria-label="Ustawienia interfejsu">
+            <button type="button" class="segBtn" id="btnUiSettings" title="Ustawienia interfejsu" aria-label="Ustawienia interfejsu">
+              <!-- Prosty, czytelny „zębaty” symbol ustawień (bez dziwnych proporcji) -->
+              <svg class="qi" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7.3 7.3 0 0 0-1.7-1l-.4-2.7H9.6l-.4 2.7a7.3 7.3 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5A7 7 0 0 0 5 12c0 .34.03.67.1 1l-2 1.5 2 3.5 2.4-1c.52.42 1.09.77 1.7 1l.4 2.7h4.8l.4-2.7c.61-.23 1.18-.58 1.7-1l2.4 1 2-3.5-2-1.5c.07-.33.1-.66.1-1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -493,7 +532,7 @@
     <div class="quickMoreMenu__sep" aria-hidden="true"></div>
     <button type="button" class="quickMoreMenu__item" data-fire="btnSampleData" role="menuitem">
       <svg class="qmi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 2v6l-5.5 9.5A3 3 0 0 0 7.1 22h9.8a3 3 0 0 0 2.6-4.5L14 8V2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 2h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 16h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Przykładowe dane
+      Dane przykładowe
     </button>
     <button type="button" class="quickMoreMenu__item quickMoreMenu__danger" data-fire="btnReset" role="menuitem">
       <svg class="qmi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -502,31 +541,40 @@
   </div>
 
 
-  <footer class="kpoFooter" aria-label="Informacja o finansowaniu KPO">
-    <div class="kpoFooter__inner">
-      <div class="kpoFooter__logos">
-        <picture>
-          <source media="(max-width: 520px)" srcset="assets/kpo/kpo_rp_ngeu_pion_rgb.png">
-          <img src="assets/kpo/kpo_rp_ngeu_poziom_rgb.png"
-               alt="Zestawienie znaków: Krajowy Plan Odbudowy, barwy Rzeczypospolitej Polskiej, NextGenerationEU"
-               loading="lazy">
-        </picture>
+  <!-- Ustawienia interfejsu generatora (pozycjonowane jako overlay) -->
+  <div id="uiSettingsMenu" class="uiMenu" role="dialog" aria-label="Ustawienia interfejsu" hidden>
+    <div class="uiMenu__header">
+      <div class="uiMenu__title">Interfejs</div>
+    </div>
+
+    <div class="uiMenu__body">
+      <div class="uiMenu__row">
+        <div class="uiMenu__label">Motyw</div>
+        <div class="seg" role="group" aria-label="Motyw interfejsu">
+          <button type="button" class="segBtn" data-ui-theme="dark">Ciemny</button>
+          <button type="button" class="segBtn" data-ui-theme="light">Jasny</button>
+        </div>
       </div>
-      <div class="kpoFooter__text">
-        <div class="kpoFooter__title">Przedsięwzięcie jest realizowane dzięki wsparciu z Krajowego Planu Odbudowy i Zwiększania Odporności oraz finansowane przez Unię Europejską w ramach NextGenerationEU.</div>
-        <details class="kpoFooter__details">
-          <summary>Informacje o przedsięwzięciu</summary>
-          <div class="kpoFooter__detailsBody">
-            <p><strong>Tytuł:</strong> Szablon strony internetowej i pomoc medialna dla artystów z ograniczonymi zasobami – bezpłatne wsparcie w budowaniu obecności w sieci, dostępne dla każdego</p>
-            <p><strong>Cel:</strong> zwiększenie obecności online wykluczonych cyfrowo artystów.</p>
-            <p><strong>Grupa docelowa:</strong> artyści (muzycy, graficy i inni twórcy).</p>
-            <p><strong>Wartość przedsięwzięcia:</strong> 36 000 zł brutto. <strong>Dofinansowanie z UE (KPO/NGEU):</strong> 36 000 zł brutto.</p>
-            <p><strong>Termin realizacji:</strong> do 28.02.2026.</p>
-          </div>
-        </details>
+
+      <div class="uiMenu__row">
+        <div class="uiMenu__label">Skala UI</div>
+        <div class="rangeRow" aria-label="Skala interfejsu">
+          <input
+            id="uiScaleRange"
+            class="uiRange"
+            type="range"
+            min="60"
+            max="100"
+            step="5"
+            value="80"
+            aria-label="Skala interfejsu"
+          />
+          <div id="uiScaleValue" class="pill" aria-label="Aktualna skala">80%</div>
+        </div>
       </div>
     </div>
-  </footer>
+  </div>
+
 
   <!-- Local JSZip (no CDN dependency) -->
   <script src="vendor/jszip.min.js"></script>

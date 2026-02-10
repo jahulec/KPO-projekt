@@ -1,7 +1,7 @@
 /* Auto-split from scripts.js | 00_core.js */
 
 /* ==========================
-   Generator strony artysty
+   Generator stron dla artystów
    v9 (panel Styl + katalog szablonów + Styl preview + focus scroll)
 ========================== */
 
@@ -9,10 +9,11 @@ const STORAGE_KEY = "artist_site_generator_v9_draft";
 const SNAPSHOT_KEY = "artist_site_generator_v9_snapshot"; // legacy single snapshot (backwards compatibility)
 const SNAPSHOT_LIST_KEY = "artist_site_generator_v9_snapshots";
 const SNAPSHOT_LIST_LIMIT = 20;
-const ZIP_ROOT_FOLDER = "strona-artysta";
+const ZIP_ROOT_FOLDER = "strona";
 const PANEL_COLLAPSED_KEY = "artist_site_generator_v9_panel_collapsed";
 const PANEL_SCROLLTOP_KEY = "artist_site_generator_v9_panel_scrolltop";
 const PANEL_DETAILS_KEY = "artist_site_generator_v9_panel_details";
+const UI_PREFS_KEY = "artist_site_generator_v9_ui_prefs";
 const LEGACY_STORAGE_KEY = "artist_site_generator_v6_draft";
 const LEGACY_SNAPSHOT_KEY = "artist_site_generator_v6_snapshot";
 const LEGACY_PANEL_COLLAPSED_KEY = "artist_site_generator_v6_panel_collapsed";
@@ -222,7 +223,7 @@ function setLiveStatus() {
   if (!el) return;
   const mode = getLiveMode();
   const label = (mode === 'eco') ? 'ECO' : (mode === 'on' ? 'ON' : 'OFF');
-  el.textContent = `LIVE: ${label}`;
+  el.textContent = `Podgląd na żywo: ${label}`;
   el.setAttribute("aria-pressed", String(mode !== 'off'));
   el.classList.toggle("isOff", mode === 'off');
   el.classList.toggle("isEco", mode === 'eco');
@@ -233,8 +234,8 @@ function setLiveStatus() {
   if (q) {
     q.classList.toggle("isOff", mode === 'off');
     q.classList.toggle("isEco", mode === 'eco');
-    q.title = `LIVE: ${label} (klik: przełącz)`;
-    q.setAttribute("aria-label", `LIVE: ${label}`);
+    q.title = `Podgląd na żywo: ${label}`;
+    q.setAttribute("aria-label", `Podgląd na żywo: ${label}`);
   }
 }
 
@@ -314,6 +315,8 @@ function setPanelCollapsed(collapsed, persist = true) {
 
   // If a "Więcej" overlay is open, close it when panel state changes.
   try { closeQuickMoreMenu(); } catch (e) {}
+  try { closeUiSettingsMenu(); } catch (e) {}
+
 
   const btn = $("btnTogglePanel");
   if (btn) {
@@ -532,38 +535,373 @@ function bindQuickDock() {
   }
 }
 
+
+/* ==========================
+   UI settings (generator UI theme + scale)
+   Stored locally; affects only the generator interface.
+
+   Wymagania:
+   - Skala dotyczy wyłącznie UI generatora.
+   - Podgląd (iframe) nie jest skalowany.
+   - Zakres skali: 60%–100%.
+   - Domyślnie: 80%.
+========================== */
+
+const __uiDefaults = { uiTheme: "dark", uiScale: 0.8 };
+const __uiScaleVars = [
+  "--uiBaseFs",
+  "--uiLabelFs",
+  "--uiFieldGap",
+  "--uiFieldMarginY",
+  "--uiInputPadY",
+  "--uiInputPadX",
+  "--uiSegMinH",
+  "--uiSegPadY",
+  "--uiSegPadX",
+  "--uiTopBarPadY",
+  "--uiTopBarPadX",
+  "--uiTopBarGap",
+  "--uiTopBarCtlGap",
+  "--uiRangeGap",
+  "--uiMenuLabelW",
+  "--uiBtnH",
+  "--uiBtnHSmall",
+  "--uiBtnPadY",
+  "--uiBtnPadX",
+  "--uiBtnPadYSmall",
+  "--uiBtnPadXSmall",
+  "--uiPanelHeadPadY",
+  "--uiPanelHeadPadX",
+  "--uiCardPad",
+  "--uiListGap",
+  // Zwinięty panel (lewy pasek)
+  "--uiCollapsedW",
+  "--uiCollapsedPadY",
+  "--uiCollapsedGap",
+  "--uiCollapsedBtn",
+  "--uiCollapsedRadius",
+  "--uiCollapsedIcon",
+];
+
+let __uiScaleBase = null;
+let __uiScaleBasePanelW = null;
+
+function __normUiScale(v){
+  const n = (typeof v === "string") ? parseFloat(v) : Number(v);
+  if (!Number.isFinite(n)) return __uiDefaults.uiScale;
+  const clamped = Math.max(0.6, Math.min(1, n));
+  // Stabilne zapisy (np. 0.85), bez pływającego śmietnika.
+  return Math.round(clamped * 100) / 100;
+}
+
+function getUiPrefs(){
+  let p = {};
+  try{
+    p = JSON.parse(localStorage.getItem(UI_PREFS_KEY) || "{}");
+  }catch(e){ p = {}; }
+  p = p || {};
+
+  const uiTheme = (p.uiTheme === "light") ? "light" : "dark";
+
+  // Nowy zapis: uiScale
+  let uiScale = __normUiScale(p.uiScale);
+
+  // Migracja: stary "compact" -> 0.9
+  if (!p.uiScale && p.uiSize === "compact") uiScale = 0.9;
+
+  return { uiTheme, uiScale };
+}
+
+function saveUiPrefs(p){
+  try{ localStorage.setItem(UI_PREFS_KEY, JSON.stringify(p || __uiDefaults)); }catch(e){}
+}
+
+function __captureUiScaleBase(){
+  if (__uiScaleBase) return;
+  const cs = getComputedStyle(document.documentElement);
+  __uiScaleBase = {};
+  for (const v of __uiScaleVars) {
+    const raw = (cs.getPropertyValue(v) || "").trim();
+    const num = parseFloat(raw);
+    __uiScaleBase[v] = Number.isFinite(num) ? num : null;
+  }
+
+  const app = document.getElementById('appRoot') || document.querySelector('.app');
+  if (app) {
+    const acs = getComputedStyle(app);
+    const rawW = (acs.getPropertyValue('--uiPanelW') || "").trim();
+    const numW = parseFloat(rawW);
+    // Historycznie (v1.3.x) "standard" był 400px (JS ustawiało inline),
+    // mimo że :root miało 420px. Trzymamy się 400px jako bazy na desktop.
+    if (Number.isFinite(numW)) {
+      __uiScaleBasePanelW = (numW >= 410 && numW <= 430) ? 400 : numW;
+    } else {
+      __uiScaleBasePanelW = 400;
+    }
+  }
+}
+
+function applyUiScale(scale){
+  const uiScale = __normUiScale(scale);
+  __captureUiScaleBase();
+
+  const html = document.documentElement;
+  html.setAttribute('data-ui-scale', String(uiScale));
+
+  // Skala: przelicz zmienne rozmiarowe (px) w samym UI generatora.
+  if (__uiScaleBase) {
+    for (const v of __uiScaleVars) {
+      const base = __uiScaleBase[v];
+      if (!Number.isFinite(base)) continue;
+      const scaled = Math.round(base * uiScale * 10) / 10;
+      html.style.setProperty(v, `${scaled}px`);
+    }
+  }
+
+  // Panel: realnie zwężamy siatkę, żeby było więcej miejsca na podgląd.
+  const app = document.getElementById('appRoot') || document.querySelector('.app');
+  if (app && Number.isFinite(__uiScaleBasePanelW)) {
+    const minW = 260;
+    const maxW = 520;
+    const scaledW = Math.max(minW, Math.min(maxW, Math.round(__uiScaleBasePanelW * uiScale)));
+    app.style.setProperty('--uiPanelW', `${scaledW}px`);
+  }
+}
+
+function applyUiPrefs(p, persist=false){
+  const prefs = p || getUiPrefs();
+  const uiTheme = prefs.uiTheme || __uiDefaults.uiTheme;
+  const uiScale = __normUiScale(prefs.uiScale || __uiDefaults.uiScale);
+
+  // Theme on <html>
+  const html = document.documentElement;
+  html.setAttribute('data-ui-theme', uiTheme);
+  html.classList.toggle('uiThemeLight', uiTheme === 'light');
+  html.classList.toggle('uiThemeDark', uiTheme !== 'light');
+
+  // Wyczyść stare tryby (rozmiar/panel) – nie używamy.
+  html.removeAttribute('data-ui-size');
+  html.classList.remove('uiSizeCompact','uiSizeLarge');
+  const app = document.getElementById('appRoot') || document.querySelector('.app');
+  if (app) {
+    app.removeAttribute('data-panel-w');
+    app.classList.remove('panelW_s','panelW_m','panelW_l');
+  }
+
+  applyUiScale(uiScale);
+
+  if (persist) saveUiPrefs({ uiTheme, uiScale });
+  syncUiSettingsUi();
+}
+
+function syncUiSettingsUi(){
+  const menu = document.getElementById("uiSettingsMenu");
+  if (!menu) return;
+  const prefs = getUiPrefs();
+
+  menu.querySelectorAll('[data-ui-theme]').forEach((b)=>{
+    const v = b.getAttribute('data-ui-theme');
+    b.classList.toggle('isActive', v === prefs.uiTheme);
+    b.setAttribute('aria-pressed', v === prefs.uiTheme ? 'true' : 'false');
+  });
+
+  // Skala UI: suwak 60–100 (zapis jako 0.6–1.0)
+  const r = menu.querySelector('#uiScaleRange');
+  const out = menu.querySelector('#uiScaleValue');
+  if (r) {
+    const pctRaw = Math.round(__normUiScale(prefs.uiScale) * 100);
+    const pct = Math.max(60, Math.min(100, pctRaw));
+    r.value = String(pct);
+    r.setAttribute('aria-valuenow', String(pct));
+    r.setAttribute('aria-valuemin', '60');
+    r.setAttribute('aria-valuemax', '100');
+    r.setAttribute('aria-valuetext', `${pct}%`);
+    if (out) out.textContent = `${pct}%`;
+  } else if (out) {
+    const pctRaw = Math.round(__normUiScale(prefs.uiScale) * 100);
+    const pct = Math.max(60, Math.min(100, pctRaw));
+    out.textContent = `${pct}%`;
+  }
+}
+
+let __uiSettingsOpen = false;
+
+function closeUiSettingsMenu(){
+  const menu = document.getElementById("uiSettingsMenu");
+  const btn = document.getElementById("btnUiSettings");
+  if (menu) {
+    menu.hidden = true;
+    menu.style.left = "";
+    menu.style.top = "";
+  }
+  if (btn) btn.setAttribute('aria-expanded','false');
+  __uiSettingsOpen = false;
+  document.removeEventListener('click', __uiSettingsOutsideClick, true);
+  document.removeEventListener('keydown', __uiSettingsKeydown, true);
+  window.removeEventListener('resize', __uiSettingsReposition, true);
+}
+
+function __uiSettingsOutsideClick(e){
+  const menu = document.getElementById("uiSettingsMenu");
+  const btn = document.getElementById("btnUiSettings");
+  if (!__uiSettingsOpen) return;
+  if (menu && menu.contains(e.target)) return;
+  if (btn && btn.contains(e.target)) return;
+  closeUiSettingsMenu();
+}
+
+function __uiSettingsKeydown(e){
+  if (!__uiSettingsOpen) return;
+  if (e && (e.key === 'Escape' || e.key === 'Esc')) {
+    e.preventDefault();
+    closeUiSettingsMenu();
+  }
+}
+
+function __uiSettingsReposition(){
+  if (!__uiSettingsOpen) return;
+  positionUiSettingsMenu();
+}
+
+function positionUiSettingsMenu(){
+  const menu = document.getElementById("uiSettingsMenu");
+  const btn = document.getElementById("btnUiSettings");
+  if (!menu || !btn) return;
+  if (menu.hidden) return;
+
+  const rect = btn.getBoundingClientRect();
+  const margin = 12;
+
+  // ensure measurable
+  menu.style.left = '0px';
+  menu.style.top = '0px';
+  const m = menu.getBoundingClientRect();
+
+  let left = rect.right - m.width;
+  let top = rect.bottom + 8;
+
+  if (left + m.width > window.innerWidth - margin) left = window.innerWidth - margin - m.width;
+  if (left < margin) left = margin;
+
+  if (top + m.height > window.innerHeight - margin) {
+    top = rect.top - 8 - m.height;
+  }
+  if (top < margin) top = margin;
+
+  menu.style.left = `${Math.round(left)}px`;
+  menu.style.top = `${Math.round(top)}px`;
+}
+
+function openUiSettingsMenu(){
+  const menu = document.getElementById("uiSettingsMenu");
+  const btn = document.getElementById("btnUiSettings");
+  if (!menu || !btn) return;
+
+  menu.hidden = false;
+  __uiSettingsOpen = true;
+  btn.setAttribute('aria-expanded','true');
+
+  syncUiSettingsUi();
+  positionUiSettingsMenu();
+
+  document.addEventListener('click', __uiSettingsOutsideClick, true);
+  document.addEventListener('keydown', __uiSettingsKeydown, true);
+  window.addEventListener('resize', __uiSettingsReposition, true);
+}
+
+function toggleUiSettingsMenu(){
+  if (__uiSettingsOpen) closeUiSettingsMenu();
+  else openUiSettingsMenu();
+}
+
+function bindUiSettingsMenu(){
+  const btn = document.getElementById("btnUiSettings");
+  const menu = document.getElementById("uiSettingsMenu");
+
+  if (btn) {
+    btn.addEventListener('click', (e)=>{ e.preventDefault(); toggleUiSettingsMenu(); });
+    btn.setAttribute('aria-expanded','false');
+  }
+
+  if (!menu) return;
+
+  // Zamiast delegacji "klik na całe menu" (różne edge-case'y w przeglądarkach)
+  // przypinamy bezpośrednie listenery do przycisków w menu.
+  menu.querySelectorAll('[data-ui-theme]').forEach((b)=>{
+    b.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const v = b.getAttribute('data-ui-theme');
+      const prefs = getUiPrefs();
+      prefs.uiTheme = (v === 'light') ? 'light' : 'dark';
+      applyUiPrefs(prefs, true);
+      syncUiSettingsUi();
+    });
+  });
+
+  // Skala UI: suwak 60–100
+  const r = menu.querySelector('#uiScaleRange');
+  if (r) {
+    let _raf = 0;
+    const applyFromRange = ()=>{
+      _raf = 0;
+      const pct = Math.max(60, Math.min(100, Number(r.value) || 80));
+      const v = __normUiScale(pct / 100);
+      const prefs = getUiPrefs();
+      prefs.uiScale = v;
+      applyUiPrefs(prefs, true);
+      // UI skala potrafi zmienić szerokość panelu -> zabezpiecz animacje w podglądzie.
+      try{ freezePreviewAnimations(800); }catch(_){ }
+      try{ positionUiSettingsMenu(); }catch(_){ }
+    };
+
+    const scheduleApply = (e)=>{
+      if (e) e.preventDefault();
+      if (_raf) return;
+      _raf = requestAnimationFrame(applyFromRange);
+    };
+
+    r.addEventListener('input', scheduleApply);
+    r.addEventListener('change', (e)=>{
+      if (e) e.preventDefault();
+      if (_raf) cancelAnimationFrame(_raf);
+      applyFromRange();
+    });
+  }
+}
+
+
 /* ==========================
    Blocks + presets
 ========================== */
 
 const BLOCKS = {
-  hero:         { label: "HERO (start)", editor: "hero", locked: true },
+  hero:         { label: "Sekcja startowa (HERO)", editor: "hero", locked: true },
 
-  about:        { label: "O mnie", editor: "text" },
+  about:        { label: "O artyście / zespole", editor: "text" },
   gallery:      { label: "Galeria", editor: "gallery" },
 
   spotify:      { label: "Spotify", editor: "embed_spotify" },
   youtube:      { label: "YouTube", editor: "embed_youtube" },
 
   events:       { label: "Wydarzenia", editor: "events" },
-  exhibitions:  { label: "Wystawy / występy", editor: "events" },
+  exhibitions:  { label: "Wydarzenia (wariant)", editor: "events" },
 
   projects:     { label: "Projekty", editor: "projects" },
-  caseStudies:  { label: "Case studies", editor: "projects" },
+  caseStudies:  { label: "Realizacje", editor: "projects" },
 
-  services:     { label: "Usługi", editor: "services" },
-  store:        { label: "Merch / sklep", editor: "store" },
-  clients:      { label: "Klienci", editor: "simpleList" },
-  awards:       { label: "Nagrody / wyróżnienia", editor: "simpleList" },
+  services:     { label: "Oferta", editor: "services" },
+  store:        { label: "Sklep", editor: "store" },
+  clients:      { label: "Partnerzy", editor: "simpleList" },
+  awards:       { label: "Wyróżnienia", editor: "simpleList" },
 
   publications: { label: "Publikacje", editor: "publications" },
   testimonials: { label: "Opinie", editor: "testimonials" },
 
-  epk:          { label: "EPK / Press kit", editor: "epk" },
-  newsletter:   { label: "Newsletter / mailing list", editor: "newsletter" },
+  epk:          { label: "Materiały prasowe", editor: "epk" },
+  newsletter:   { label: "Subskrypcja", editor: "newsletter" },
 
   contact:      { label: "Kontakt", editor: "contact" },
-  social:       { label: "Social media", editor: "social" },
+  social:       { label: "Linki zewnętrzne", editor: "social" },
 };
 
 const ROLE_PRESETS = {
@@ -582,18 +920,19 @@ const ROLE_PRESETS = {
 ========================== */
 
 const BASIC_VARIANTS = [
-  { id: "underline", label: "Underline", preset: { accentType: "underline" } },
-  { id: "pills", label: "Pills", preset: { accentType: "pill", radius: "lg" } },
-  { id: "outline", label: "Outline", preset: { accentType: "outline" } },
-  { id: "glow", label: "Glow", preset: { accentType: "gradient" } },
+  { id: "underline", label: "Podkreślenie", preset: { accentType: "underline" } },
+  { id: "pills", label: "Pigułki", preset: { accentType: "pill", radius: "lg" } },
+  { id: "outline", label: "Obrys", preset: { accentType: "outline" } },
+  { id: "glow", label: "Poświata", preset: { accentType: "gradient" } },
 ];
 
 const STYLE_CATALOG = {
   flagship: [
+    // 1) Editorial — premium, czytelny, dobry jako HUB + podstrony
     {
       id: "editorial",
-      name: "Editorial / Magazine",
-      desc: "Serif + linie: jak magazyn",
+      name: "Editorial",
+      desc: "Typografia szeryfowa, spokojny rytm, EPK/portfolio",
       thumb: "linear-gradient(135deg, #ffffff, #e5e7eb)",
       preset: {
         theme: "minimalist",
@@ -623,182 +962,27 @@ const STYLE_CATALOG = {
         youtube: { embedSize: 75 },
       },
       variants: [
-        { id: "classic", label: "Classic", preset: {} },
-        { id: "wide", label: "Wide", preset: { contentWidth: "wide" } },
-        { id: "compact", label: "Compact", preset: { density: "compact" } },
+        { id: "classic", label: "Klasyczny", preset: {} },
+        { id: "wide", label: "Szeroki", preset: { contentWidth: "wide" } },
+        { id: "compact", label: "Kompaktowy", preset: { density: "compact" } },
       ],
     },
 
-    {
-      id: "cinematic",
-      name: "Cinematic Dark",
-      desc: "Ciemny landing, full-bleed HERO",
-      thumb: "linear-gradient(135deg, #0b1020, #111827)",
-      preset: {
-        theme: "modern",
-        fontPreset: "space",
-        accent: "#14b8a6",
-        accentType: "gradient",
-
-        headerLayout: "left",
-        headerBg: "transparent",
-        headerWidth: "full",
-
-        heroWidth: "full",
-        contentWidth: "normal",
-
-        density: "normal",
-        borders: "none",
-        radius: "md",
-        sectionDividers: "none",
-        motion: "strong",
-        scrollMode: "normal",
-        sectionHeadersAlign: "left",
-        mediaLayout: "split",
-      },
-      blockPreset: {
-        gallery: { layout: "masonry", cols: 4, masonryCols: 3 },
-        spotify: { embedSize: 60 },
-        youtube: { embedSize: 60 },
-      },
-      variants: [
-        { id: "standard", label: "Standard", preset: {} },
-        { id: "tight", label: "Tight", preset: { density: "compact" } },
-        { id: "glow", label: "Glow", preset: { motion: "strong" } },
-      ],
-    },
-
-    {
-      id: "brutalist",
-      name: "Brutalist Type",
-      desc: "Grube linie, zero ozdobników",
-      thumb: "linear-gradient(135deg, #f8fafc, #111827)",
-      preset: {
-        theme: "minimalist",
-        fontPreset: "plex",
-        accent: "#dc2626",
-        accentType: "outline",
-
-        headerLayout: "left",
-        headerBg: "solid",
-        headerWidth: "full",
-
-        heroWidth: "wide",
-        contentWidth: "normal",
-
-        density: "compact",
-        borders: "thick",
-        radius: "0",
-        sectionDividers: "block",
-        motion: "off",
-        scrollMode: "normal",
-        sectionHeadersAlign: "left",
-        mediaLayout: "stack",
-      },
-      blockPreset: {
-        gallery: { layout: "grid", cols: 6, masonryCols: 3 },
-        spotify: { embedSize: 55 },
-        youtube: { embedSize: 55 },
-      },
-      variants: [
-        { id: "poster", label: "Poster", preset: {} },
-        { id: "clean", label: "Clean", preset: { borders: "thin" } },
-        { id: "compact", label: "Compact", preset: { density: "compact" } },
-      ],
-    },
-
-    {
-      id: "neon",
-      name: "Neon Club",
-      desc: "Glow, pill header, nocny vibe",
-      thumb: "linear-gradient(135deg, #0b1020, #4c1d95)",
-      preset: {
-        theme: "modern",
-        fontPreset: "space",
-        accent: "#a855f7",
-        accentType: "gradient",
-
-        headerLayout: "center",
-        headerBg: "pill",
-        headerWidth: "wide",
-
-        heroWidth: "full",
-        contentWidth: "wide",
-
-        density: "normal",
-        borders: "thin",
-        radius: "lg",
-        sectionDividers: "none",
-        motion: "strong",
-        scrollMode: "normal",
-        sectionHeadersAlign: "center",
-        mediaLayout: "split",
-      },
-      blockPreset: {
-        gallery: { layout: "masonry", cols: 4, masonryCols: 4 },
-        spotify: { embedSize: 60 },
-        youtube: { embedSize: 60 },
-      },
-      variants: [
-        { id: "club", label: "Club", preset: {} },
-        { id: "soft", label: "Soft", preset: { motion: "subtle" } },
-        { id: "outline", label: "Outline", preset: { accentType: "outline" } },
-      ],
-    },
-
-    {
-      id: "soft",
-      name: "Soft Pastel",
-      desc: "Miękko, karty, dużo oddechu",
-      thumb: "linear-gradient(135deg, #fdf2f8, #ecfeff)",
-      preset: {
-        theme: "minimalist",
-        fontPreset: "inter",
-        accent: "#ec4899",
-        accentType: "pill",
-
-        headerLayout: "left",
-        headerBg: "pill",
-        headerWidth: "normal",
-
-        heroWidth: "wide",
-        contentWidth: "normal",
-
-        density: "comfortable",
-        borders: "thin",
-        radius: "lg",
-        sectionDividers: "none",
-        motion: "subtle",
-        scrollMode: "normal",
-        sectionHeadersAlign: "center",
-        mediaLayout: "stack",
-      },
-      blockPreset: {
-        gallery: { layout: "grid", cols: 3, masonryCols: 3 },
-        spotify: { embedSize: 80 },
-        youtube: { embedSize: 80 },
-      },
-      variants: [
-        { id: "cards", label: "Cards", preset: {} },
-        { id: "tight", label: "Tight", preset: { density: "normal" } },
-        { id: "line", label: "Line", preset: { sectionDividers: "line" } },
-      ],
-    },
-
+    // 2) Swiss Grid — rygor, siatka, profesjonalny charakter
     {
       id: "swiss",
       name: "Swiss Grid",
-      desc: "Minimal, siatka, równe linie",
+      desc: "Rygor siatki, mocne nagłówki, portfolio i projekty",
       thumb: "linear-gradient(135deg, #ffffff, #0f172a)",
       preset: {
         theme: "minimalist",
         fontPreset: "system",
-        accent: "#2563eb",
+        accent: "#dc2626",
         accentType: "underline",
 
         headerLayout: "left",
         headerBg: "solid",
-        headerWidth: "normal",
+        headerWidth: "full",
 
         heroWidth: "wide",
         contentWidth: "wide",
@@ -818,33 +1002,113 @@ const STYLE_CATALOG = {
         youtube: { embedSize: 60 },
       },
       variants: [
-        { id: "grid", label: "Grid", preset: {} },
-        { id: "wide", label: "Wide", preset: { contentWidth: "wide" } },
-        { id: "compact", label: "Compact", preset: { density: "compact" } },
+        { id: "grid", label: "Siatka", preset: {} },
+        { id: "wide", label: "Szeroki", preset: { contentWidth: "wide" } },
+        { id: "compact", label: "Kompaktowy", preset: { density: "compact" } },
       ],
     },
 
+    // 3) Cinematic — video-first, elegancki ciemny klimat
     {
-      id: "rounded",
-      name: "Rounded Modern",
-      desc: "Nowoczesne karty, miękkie UI",
-      thumb: "linear-gradient(135deg, #e0e7ff, #ffffff)",
+      id: "cinematic",
+      name: "Cinematic",
+      desc: "Ciemny, filmowy, pod wideo i duże wizualizacje",
+      thumb: "linear-gradient(135deg, #0b1020, #111827)",
+      preset: {
+        theme: "modern",
+        fontPreset: "space",
+        accent: "#c08457",
+        accentType: "gradient",
+
+        headerLayout: "left",
+        headerBg: "transparent",
+        headerWidth: "full",
+
+        heroWidth: "full",
+        contentWidth: "normal",
+
+        density: "normal",
+        borders: "none",
+        radius: "md",
+        sectionDividers: "none",
+        motion: "subtle",
+        scrollMode: "normal",
+        sectionHeadersAlign: "left",
+        mediaLayout: "split",
+      },
+      blockPreset: {
+        gallery: { layout: "masonry", cols: 4, masonryCols: 3 },
+        spotify: { embedSize: 60 },
+        youtube: { embedSize: 60 },
+      },
+      variants: [
+        { id: "standard", label: "Standard", preset: {} },
+        { id: "tight", label: "Kompaktowy", preset: { density: "compact" } },
+        { id: "contrast", label: "Kontrast", preset: { motion: "subtle" } },
+      ],
+    },
+
+    // 4) Photo First — wizualny, hero + siatka
+    {
+      id: "photofirst",
+      name: "Photo First",
+      desc: "Maksimum miejsca na zdjęcia: hero + siatka",
+      thumb: "linear-gradient(135deg, #0f172a, #ffffff)",
       preset: {
         theme: "minimalist",
         fontPreset: "inter",
-        accent: "#16a34a",
-        accentType: "pill",
+        accent: "#1d4ed8",
+        accentType: "underline",
 
         headerLayout: "left",
         headerBg: "solid",
         headerWidth: "wide",
 
+        heroWidth: "full",
+        contentWidth: "wide",
+
+        density: "comfortable",
+        borders: "thin",
+        radius: "md",
+        sectionDividers: "none",
+        motion: "subtle",
+        scrollMode: "normal",
+        sectionHeadersAlign: "left",
+        mediaLayout: "stack",
+      },
+      blockPreset: {
+        gallery: { layout: "masonry", cols: 4, masonryCols: 4 },
+        spotify: { embedSize: 55 },
+        youtube: { embedSize: 55 },
+      },
+      variants: [
+        { id: "gallery", label: "Galeria", preset: {} },
+        { id: "tight", label: "Kompakt", preset: { density: "normal" } },
+      ],
+    },
+
+    // 5) Artbook — collage/card look, premium eksperyment
+    {
+      id: "collage",
+      name: "Artbook",
+      desc: "Artbook: sekcje jako karty, lekko „drukowany” klimat",
+      thumb: "linear-gradient(135deg, #f8fafc, #0b1020)",
+      preset: {
+        theme: "minimalist",
+        fontPreset: "editorial",
+        accent: "#4338ca",
+        accentType: "underline",
+
+        headerLayout: "left",
+        headerBg: "solid",
+        headerWidth: "normal",
+
         heroWidth: "wide",
         contentWidth: "normal",
 
-        density: "normal",
-        borders: "none",
-        radius: "lg",
+        density: "comfortable",
+        borders: "thin",
+        radius: "md",
         sectionDividers: "block",
         motion: "subtle",
         scrollMode: "normal",
@@ -853,60 +1117,20 @@ const STYLE_CATALOG = {
       },
       blockPreset: {
         gallery: { layout: "grid", cols: 3, masonryCols: 3 },
-        spotify: { embedSize: 70 },
-        youtube: { embedSize: 70 },
+        spotify: { embedSize: 60 },
+        youtube: { embedSize: 60 },
       },
       variants: [
-        { id: "smooth", label: "Smooth", preset: {} },
-        { id: "outline", label: "Outline", preset: { accentType: "outline" } },
-        { id: "tight", label: "Tight", preset: { density: "compact" } },
+        { id: "cards", label: "Karty", preset: {} },
+        { id: "wide", label: "Szeroki", preset: { contentWidth: "wide" } },
       ],
     },
 
-    {
-      id: "colorwash",
-      name: "Colorwash",
-      desc: "Sekcje jak plansze, ciepły vibe",
-      thumb: "linear-gradient(135deg, #fef3c7, #bfdbfe)",
-      preset: {
-        theme: "minimalist",
-        fontPreset: "inter",
-        accent: "#f59e0b",
-        bgColor: "#fef3c7",
-        accentType: "pill",
-
-        headerLayout: "center",
-        headerBg: "transparent",
-        headerWidth: "wide",
-
-        heroWidth: "wide",
-        contentWidth: "normal",
-
-        density: "comfortable",
-        borders: "none",
-        radius: "lg",
-        sectionDividers: "block",
-        motion: "subtle",
-        scrollMode: "normal",
-        sectionHeadersAlign: "center",
-        mediaLayout: "split",
-      },
-      blockPreset: {
-        gallery: { layout: "masonry", cols: 3, masonryCols: 3 },
-        spotify: { embedSize: 70 },
-        youtube: { embedSize: 70 },
-      },
-      variants: [
-        { id: "soft", label: "Soft", preset: {} },
-        { id: "wide", label: "Wide", preset: { contentWidth: "wide" } },
-        { id: "pills", label: "Pills", preset: { accentType: "pill" } },
-      ],
-    },
-
+    // 6) Spotlight — focus scroll (desktop), mobile automatycznie łagodniej
     {
       id: "spotlight",
-      name: "Spotlight Sections",
-      desc: "Prowadzi wzrok: focus scroll",
+      name: "Spotlight",
+      desc: "Prowadzenie wzroku (desktop). Na mobile: standardowy scroll",
       thumb: "linear-gradient(135deg, #111827, #f97316)",
       preset: {
         theme: "modern",
@@ -936,15 +1160,185 @@ const STYLE_CATALOG = {
         youtube: { embedSize: 75 },
       },
       variants: [
-        { id: "focus", label: "Focus", preset: { scrollMode: "focus" } },
-        { id: "normal", label: "Normal", preset: { scrollMode: "normal" } },
+        { id: "focus", label: "Fokus", preset: { scrollMode: "focus" } },
+        { id: "normal", label: "Standard", preset: { scrollMode: "normal" } },
       ],
     },
 
+    // 7) Neon — klubowy, kontrolowany glow
+    {
+      id: "neon",
+      name: "Neon",
+      desc: "Klubowy: kontrast + poświata, dla elektroniki/DJ",
+      thumb: "linear-gradient(135deg, #0b1020, #4c1d95)",
+      preset: {
+        theme: "modern",
+        fontPreset: "space",
+        accent: "#a855f7",
+        accentType: "gradient",
+
+        headerLayout: "center",
+        headerBg: "pill",
+        headerWidth: "wide",
+
+        heroWidth: "full",
+        contentWidth: "wide",
+
+        density: "normal",
+        borders: "thin",
+        radius: "lg",
+        sectionDividers: "none",
+        motion: "strong",
+        scrollMode: "normal",
+        sectionHeadersAlign: "center",
+        mediaLayout: "split",
+      },
+      blockPreset: {
+        gallery: { layout: "masonry", cols: 4, masonryCols: 4 },
+        spotify: { embedSize: 60 },
+        youtube: { embedSize: 60 },
+      },
+      variants: [
+        { id: "club", label: "Klub", preset: {} },
+        { id: "soft", label: "Stonowany", preset: { motion: "subtle" } },
+        { id: "outline", label: "Obrys", preset: { accentType: "outline" } },
+      ],
+    },
+
+    // 8) Brutalist — statement
+    {
+      id: "brutalist",
+      name: "Brutalist",
+      desc: "Plakatowy statement, kontrolowany minimalizm",
+      thumb: "linear-gradient(135deg, #f8fafc, #111827)",
+      preset: {
+        theme: "minimalist",
+        fontPreset: "plex",
+        accent: "#dc2626",
+        accentType: "outline",
+
+        headerLayout: "left",
+        headerBg: "solid",
+        headerWidth: "full",
+
+        heroWidth: "wide",
+        contentWidth: "normal",
+
+        density: "compact",
+        borders: "thick",
+        radius: "0",
+        sectionDividers: "block",
+        motion: "off",
+        scrollMode: "normal",
+        sectionHeadersAlign: "left",
+        mediaLayout: "stack",
+      },
+      blockPreset: {
+        gallery: { layout: "grid", cols: 6, masonryCols: 3 },
+        spotify: { embedSize: 55 },
+        youtube: { embedSize: 55 },
+      },
+      variants: [
+        { id: "poster", label: "Plakat", preset: {} },
+        { id: "clean", label: "Czysty", preset: { borders: "thin" } },
+        { id: "compact", label: "Kompaktowy", preset: { density: "compact" } },
+      ],
+    },
+  ],
+  basic: [
+
+    {
+      id: "basic-clean",
+      name: "Neutralny",
+      desc: "Najbezpieczniejszy układ dla większości profili",
+      thumb: "linear-gradient(135deg, #ffffff, #f1f5f9)",
+      preset: {
+        theme: "minimalist",
+        headerLayout: "left",
+        contentWidth: "normal",
+        headerWidth: "normal",
+        heroWidth: "normal",
+        mediaLayout: "stack",
+        density: "comfortable",
+        borders: "thin",
+        radius: "md",
+        sectionDividers: "none",
+        motion: "subtle",
+        scrollMode: "normal",
+        sectionHeadersAlign: "left",
+      },
+      variants: BASIC_VARIANTS,
+    },
+    {
+      id: "basic-cards",
+      name: "Karty",
+      desc: "Sekcje jako karty, nowoczesny i czytelny",
+      thumb: "linear-gradient(135deg, #ecfeff, #e0e7ff)",
+      preset: {
+        theme: "minimalist",
+        headerLayout: "center",
+        contentWidth: "normal",
+        headerWidth: "normal",
+        heroWidth: "wide",
+        mediaLayout: "split",
+        density: "comfortable",
+        borders: "thin",
+        radius: "lg",
+        sectionDividers: "block",
+        motion: "subtle",
+        scrollMode: "normal",
+        sectionHeadersAlign: "center",
+      },
+      variants: BASIC_VARIANTS,
+    },
+    {
+      id: "basic-classic",
+      name: "Klasyczny",
+      desc: "Tradycyjny układ: linie, porządek, spokój",
+      thumb: "linear-gradient(135deg, #fff7ed, #fafaf9)",
+      preset: {
+        theme: "minimalist",
+        headerLayout: "left",
+        contentWidth: "normal",
+        headerWidth: "normal",
+        heroWidth: "normal",
+        mediaLayout: "stack",
+        density: "normal",
+        borders: "thin",
+        radius: "md",
+        sectionDividers: "line",
+        motion: "off",
+        scrollMode: "normal",
+        sectionHeadersAlign: "left",
+      },
+      variants: BASIC_VARIANTS,
+    },
+    {
+      id: "basic-dark",
+      name: "Ciemny",
+      desc: "Ciemny wariant pod zdjęcia, wideo i scenę",
+      thumb: "linear-gradient(135deg, #0b1020, #111827)",
+      preset: {
+        theme: "modern",
+        headerLayout: "left",
+        contentWidth: "normal",
+        headerWidth: "normal",
+        heroWidth: "wide",
+        mediaLayout: "split",
+        density: "comfortable",
+        borders: "thin",
+        radius: "md",
+        sectionDividers: "none",
+        motion: "subtle",
+        scrollMode: "normal",
+        sectionHeadersAlign: "left",
+      },
+      variants: BASIC_VARIANTS,
+    },
     {
       id: "square",
-      name: "Monochrome",
-      desc: "Czarno-białe: kontrast i typografia",
+      name: "Monochromatyczny",
+      desc: "Czerń i biel: nacisk na typografię i kontrast",
       thumb: "linear-gradient(135deg, #0b0f19, #ffffff)",
       preset: {
         theme: "minimalist",
@@ -975,122 +1369,11 @@ const STYLE_CATALOG = {
       },
       variants: [
         { id: "standard", label: "Standard", preset: {} },
-        { id: "compact", label: "Compact", preset: { density: "compact" } },
-        { id: "wide", label: "Wide", preset: { contentWidth: "wide" } },
+        { id: "compact", label: "Kompaktowy", preset: { density: "compact" } },
+        { id: "wide", label: "Szeroki", preset: { contentWidth: "wide" } },
       ],
     },
-  ],
-  basic: [
-    {
-      id: "basic-clean",
-      name: "Basic Clean",
-      desc: "Szybko i schludnie",
-      thumb: "linear-gradient(135deg, #ffffff, #f1f5f9)",
-      preset: {
-        theme: "minimalist",
-        headerLayout: "left",
-        contentWidth: "normal",
-        headerWidth: "normal",
-        heroWidth: "normal",
-        mediaLayout: "stack",
-        density: "comfortable",
-        borders: "thin",
-        radius: "md",
-        sectionDividers: "none",
-        motion: "subtle",
-        scrollMode: "normal",
-        sectionHeadersAlign: "left",
-      },
-      variants: BASIC_VARIANTS,
-    },
-    {
-      id: "basic-dark",
-      name: "Basic Dark",
-      desc: "Ciemny, prosty, czytelny",
-      thumb: "linear-gradient(135deg, #0b1020, #111827)",
-      preset: {
-        theme: "modern",
-        headerLayout: "left",
-        contentWidth: "normal",
-        headerWidth: "normal",
-        heroWidth: "wide",
-        mediaLayout: "split",
-        density: "comfortable",
-        borders: "thin",
-        radius: "md",
-        sectionDividers: "none",
-        motion: "subtle",
-        scrollMode: "normal",
-        sectionHeadersAlign: "left",
-      },
-      variants: BASIC_VARIANTS,
-    },
-    {
-      id: "basic-cards",
-      name: "Basic Cards",
-      desc: "Sekcje jako karty",
-      thumb: "linear-gradient(135deg, #ecfeff, #e0e7ff)",
-      preset: {
-        theme: "minimalist",
-        headerLayout: "center",
-        contentWidth: "normal",
-        headerWidth: "normal",
-        heroWidth: "wide",
-        mediaLayout: "split",
-        density: "comfortable",
-        borders: "thin",
-        radius: "lg",
-        sectionDividers: "block",
-        motion: "subtle",
-        scrollMode: "normal",
-        sectionHeadersAlign: "center",
-      },
-      variants: BASIC_VARIANTS,
-    },
-    {
-      id: "basic-colorwash",
-      name: "Basic Colorwash",
-      desc: "Delikatne tła sekcji",
-      thumb: "linear-gradient(135deg, #fef3c7, #bfdbfe)",
-      preset: {
-        theme: "minimalist",
-        headerLayout: "center",
-        contentWidth: "normal",
-        headerWidth: "wide",
-        heroWidth: "normal",
-        mediaLayout: "stack",
-        density: "comfortable",
-        borders: "none",
-        radius: "lg",
-        sectionDividers: "block",
-        motion: "subtle",
-        scrollMode: "normal",
-        sectionHeadersAlign: "center",
-      },
-      variants: BASIC_VARIANTS,
-    },
-    {
-      id: "basic-classic",
-      name: "Basic Classic",
-      desc: "Spokojnie, tradycyjnie",
-      thumb: "linear-gradient(135deg, #fff7ed, #fafaf9)",
-      preset: {
-        theme: "minimalist",
-        headerLayout: "left",
-        contentWidth: "normal",
-        headerWidth: "normal",
-        heroWidth: "normal",
-        mediaLayout: "stack",
-        density: "normal",
-        borders: "thin",
-        radius: "md",
-        sectionDividers: "line",
-        motion: "off",
-        scrollMode: "normal",
-        sectionHeadersAlign: "left",
-      },
-      variants: BASIC_VARIANTS,
-    },
+
   ],
 };
 
@@ -1201,13 +1484,16 @@ function renderStyleUi() {
   const grid = $("templateGrid");
   if (!grid) return;
 
+  // allow per-collection styling (flagship vs basic)
+  grid.dataset.collection = String(state.styleCollection || 'flagship');
+
   const entries = getStyleEntries();
   grid.innerHTML = entries.map((e) => {
     const active = e.id === state.template ? " isActive" : "";
-    const thumb = e.thumb || "linear-gradient(135deg,#e5e7eb,#ffffff)";
+    const icon = styleIconSvg(e.id);
     return `
       <button type="button" class="tplCard${active}" data-template-id="${escapeHtml(e.id)}" aria-pressed="${e.id === state.template}">
-        <div class="tplThumb" style="background:${thumb}"></div>
+        <div class="tplIcon" aria-hidden="true">${icon}</div>
         <div class="tplMeta">
           <div class="tplName">${escapeHtml(e.name)}</div>
           <div class="tplDesc">${escapeHtml(e.desc)}</div>
@@ -1215,6 +1501,43 @@ function renderStyleUi() {
       </button>
     `;
   }).join("");
+}
+
+// Minimal, monochrome icons for style cards (no color blocks).
+function styleIconSvg(styleId) {
+  const id = String(styleId || "").toLowerCase();
+  const common = 'class="tplIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  switch (id) {
+    case 'editorial':
+      return `<svg ${common}><path d="M6 18V6"/><path d="M10 18V6"/><path d="M14 10h4"/><path d="M14 14h4"/></svg>`; // columns + text
+    case 'swiss':
+      return `<svg ${common}><path d="M5 7h14"/><path d="M5 12h14"/><path d="M5 17h14"/><path d="M9 5v14"/></svg>`; // grid
+    case 'cinematic':
+      return `<svg ${common}><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M9 10l6 3-6 3z" fill="currentColor" stroke="none"/></svg>`;
+    case 'photofirst':
+      return `<svg ${common}><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10l2-2h4l2 2"/><circle cx="12" cy="12" r="2"/></svg>`;
+    case 'collage':
+      return `<svg ${common}><rect x="5" y="5" width="6" height="6" rx="1"/><rect x="13" y="5" width="6" height="9" rx="1"/><rect x="5" y="13" width="6" height="6" rx="1"/><rect x="13" y="16" width="6" height="3" rx="1"/></svg>`;
+    case 'spotlight':
+      return `<svg ${common}><path d="M7 3h10"/><path d="M8 3l1 4"/><path d="M16 3l-1 4"/><path d="M12 7v14"/><path d="M8 21h8"/><path d="M9 12c1.6-1.6 4.4-1.6 6 0"/></svg>`;
+    case 'neon':
+      return `<svg ${common}><path d="M13 2L6 14h7l-1 8 7-12h-7z"/></svg>`;
+    case 'brutalist':
+      return `<svg ${common}><path d="M7 6h6a3 3 0 0 1 0 6H7z"/><path d="M7 12h7a3 3 0 0 1 0 6H7z"/></svg>`;
+
+    case 'basic-clean':
+      return `<svg ${common}><rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h5"/></svg>`;
+    case 'basic-cards':
+      return `<svg ${common}><rect x="6" y="6" width="12" height="6" rx="2"/><rect x="6" y="13" width="12" height="5" rx="2"/></svg>`;
+    case 'basic-classic':
+      return `<svg ${common}><path d="M6 7h12"/><path d="M6 12h12"/><path d="M6 17h12"/><path d="M6 5v14"/></svg>`;
+    case 'basic-dark':
+      return `<svg ${common}><path d="M21 12.8A7.5 7.5 0 1 1 11.2 3a6 6 0 1 0 9.8 9.8z"/></svg>`;
+    case 'square':
+      return `<svg ${common}><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M12 5v14"/></svg>`;
+    default:
+      return `<svg ${common}><circle cx="12" cy="12" r="8"/></svg>`;
+  }
 }
 
 const OPTIONAL_BLOCKS = Object.keys(BLOCKS).filter(id => id !== "hero");

@@ -61,8 +61,8 @@ function bindSettings() {
     const prev = String(state.role || "musician");
     if (next === prev) return;
     const ok = confirm(
-      "Zmiana kategorii artysty przełączy zestaw bloków i układ strony na preset branżowy.\n\n" +
-      "Jeśli masz już rozbudowany szkic, zrób snapshot przed zmianą.\n\n" +
+      "Zmiana profilu strony zmieni domyślny zestaw bloków oraz ich kolejność.\n\n" +
+      "Jeśli masz już rozbudowany szkic, zapisz snapshot przed zmianą.\n\n" +
       "Kontynuować?"
     );
     if (!ok) {
@@ -249,41 +249,40 @@ function bindSettings() {
   });
 
 
-  // Logo upload + header option
-  const logoUp = $("logoUpload");
-  if (logoUp) logoUp.addEventListener("change", async () => {
-    const file = logoUp.files && logoUp.files[0];
-    if (!file) return;
+  // Logo (nagłówek): checkbox + drop-zone jak w SEO
+  async function handleLogoFile(file) {
+    const f = file;
+    if (!f) return;
 
     const rem = remainingMediaBudgetBytes() + assetBytes(assets.logo);
-    const inBytes = Number(file.size || 0);
+    const inBytes = Number(f.size || 0);
     if (inBytes && rem && inBytes > rem) {
       toast(`⚠ Limit zasobów: brak miejsca na logo (${formatBytes(inBytes)}). Zostało: ${formatBytes(rem)}.`, 'warn', 5200);
       return;
     }
 
-    if (isLikelyHeic(file)) {
-      toast(`⚠ Format HEIC/HEIF nie jest wspierany: ${file.name}. Zapisz jako JPG/PNG/SVG i wgraj ponownie.`, 'warn', 5200);
+    if (isLikelyHeic(f)) {
+      toast(`⚠ Format HEIC/HEIF nie jest wspierany: ${f.name}. Zapisz jako JPG/PNG/SVG i wgraj ponownie.`, 'warn', 5200);
       return;
     }
 
     // SVG trzymamy w oryginale (bez re-encode)
-    if (isSvgFile(file)) {
+    if (isSvgFile(f)) {
       if (inBytes && inBytes > 2 * 1024 * 1024) {
         toast(`⚠ Logo SVG jest spore (${formatBytes(inBytes)}). Rozważ uproszczenie pliku.`, 'warn', 5200);
       }
-      const dataUrl = await readFileAsDataUrl(file);
+      const dataUrl = await readFileAsDataUrl(f);
       if (!dataUrl) return;
-      const mime = file.type || (parseDataUrl(dataUrl)?.mime || 'image/svg+xml');
-      assets.logo = { id: "single_logo", dataUrl, mime, bytes: inBytes };
+      const mime = f.type || (parseDataUrl(dataUrl)?.mime || 'image/svg+xml');
+      assets.logo = { id: "single_logo", name: f.name || "logo", dataUrl, mime, bytes: inBytes };
       await persistSingleAsset(assets.logo, "single_logo", { kind: "logo" });
       contentDraftChanged();
-      logoUp.value = '';
+      refreshLogoSingleUI();
       return;
     }
 
-    // Raster: normalizacja (max bok 1200, WEBP z fallbackiem)
-    const norm = await normalizeImageFileToDataUrl(file, {
+    // Raster: normalizacja (max bok 1200, WEBP)
+    const norm = await normalizeImageFileToDataUrl(f, {
       maxSide: 1200,
       maxOutputBytes: 800_000,
       mime: "image/webp",
@@ -291,18 +290,57 @@ function bindSettings() {
       _single: 1,
     });
     if (!norm.dataUrl) return;
-    assets.logo = { id: "single_logo", dataUrl: norm.dataUrl, mime: norm.mime, bytes: norm.bytes, width: norm.width, height: norm.height };
+    assets.logo = { id: "single_logo", name: f.name || "logo", dataUrl: norm.dataUrl, mime: norm.mime, bytes: norm.bytes, width: norm.width, height: norm.height };
     await persistSingleAsset(assets.logo, "single_logo", { kind: "logo" });
     contentChanged();
-    logoUp.value = '';
+    refreshLogoSingleUI();
+  }
+
+  function syncLogoUploadVisibility() {
+    const wrap = $("logoUploadWrap");
+    if (!wrap) return;
+    const on = !!state.useLogoInHeader;
+    wrap.classList.toggle("isHiddenControl", !on);
+  }
+
+  const logoUp = $("logoUpload");
+  if (logoUp) logoUp.addEventListener("change", async () => {
+    const file = logoUp.files && logoUp.files[0];
+    if (!file) return;
+    await handleLogoFile(file);
+    try{ logoUp.value = ""; }catch(_){ }
   });
 
+  const logoDZ = document.querySelector('[data-drop="logoUpload"]');
+  if (logoDZ && typeof bindDropZone === 'function') {
+    bindDropZone(logoDZ, async (files) => {
+      const f = (files && files[0]) ? files[0] : null;
+      if (!f) return;
+      await handleLogoFile(f);
+      try{ if (logoUp) logoUp.value = ""; }catch(_){ }
+    });
+  }
+
   const useLogo = $("useLogoInHeader");
-  if (useLogo) useLogo.addEventListener("change", () => {
-    state.useLogoInHeader = !!useLogo.checked;
-    contentChanged();
-    // contentChanged will schedule preview rebuild depending on LIVE mode
+  if (useLogo) {
+    // Restore checkbox from saved state
+    useLogo.checked = !!state.useLogoInHeader;
+    useLogo.addEventListener("change", () => {
+      state.useLogoInHeader = !!useLogo.checked;
+      syncLogoUploadVisibility();
+      contentChanged();
+    });
+  }
+
+  // Remove logo button
+  const logoRem = $("logoRemove");
+  if (logoRem) logoRem.addEventListener("click", async (e) => {
+    try{ e.preventDefault(); e.stopPropagation(); }catch(_){ }
+    await removeLogoSingle();
   });
+
+  // Initial visibility (after draft load, we also run it again)
+  syncLogoUploadVisibility();
 
 
   const fav = $("faviconUpload");
@@ -832,6 +870,35 @@ function refreshSeoSinglesUI() {
   if (ogName) ogName.textContent = ogOn ? (assets.ogImage.name || "og-image") : "";
 }
 
+function refreshLogoSingleUI() {
+  const empty = $("logoEmpty");
+  const row = $("logoRow");
+  const name = $("logoName");
+  const on = !!(assets && assets.logo && assets.logo.dataUrl);
+  if (empty) {
+    empty.hidden = on;
+    empty.style.display = on ? "none" : "block";
+  }
+  if (row) {
+    row.hidden = !on;
+    row.style.display = on ? "flex" : "none";
+  }
+  if (name) name.textContent = on ? (assets.logo.name || "logo") : "";
+}
+
+async function removeLogoSingle() {
+  try {
+    if (assets && assets.logo) {
+      try { await mediaDel(assets.logo.id || "single_logo"); } catch(_) {}
+      assets.logo = null;
+      contentChanged();
+      refreshLogoSingleUI();
+    }
+  } catch (e) {
+    // keep app stable
+  }
+}
+
 async function removeSeoSingle(kind) {
   try {
     if (kind === "favicon" && assets && assets.favicon) {
@@ -854,9 +921,13 @@ async function removeSeoSingle(kind) {
 }
 
 async function init() {
+  // Apply generator UI preferences (theme/size/panel width)
+  try{ applyUiPrefs(getUiPrefs(), false); }catch(e){}
+
   bindPanelToggle();
   bindPanelDetailsPersistence();
   bindQuickDock();
+  try{ bindUiSettingsMenu(); }catch(e){}
   applyRolePreset(state.role);
 
   const loaded = await loadDraft();
@@ -892,6 +963,7 @@ async function init() {
   updateSnapshotPill();
   setLiveStatus();
   bindSettings();
+  refreshLogoSingleUI();
   refreshSeoSinglesUI();
   installLivePreviewFallback();
   initCustomSelects(document);
