@@ -18,7 +18,11 @@ Szczegóły: `kpo.html`
 ---
 
 ## Opis
+<<<<<<< HEAD
 Generator pozwala stworzyć statyczną stronę internetową artysty w oparciu o wybrany profil, zestaw sekcji oraz styl. Aplikacja buduje podgląd HTML i umożliwia eksport gotowych plików strony.
+=======
+Projekt pozwala na stworzenie statycznej strony internetowej w oparciu o wybrany profil, zestaw sekcji oraz styl. Generator buduje podgląd HTML i umożliwia eksport gotowych plików.
+>>>>>>> c5a77e2be4ea59b3aac2da50d9bd30ba25ab560b
 
 ## Pobieranie
 - **Rekomendowane:** wejdź w zakładkę **Releases** i pobierz plik ZIP (asset wydania).
@@ -31,6 +35,7 @@ Generator pozwala stworzyć statyczną stronę internetową artysty w oparciu o 
 Generator działa lokalnie i nie wymaga serwera.
 
 ## Dokumentacja
+<<<<<<< HEAD
 - Strona dokumentacyjna: `docs/index.html`
 - Instrukcja PDF: `docs/instrukcja.pdf`
 
@@ -39,6 +44,16 @@ Generator działa lokalnie i nie wymaga serwera.
 
 ## Offline (bez CDN)
 Wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
+=======
+- Strona dokumentacyjna: `docs/index.html` ).
+- Instrukcja PDF: `docs/instrukcja.pdf`
+
+## Wymagania
+- JavaScript włączony w przeglądarce.
+
+## Offline (bez CDN)
+Ta wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
+>>>>>>> c5a77e2be4ea59b3aac2da50d9bd30ba25ab560b
 
 ## Licencja
 Projekt jest udostępniony jako open source na licencji MIT — patrz plik `LICENSE`.
