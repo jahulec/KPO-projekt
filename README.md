@@ -2,7 +2,7 @@
 
 ## Finansowanie (KPO / NextGenerationEU)
 
-![Zestawienie znaków: KPO + barwy RP + NextGenerationEU](assets/kpo/kpo_rp_ngeu_poziom_rgb.png)
+![Zestawienie znaków: KPO + barwy RP + NextGenerationEU](assets/kpo/kpo_rp_ngeu_poziom_rgb_whitebg.png)
 
 Przedsięwzięcie jest realizowane dzięki wsparciu z Krajowego Planu Odbudowy i Zwiększania Odporności oraz finansowane przez Unię Europejską w ramach NextGenerationEU.
 
@@ -35,28 +35,3 @@ Ta wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołąc
 
 
 
-
-
-## Pobieranie
-- **Najprościej:** wejdź w zakładkę **Releases** w repozytorium i pobierz plik ZIP (asset).
-- Alternatywnie możesz pobrać kod jako „Source code (zip)”, ale rekomendowany jest asset ZIP z release.
-
-## Dokumentacja
-- Strona dokumentacyjna: `docs/index.html` (dobrze nadaje się pod GitHub Pages).
-- Instrukcja PDF: `docs/instrukcja.pdf`
-
-## Wideotutoriale
-Dodaj link do playlisty YouTube:
-- w README (ten plik),
-- oraz w `docs/index.html` (sekcja CONFIG na dole pliku).
-
-## Licencja
-Projekt jest udostępniony jako open source na licencji MIT — patrz plik `LICENSE`.
-
-## Struktura plików
-- `index.html` — aplikacja generatora
-- `js/` — logika (podzielona na moduły)
-- `style.css` — style UI generatora
-- `vendor/jszip.min.js` — JSZip (offline)
-- `docs/` — landing + instrukcja PDF
-- `kpo.html` — informacje o finansowaniu (KPO / NextGenerationEU)
