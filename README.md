@@ -19,36 +19,19 @@ Szczegóły: `kpo.html`
 ## Opis
 Projekt pozwala na stworzenie statycznej strony internetowej w oparciu o wybrany profil, zestaw sekcji oraz styl. Generator buduje podgląd HTML i umożliwia eksport gotowych plików.
 
-## Jak używać
-1. Wybierz profil strony z listy.
-2. Zaznacz sekcje, które mają zostać wygenerowane.
-3. Wybierz styl.
-4. Uruchom podgląd.
-5. Wyeksportuj wygenerowane pliki.
-
-## Wymagania
-- JavaScript włączony w przeglądarce.
-- Możliwość hostowania strony na GitHub Pages lub innym serwerze.
-
-## Offline (bez CDN)
-Ta wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
-
-
-
-
-
 ## Pobieranie
 - **Najprościej:** wejdź w zakładkę **Releases** w repozytorium i pobierz plik ZIP (asset).
 - Alternatywnie możesz pobrać kod jako „Source code (zip)”, ale rekomendowany jest asset ZIP z release.
 
 ## Dokumentacja
-- Strona dokumentacyjna: `docs/index.html` (dobrze nadaje się pod GitHub Pages).
+- Strona dokumentacyjna: `docs/index.html` ).
 - Instrukcja PDF: `docs/instrukcja.pdf`
 
-## Wideotutoriale
-Dodaj link do playlisty YouTube:
-- w README (ten plik),
-- oraz w `docs/index.html` (sekcja CONFIG na dole pliku).
+## Wymagania
+- JavaScript włączony w przeglądarce.
+
+## Offline (bez CDN)
+Ta wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
 
 ## Licencja
 Projekt jest udostępniony jako open source na licencji MIT — patrz plik `LICENSE`.
