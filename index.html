@@ -25,6 +25,12 @@
 </head>
 <body>
   <div class="app" id="appRoot">
+    <div class="mobileBar" id="mobileBar" aria-label="Widok mobilny">
+      <div class="seg" role="group" aria-label="Widok">
+        <button type="button" class="segBtn" id="btnMobilePanel">Panel</button>
+        <button type="button" class="segBtn" id="btnMobilePreview">Podglad</button>
+      </div>
+    </div>
     <aside class="panel">
       <div class="panel__head">
         <div class="brandRow">
@@ -365,6 +371,11 @@
           <span>Słowa kluczowe (opcjonalnie)</span>
           <input id="metaKeywords" type="text" placeholder="Wprowadź słowa kluczowe (oddziel przecinkami)" />
                   </label>
+
+        <label class="field">
+          <span>Adres strony (URL)</span>
+          <input id="siteBaseUrl" type="text" placeholder="moja-domena.pl" />
+        </label>
 
         <div class="grid2">
           <label class="field">

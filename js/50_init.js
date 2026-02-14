@@ -74,7 +74,7 @@ function bindSettings() {
   });
 
   // settings that should NOT rerender UI on each key
-  ["accent","bgColor","siteName","metaTitle","metaDescription","metaKeywords","gtmId","privacyUrl"].forEach(id => {
+  ["accent","bgColor","siteName","metaTitle","metaDescription","metaKeywords","siteBaseUrl","gtmId","privacyUrl"].forEach(id => {
     $(id).addEventListener("input", () => {
       syncStateFromSettingsInputs();
       contentDraftChanged();
@@ -539,8 +539,11 @@ function bindSettings() {
       return;
     }
     if (state.exportMode === "single") {
-      // export: separate files? -> simplest: one index.html with inline CSS/JS
-      downloadText("index.html", buildSingleHtml({ inlineAssets: true, preview: false }));
+      // export: single HTML + robots/sitemap (separate files)
+      const html = buildSingleHtml({ inlineAssets: true, preview: false });
+      downloadText("index.html", html, "text/html;charset=utf-8");
+      downloadText("robots.txt", buildRobotsTxt(), "text/plain;charset=utf-8");
+      downloadText("sitemap.xml", buildSitemapXml(["index.html"]), "application/xml;charset=utf-8");
       return;
     }
     const files = buildZipFiles({ inlineAssets: false, preview: false }); // export = external style.css + site.js
@@ -969,6 +972,7 @@ async function init() {
   initCustomSelects(document);
   refreshCustomSelects();
   bindKeyboardShortcuts();
+  try{ bindMobileViewToggle(); }catch(_){}
 
   setPreviewDevice(state.previewDevice || "desktop");
 

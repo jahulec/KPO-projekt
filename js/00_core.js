@@ -14,6 +14,7 @@ const PANEL_COLLAPSED_KEY = "artist_site_generator_v9_panel_collapsed";
 const PANEL_SCROLLTOP_KEY = "artist_site_generator_v9_panel_scrolltop";
 const PANEL_DETAILS_KEY = "artist_site_generator_v9_panel_details";
 const UI_PREFS_KEY = "artist_site_generator_v9_ui_prefs";
+const MOBILE_VIEW_KEY = "artist_site_generator_v9_mobile_view";
 const LEGACY_STORAGE_KEY = "artist_site_generator_v6_draft";
 const LEGACY_SNAPSHOT_KEY = "artist_site_generator_v6_snapshot";
 const LEGACY_PANEL_COLLAPSED_KEY = "artist_site_generator_v6_panel_collapsed";
@@ -551,6 +552,9 @@ const __uiDefaults = { uiTheme: "dark", uiScale: 0.8 };
 const __uiScaleVars = [
   "--uiBaseFs",
   "--uiLabelFs",
+  "--uiTextFs",
+  "--uiTitleFs",
+  "--uiSmallFs",
   "--uiFieldGap",
   "--uiFieldMarginY",
   "--uiInputPadY",
@@ -574,6 +578,9 @@ const __uiScaleVars = [
   "--uiPanelHeadPadX",
   "--uiCardPad",
   "--uiListGap",
+  "--uiTplIcon",
+  "--uiTplIconSm",
+  "--uiTplCardMinH",
   // Zwinięty panel (lewy pasek)
   "--uiCollapsedW",
   "--uiCollapsedPadY",
@@ -692,6 +699,63 @@ function applyUiPrefs(p, persist=false){
 
   if (persist) saveUiPrefs({ uiTheme, uiScale });
   syncUiSettingsUi();
+}
+
+/* ==========================
+   Mobile view toggle (panel / preview)
+========================== */
+
+function _getMobileViewPref(){
+  try{
+    const v = String(localStorage.getItem(MOBILE_VIEW_KEY) || "").toLowerCase();
+    return (v === "preview") ? "preview" : "panel";
+  }catch(e){ return "panel"; }
+}
+
+function _setMobileViewPref(v){
+  try{ localStorage.setItem(MOBILE_VIEW_KEY, v); }catch(e){}
+}
+
+function _isMobileLayout(){
+  return !!(window.matchMedia && window.matchMedia("(max-width: 980px)").matches);
+}
+
+function _syncMobileViewButtons(view){
+  const v = (view === "preview") ? "preview" : "panel";
+  const bPanel = document.getElementById("btnMobilePanel");
+  const bPrev = document.getElementById("btnMobilePreview");
+  if (bPanel) bPanel.classList.toggle("isActive", v === "panel");
+  if (bPrev) bPrev.classList.toggle("isActive", v === "preview");
+}
+
+function applyMobileView(view, persist=true){
+  const v = (view === "preview") ? "preview" : "panel";
+  if (persist) _setMobileViewPref(v);
+  const body = document.body;
+  if (!body) return;
+  if (_isMobileLayout()) body.setAttribute("data-mobile-view", v);
+  else body.removeAttribute("data-mobile-view");
+  _syncMobileViewButtons(v);
+}
+
+function bindMobileViewToggle(){
+  const bPanel = document.getElementById("btnMobilePanel");
+  const bPrev = document.getElementById("btnMobilePreview");
+  if (!bPanel || !bPrev) return;
+
+  bPanel.addEventListener("click", () => applyMobileView("panel", true));
+  bPrev.addEventListener("click", () => applyMobileView("preview", true));
+
+  const applyFromResize = debounce(() => {
+    if (_isMobileLayout()) applyMobileView(_getMobileViewPref(), false);
+    else {
+      const body = document.body;
+      if (body) body.removeAttribute("data-mobile-view");
+    }
+  }, 120);
+
+  window.addEventListener("resize", applyFromResize, { passive: true });
+  applyFromResize();
 }
 
 function syncUiSettingsUi(){
@@ -1612,4 +1676,3 @@ function makeUniqueId(base) {
   });
   return `${b}__${max + 1}`;
 }
-

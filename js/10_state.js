@@ -45,6 +45,7 @@ const state = {
   metaTitle: "",
   metaDescription: "",
   metaKeywords: "",
+  siteBaseUrl: "",
 
   /* Analityka */
   gtmId: "",
@@ -416,6 +417,7 @@ function buildPayload() {
     metaTitle: state.metaTitle,
     metaDescription: state.metaDescription,
     metaKeywords: state.metaKeywords,
+    siteBaseUrl: state.siteBaseUrl,
 
     gtmId: state.gtmId,
     cookieBanner: !!state.cookieBanner,
@@ -478,6 +480,7 @@ function applyPayload(payload, setStatusText = true) {
   state.metaTitle = d.metaTitle ?? state.metaTitle;
   state.metaDescription = d.metaDescription ?? state.metaDescription;
   state.metaKeywords = d.metaKeywords ?? state.metaKeywords;
+  state.siteBaseUrl = d.siteBaseUrl ?? state.siteBaseUrl;
 
   state.gtmId = d.gtmId ?? state.gtmId;
   state.cookieBanner = (typeof d.cookieBanner === 'boolean') ? d.cookieBanner : state.cookieBanner;
@@ -543,6 +546,7 @@ function applyPayload(payload, setStatusText = true) {
   if ($("metaTitle")) $("metaTitle").value = state.metaTitle;
   if ($("metaDescription")) $("metaDescription").value = state.metaDescription;
   if ($("metaKeywords")) $("metaKeywords").value = state.metaKeywords || "";
+  if ($("siteBaseUrl")) $("siteBaseUrl").value = state.siteBaseUrl || "";
 
   if ($("gtmId")) $("gtmId").value = state.gtmId;
   if ($("cookieBanner")) $("cookieBanner").checked = !!state.cookieBanner;
@@ -1252,6 +1256,7 @@ function syncStateFromSettingsInputs() {
   if ($("metaTitle")) state.metaTitle = $("metaTitle").value;
   if ($("metaDescription")) state.metaDescription = $("metaDescription").value;
   if ($("metaKeywords")) state.metaKeywords = $("metaKeywords").value;
+  if ($("siteBaseUrl")) state.siteBaseUrl = $("siteBaseUrl").value;
 
   if ($("gtmId")) state.gtmId = $("gtmId").value;
   if ($("cookieBanner")) state.cookieBanner = $("cookieBanner").checked;
@@ -1812,4 +1817,3 @@ function structureChanged(forcePreview = false) {
 }
 
     if (typeof state.blocks[blockId].showOnHomeZip === "undefined") state.blocks[blockId].showOnHomeZip = true;
-

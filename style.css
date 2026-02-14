@@ -29,6 +29,9 @@
   /* UI prefs (generator) */
   --uiBaseFs: 14px;
   --uiLabelFs: 12px;
+  --uiTextFs: 13px;
+  --uiTitleFs: 16px;
+  --uiSmallFs: 11px;
   --uiFieldGap: 5px;
   --uiFieldMarginY: 8px;
   --uiInputPadY: 6px;
@@ -62,6 +65,10 @@
   --uiPanelHeadPadX: 14px;
 
   --uiPanelW: 420px;
+
+  --uiTplIcon: 46px;
+  --uiTplIconSm: 24px;
+  --uiTplCardMinH: 92px;
 
   /* Zwinięty panel (lewy pasek) – skaluje się razem z UI */
   --uiCollapsedW: 56px;
@@ -155,6 +162,9 @@ html[data-ui-size="compact"],
 html.uiSizeCompact{
   --uiBaseFs: 12.5px;
   --uiLabelFs: 11.5px;
+  --uiTextFs: 12px;
+  --uiTitleFs: 14.5px;
+  --uiSmallFs: 10.5px;
   --uiFieldGap: 4px;
   --uiFieldMarginY: 6px;
   --uiInputPadY: 5px;
@@ -183,6 +193,9 @@ html[data-ui-size="large"],
 html.uiSizeLarge{
   --uiBaseFs: 16px;
   --uiLabelFs: 13px;
+  --uiTextFs: 14px;
+  --uiTitleFs: 18px;
+  --uiSmallFs: 12px;
   --uiFieldGap: 6px;
   --uiFieldMarginY: 10px;
   --uiInputPadY: 7px;
@@ -492,8 +505,8 @@ html.uiThemeLight .uiMenu{ box-shadow: 0 18px 55px rgba(0,0,0,.18); }
 .brandRow{ display:flex; gap:12px; align-items:flex-start; }
 .panelToggle{ margin-left:auto; }
 .brandMark{ display:none; }
-.panel__head h1{ margin:0; font-size: 16px; letter-spacing:.2px; }
-.panel__head p{ margin:6px 0 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+.panel__head h1{ margin:0; font-size: var(--uiTitleFs); letter-spacing:.2px; }
+.panel__head p{ margin:6px 0 0 0; color: var(--muted); font-size: var(--uiLabelFs); line-height: 1.4; }
 
 .statusRow{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:12px; padding:10px; border:1px solid var(--uiCardBorder); border-radius: var(--uiCardRadius); background: var(--uiCardBg); }
 @media (max-width: 420px){ .statusRow{ grid-template-columns: 1fr; } }
@@ -523,7 +536,7 @@ html.uiThemeLight .uiMenu{ box-shadow: 0 18px 55px rgba(0,0,0,.18); }
   margin: 0 -14px;
   padding: var(--uiPanelHeadPadY) var(--uiPanelHeadPadX);
   font-weight: 900;
-  font-size: 13px;
+  font-size: var(--uiTextFs);
   letter-spacing:.25px;
   display:flex;
   align-items:center;
@@ -664,7 +677,7 @@ input:focus, textarea:focus, select:focus{
   background: var(--uiCardBg);
 }
 .toggleRow input{ width:18px; height:18px; }
-.toggleText{ font-size: 12.5px; color: var(--muted); }
+.toggleText{ font-size: var(--uiLabelFs); color: var(--muted); }
 
 .hint{
   margin-top:10px;
@@ -695,7 +708,7 @@ input:focus, textarea:focus, select:focus{
 }
 .customSelect__btn:hover{ border-color: rgba(109,40,217,.45); background: var(--uiInputBgHover); }
 .customSelect__btn:focus{ outline:none; border-color: rgba(109,40,217,.65); box-shadow: 0 0 0 4px rgba(109,40,217,.18); }
-.customSelect__value{ font-size: 13px; font-weight: 650; letter-spacing:.1px; }
+.customSelect__value{ font-size: var(--uiTextFs); font-weight: 650; letter-spacing:.1px; }
 .customSelect__chev{ opacity:.75; transition: transform .15s ease; }
 .customSelect.isOpen .customSelect__chev{ transform: rotate(180deg); }
 
@@ -720,7 +733,7 @@ input:focus, textarea:focus, select:focus{
   border-radius: 10px;
   cursor:pointer;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--uiTextFs);
 }
 .customSelect__opt:hover{ background: var(--ctlBgHover); }
 .customSelect__opt.isSelected{ background: rgba(109,40,217,.20); border:1px solid rgba(109,40,217,.35); }
@@ -750,8 +763,8 @@ input:focus, textarea:focus, select:focus{
   cursor:pointer;
   user-select:none;
 }
-.blockLabel strong{ font-size: 13px; }
-.blockLabel small{ color: var(--muted); font-size: 11px; }
+.blockLabel strong{ font-size: var(--uiTextFs); }
+.blockLabel small{ color: var(--muted); font-size: var(--uiSmallFs); }
 
 .tog{ display:flex; align-items:center; gap:8px; color: var(--muted); font-size: var(--uiLabelFs); }
 .tog input{ width:16px; height:16px; }
@@ -1003,9 +1016,9 @@ input:focus, textarea:focus, select:focus{
 
 /* Style cards: no big color thumbnails. Use small monochrome icon tile. */
 .tplIcon{
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
+  width: var(--uiTplIcon);
+  height: var(--uiTplIcon);
+  min-width: var(--uiTplIcon);
   border-radius: 12px;
   border: 1px solid var(--stroke);
   background: rgba(255,255,255,.03);
@@ -1014,13 +1027,17 @@ input:focus, textarea:focus, select:focus{
   justify-content:center;
 }
 .tplIconSvg{
-  width: 24px;
-  height: 24px;
+  width: var(--uiTplIconSm);
+  height: var(--uiTplIconSm);
   opacity: .92;
 }
 
 .tplMeta{ display:flex; flex-direction:column; gap:4px; min-width:0; }
-.tplName{ font-weight: 900; font-size: 13px; letter-spacing:.2px; line-height: 1.15; }
+.tplName{ font-weight: 900; font-size: var(--uiTextFs); letter-spacing:.2px; line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden; }
 .tplDesc{ font-size: var(--uiLabelFs); opacity:.72; line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1029,13 +1046,13 @@ input:focus, textarea:focus, select:focus{
 }
 
 /* Keep the grid visually tidy: consistent card height */
-.tplCard{ min-height: 92px; }
+.tplCard{ min-height: var(--uiTplCardMinH); }
 
 /* Slightly more compact and cleaner look for Basic templates */
 .templateGrid[data-collection="basic"]{ gap: 12px; }
 .templateGrid[data-collection="basic"] .tplCard{ padding: 12px; }
-.templateGrid[data-collection="basic"] .tplIcon{ width: 44px; height: 44px; min-width: 44px; border-radius: 11px; }
-.templateGrid[data-collection="basic"] .tplName{ font-size: 14px; }
+.templateGrid[data-collection="basic"] .tplIcon{ width: calc(var(--uiTplIcon) - 2px); height: calc(var(--uiTplIcon) - 2px); min-width: calc(var(--uiTplIcon) - 2px); border-radius: 11px; }
+.templateGrid[data-collection="basic"] .tplName{ font-size: calc(var(--uiTextFs) + 1px); }
 
 
 .chipRow{ display:flex; flex-wrap:wrap; gap:8px; }
@@ -1089,23 +1106,44 @@ input:focus, textarea:focus, select:focus{
 .preview__frameWrap[data-device="tablet"] #previewFrame{ width: 820px; }
 .preview__frameWrap[data-device="mobile"] #previewFrame{ width: 420px; }
 
+
+
+.mobileBar{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--stroke);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 980px){
-  .app{ grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
-  .app.isPanelCollapsed{ grid-template-columns: 1fr; grid-template-rows: 56px minmax(0, 1fr); }
+  .mobileBar{ display:flex; }
+  .app{ grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .app.isPanelCollapsed{ grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
   .panel{ border-right:0; border-bottom:1px solid var(--stroke); min-height: 0; }
   .preview{ min-height: 0; }
+  .panel, .preview{ grid-row: 2; }
+  body[data-mobile-view="panel"] .preview{ display:none; }
+  body[data-mobile-view="preview"] .panel{ display:none; }
   .grid2{ display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:10px; align-items:start; }
-.grid2 > *{ min-width:0; }
+  .grid2 > *{ min-width:0; }
   .panel__actions{ grid-template-columns: 1fr; }
   .itemGrid2{ grid-template-columns: 1fr; }
 }
+
+
 
 
 /* Shared modal primitives (polish) */
 .modalBackdrop{ position:absolute; inset:0; background: rgba(0,0,0,.60); }
 .modalCard{ position: relative; width: min(760px, calc(100vw - 28px)); margin: 10vh auto 0; background: var(--panel); border: 1px solid var(--stroke); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
 .modalHead{ display:flex; align-items:center; justify-content:space-between; padding: 14px 14px; border-bottom: 1px solid var(--stroke); background: rgba(255,255,255,.04); }
-.modalTitle strong{ font-size: 14px; letter-spacing: .2px; }
+.modalTitle strong{ font-size: var(--uiTextFs); letter-spacing: .2px; }
 .modalClose{ padding: 6px 8px; }
 
 
@@ -1328,7 +1366,7 @@ input:focus, textarea:focus, select:focus{
   max-width: 360px;
   padding: 10px 12px;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: var(--uiTextFs);
   line-height: 1.3;
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(20,20,20,.92);
@@ -1405,7 +1443,7 @@ input:focus, textarea:focus, select:focus{
   display: flex;
   gap: 8px;
   align-items: center;
-  font-size: 13px;
+  font-size: var(--uiTextFs);
   opacity: 0.9;
 }
 
@@ -1432,7 +1470,7 @@ input:focus, textarea:focus, select:focus{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: calc(var(--uiTextFs) + 1px);
   font-weight: 750;
   line-height: 1;
   letter-spacing: .2px;
@@ -1495,7 +1533,7 @@ dialog.rtDialog::backdrop{ background: rgba(0,0,0,0.55); }
   color: var(--text);
   border-radius: 12px;
   padding: var(--uiInputPadY) var(--uiInputPadX);
-  font-size: 13px;
+  font-size: var(--uiTextFs);
   cursor:pointer;
 }
 
@@ -1556,14 +1594,14 @@ dialog.rtDialog::backdrop{ background: rgba(0,0,0,0.55); }
   min-width: 240px;
 }
 .kpoFooter__title{
-  font-size: 13px;
+  font-size: var(--uiTextFs);
   line-height: 1.35;
   opacity: 0.92;
   margin-bottom: 6px;
 }
 .kpoFooter__details summary{
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--uiTextFs);
   opacity: 0.92;
   user-select: none;
 }
@@ -1574,6 +1612,7 @@ dialog.rtDialog::backdrop{ background: rgba(0,0,0,0.55); }
   opacity: 0.92;
 }
 .kpoFooter__detailsBody p{ margin: 6px 0; }
+
 @media (max-width: 980px){
   .kpoFooter__inner{ flex-direction: column; }
   .kpoFooter__logos{ max-width: 380px; }

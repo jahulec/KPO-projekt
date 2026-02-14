@@ -60,6 +60,58 @@ function getNavItemsSingle() {
   return items;
 }
 
+function normalizeBaseUrlForSitemap(raw) {
+  let s = String(raw || "").trim();
+  if (!s) return "";
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) s = "https://" + s;
+  s = s.replace(/\/+$/, "");
+  return s;
+}
+
+function buildSitemapXml(pages) {
+  const list = Array.isArray(pages) ? pages : [];
+  const base = normalizeBaseUrlForSitemap(state.siteBaseUrl || "");
+  const urls = list.map((p) => {
+    const path = String(p || "").replace(/^\/+/, "");
+    const loc = base ? `${base}/${path}` : `/${path}`;
+    return `  <url><loc>${escapeHtml(loc)}</loc></url>`;
+  }).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    `${urls}\n` +
+    `</urlset>`;
+}
+
+function buildRobotsTxt() {
+  const base = normalizeBaseUrlForSitemap(state.siteBaseUrl || "");
+  const lines = [
+    "User-agent: *",
+    "Allow: /",
+  ];
+  lines.push(`Sitemap: ${base ? `${base}/sitemap.xml` : "/sitemap.xml"}`);
+  return lines.join("\n");
+}
+
+function getZipPageList() {
+  const pages = ["index.html"];
+  const enabledAll = enabledBlocksInOrder().filter(id => id !== "hero");
+  const baseFirst = new Map();
+
+  enabledAll.forEach((id) => {
+    const base = baseBlockId(id);
+    if (base === "epk" && !isEpkRenderable()) return;
+    if (!baseFirst.has(base)) baseFirst.set(base, id);
+  });
+
+  for (const [base] of baseFirst.entries()) {
+    pages.push(blockToFile(base));
+  }
+
+  if (state.privacyAuto) pages.push("privacy.html");
+  return pages;
+}
+
+
 
 function buildFontLinks(){
   const p = String(state.fontPreset || "inter");
@@ -3299,6 +3351,10 @@ ${footJs}
 </html>`.trim();
   }
 
+
+  files["robots.txt"] = buildRobotsTxt();
+  files["sitemap.xml"] = buildSitemapXml(getZipPageList());
+
   return files;
 }
 
@@ -3528,8 +3584,9 @@ window.addEventListener("message", (ev) => {
    Download
 ========================== */
 
-function downloadText(filename, text) {
-  const blob = new Blob([text], { type: "text/html;charset=utf-8" });
+function downloadText(filename, text, mime) {
+  const t = String(mime || "text/plain;charset=utf-8");
+  const blob = new Blob([text], { type: t });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

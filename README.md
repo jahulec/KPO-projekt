@@ -2,30 +2,39 @@
 
 ## Finansowanie (KPO / NextGenerationEU)
 
-![Zestawienie znaków: KPO + barwy RP + NextGenerationEU](assets/kpo/kpo_rp_ngeu_poziom_rgb_whitebg.png)
+![Zestawienie znaków: KPO + barwy RP + NextGenerationEU](assets/kpo/kpo_rp_ngeu_poziom_rgb.png)
 
 Przedsięwzięcie jest realizowane dzięki wsparciu z Krajowego Planu Odbudowy i Zwiększania Odporności oraz finansowane przez Unię Europejską w ramach NextGenerationEU.
 
-Szczegóły: kpo.html
+- **Tytuł:** Szablon strony internetowej i pomoc medialna dla artystów z ograniczonymi zasobami – bezpłatne wsparcie w budowaniu obecności w sieci, dostępne dla każdego
+- **Cel:** zwiększenie obecności online wykluczonych cyfrowo artystów
+- **Grupa docelowa:** artyści (muzycy, graficy i inni twórcy)
+- **Wartość przedsięwzięcia:** 36 000 zł brutto
+- **Dofinansowanie z UE (KPO/NGEU):** 36 000 zł brutto
+- **Termin realizacji:** do 28.02.2026
 
-## Co to jest
-Prosty generator, który pozwala przygotować statyczną stronę internetową artysty:
-- wybierasz profil i sekcje,
-- wybierasz styl,
-- masz podgląd Desktop/Tablet/Mobile,
-- eksportujesz gotowe pliki.
+Szczegóły: `kpo.html`
 
-## Uruchomienie
-1. Pobierz ZIP z zakładki Releases (asset).
-2. Rozpakuj.
-3. Otwórz plik index.html w przeglądarce.
 
-## Dokumentacja
-- Strona informacyjna: docs/index.html
-- Instrukcja PDF: docs/instrukcja.pdf
+## Opis
+Projekt pozwala na stworzenie statycznej strony internetowej w oparciu o wybrany profil, zestaw sekcji oraz styl. Generator buduje podgląd HTML i umożliwia eksport gotowych plików.
 
-## Offline
-Generator działa bez CDN. JSZip jest dołączony lokalnie w vendor/jszip.min.js.
+## Jak używać
+1. Wybierz profil strony z listy.
+2. Zaznacz sekcje, które mają zostać wygenerowane.
+3. Wybierz styl.
+4. Uruchom podgląd.
+5. Wyeksportuj wygenerowane pliki.
 
-## Licencja
-MIT — patrz plik LICENSE.
+## Wymagania
+- JavaScript włączony w przeglądarce.
+- Możliwość hostowania strony na GitHub Pages lub innym serwerze.
+
+## YouTube (osadzanie)
+Osadzenia YouTube dzia?aj? tylko wtedy, gdy w ustawieniach filmu jest w??czone **Zezwalaj na osadzanie**. W przeciwnym razie pojawi si? b??d odtwarzacza (np. 153).
+
+## Offline (bez CDN)
+Ta wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
+
+
+
