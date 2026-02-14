@@ -945,6 +945,15 @@ async function generateSampleData() {
       continue;
     }
 
+    if (ed === "embed_bandcamp") {
+      setBlock(id, "Bandcamp", {
+        items: [
+          { url: "https://bandcamp.com/EmbeddedPlayer/album=0/size=large/bgcol=ffffff/linkcol=333333/tracklist=false/transparent=true/" }
+        ]
+      });
+      continue;
+    }
+
     if (ed === "store") {
       setBlock(id, "Sklep", {
         items: [
@@ -1382,6 +1391,14 @@ function collectIssues() {
       for (const it of items) {
         const u = String(it.url || "").trim();
         if (u && !normalizeYouTube(u)) pushUrlIssue(`${label}: nie rozpoznaję jednego z linków YouTube (wklej pełny link lub iframe).`);
+      }
+    }
+
+    if (def.editor === "embed_bandcamp") {
+      const items = Array.isArray(d.items) ? d.items : [];
+      for (const it of items) {
+        const u = String(it.url || "").trim();
+        if (u && !normalizeBandcamp(u)) pushUrlIssue(`${label}: nie rozpoznaję jednego z linków Bandcamp (wklej pełny link lub iframe).`);
       }
     }
 

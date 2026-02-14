@@ -751,6 +751,22 @@ function renderBlockEditor() {
       ;
   }
 
+  if (def.editor === "embed_bandcamp") {
+    cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const sz = clampNum(cfg.data.embedSize ?? 60, 45, 85);
+    specific =
+      fieldRow("Rozmiar okna", `
+        <div class="rangeRow">
+          <input id="ed_bandcamp_size" type="range" min="45" max="85" step="5" value="${sz}" data-path="embedSize" />
+          <div class="pill"><output id="ed_bandcamp_size_out">${sz}%</output></div>
+        </div>
+      `)
+      + listEditor(cfg.data.items, "items", "Wpis", [
+          { key: "url", label: "Źródło", type: "textarea", placeholder: "Wklej iframe lub URL Bandcamp" }
+        ])
+      ;
+  }
+
   if (def.editor === "events") {
     cfg.data.items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     specific = listEditor(cfg.data.items, "items", "Wydarzenie", [
@@ -1395,6 +1411,11 @@ function bindEditorHandlers(host, blockId) {
   if (def.editor === "embed_youtube") {
     const r = host.querySelector("#ed_youtube_size");
     const o = host.querySelector("#ed_youtube_size_out");
+    if (r && o) r.addEventListener("input", () => { o.textContent = `${r.value}%`; });
+  }
+  if (def.editor === "embed_bandcamp") {
+    const r = host.querySelector("#ed_bandcamp_size");
+    const o = host.querySelector("#ed_bandcamp_size_out");
     if (r && o) r.addEventListener("input", () => { o.textContent = `${r.value}%`; });
   }
 

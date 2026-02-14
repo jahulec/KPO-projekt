@@ -404,6 +404,37 @@ function normalizeYouTube(input) {
   return parseYouTube(input).embedUrl || "";
 }
 
+function parseBandcamp(input) {
+  const s0raw = String(input || "").trim();
+  const s0 = decodeHtmlEntitiesLoose(s0raw).trim();
+  if (!s0) return { embedUrl: "", openUrl: "", kind: "" };
+
+  if (s0.includes("<iframe")) {
+    const src = decodeHtmlEntitiesLoose(extractIframeSrc(s0));
+    return src ? parseBandcamp(src) : { embedUrl: "", openUrl: "", kind: "" };
+  }
+
+  const u = tryParseUrl(s0);
+  if (!u) return { embedUrl: "", openUrl: "", kind: "" };
+  const host = (u.hostname || "").toLowerCase();
+  const path = u.pathname || "";
+
+  if (host.endsWith("bandcamp.com")) {
+    // Embedded player URL (most reliable)
+    if (/EmbeddedPlayer/i.test(path)) {
+      return { embedUrl: u.toString(), openUrl: u.toString(), kind: "embed" };
+    }
+    // Regular Bandcamp pages are not safely embeddable without a proper embed URL.
+    return { embedUrl: "", openUrl: u.toString(), kind: "link" };
+  }
+
+  return { embedUrl: "", openUrl: u.toString(), kind: "link" };
+}
+
+function normalizeBandcamp(input) {
+  return parseBandcamp(input).embedUrl || "";
+}
+
 /* ==========================
    Files / dataURL helpers
 ========================== */
@@ -958,4 +989,3 @@ function cssUrl(dataUrl) {
   // minimal safe for quotes
   return String(dataUrl || "").replaceAll("'", "%27");
 }
-

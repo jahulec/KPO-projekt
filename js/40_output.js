@@ -685,6 +685,8 @@ body.herow-full #hero.hero{
 	.embedWrap--youtube .embed{ height: 100%; aspect-ratio: auto; }
 	.embedWrap--spotify{ aspect-ratio: 560 / 352; }
 	.embedWrap--spotify .embed.tall{ height: 100%; aspect-ratio: auto; }
+	.embedWrap--bandcamp{ aspect-ratio: 1 / 1; }
+	.embedWrap--bandcamp .embed.tall{ height: 100%; aspect-ratio: auto; }
 .embedGrid{ --embed-max: 100%; justify-items:center; }
 /* Mobile: make stacked embeds a fixed 75% width regardless of slider */
 @media (max-width: 900px){
@@ -701,6 +703,7 @@ body.herow-full #hero.hero{
 .mediaSplitRow .embed.tall{ height: 352px; }
 	.mediaSplitRow .embedWrap--youtube{ aspect-ratio: auto; }
 	.mediaSplitRow .embedWrap--spotify{ aspect-ratio: auto; }
+	.mediaSplitRow .embedWrap--bandcamp{ aspect-ratio: auto; }
 @media (max-width: 900px){ .mediaSplitRow .embed{ height:auto; aspect-ratio: 16/9; } .mediaSplitRow .embed.tall{ height: 352px; } }
 @media (max-width: 900px){ .mediaSplitRow{ grid-template-columns: 1fr; } }
 .embedCard{ border: var(--border-w) solid var(--line-soft); padding:12px; border-radius: var(--radius); background: color-mix(in oklab, var(--bg), transparent 0%); }
@@ -2301,6 +2304,39 @@ function renderBlockSection(id, mode) {
 </section>`;
   }
 
+  if (editor === "embed_bandcamp") {
+    const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
+    const sz = clampNum(cfg.data.embedSize ?? 60, 45, 85);
+    const embedCls = (String(state.mediaLayout || "stack") === "split")
+      ? "embedSection embedSection--split"
+      : "embedSection embedSection--stack";
+    const parts = items.map(it => {
+      const p = parseBandcamp(it.url || "");
+      if (p.embedUrl) {
+        return `
+	<div class="embedWrap embedWrap--bandcamp">
+  <iframe class="embed tall" src="${escapeHtml(p.embedUrl)}" title="Bandcamp player" frameborder="0" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+</div>`;
+      }
+      if (p.openUrl) {
+        return `
+	<div class="embedWrap embedWrap--bandcamp">
+  <div class="embedCard">
+    <div style="font-weight:900;">Bandcamp</div>
+    <div class="muted" style="margin-top:6px;">Tego źródła nie da się osadzić jako player.</div>
+  </div>
+</div>`;
+      }
+      return "";
+    }).filter(Boolean).join("");
+
+    return `
+<section id="${id}" class="section ${embedCls}">
+  ${headingHtml}
+  <div class="grid embedGrid" style="--embed-max:${sz}%;">${parts || `<div class="muted">Wklej linki Bandcamp w generatorze.</div>`}</div>
+</section>`;
+  }
+
   if (editor === "events") {
     const items = Array.isArray(cfg.data.items) ? cfg.data.items : [];
     const rows = items.map(it => {
@@ -2927,7 +2963,7 @@ let __renderCtx = { target: "single", inlineAssets: true };
 
 function isEmbedBlockId(blockId) {
   const ed = String(getBlockDef(blockId)?.editor || "");
-  return ed === "embed_youtube" || ed === "embed_spotify";
+  return ed === "embed_youtube" || ed === "embed_spotify" || ed === "embed_bandcamp";
 }
 
 function buildSectionsHtml(ids, target) {

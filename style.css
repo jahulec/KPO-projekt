@@ -1121,7 +1121,34 @@ input:focus, textarea:focus, select:focus{
   grid-column: 1 / -1;
 }
 
+.desktopOnlyNotice{
+  display:none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,.75);
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  text-align: center;
+}
+.desktopOnlyNotice__card{
+  max-width: 520px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 18px 16px;
+  box-shadow: var(--shadow);
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+}
+.desktopOnlyNotice__card strong{ font-size: var(--uiTitleFs); }
+.desktopOnlyNotice__card span{ font-size: var(--uiTextFs); opacity: .9; }
+
 @media (max-width: 980px){
+  .desktopOnlyNotice{ display:flex; }
   .mobileBar{ display:flex; }
   .app{ grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
   .app.isPanelCollapsed{ grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }

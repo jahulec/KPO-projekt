@@ -946,6 +946,7 @@ const BLOCKS = {
 
   spotify:      { label: "Spotify", editor: "embed_spotify" },
   youtube:      { label: "YouTube", editor: "embed_youtube" },
+  bandcamp:     { label: "Bandcamp (opcjonalnie)", editor: "embed_bandcamp" },
 
   events:       { label: "Wydarzenia", editor: "events" },
   exhibitions:  { label: "Wydarzenia (wariant)", editor: "events" },
