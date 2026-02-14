@@ -629,8 +629,8 @@ body.herow-full #hero.hero{
 .hero .kicker{ display:inline-flex; align-items:center; gap:10px; font-weight:900; opacity:.95; }
 .kdot{ width:10px; height:10px; background: var(--accent); }
 .hero h1{ margin: 10px 0 10px 0; font-size: 52px; letter-spacing:-.6px; overflow-wrap:anywhere; word-break:break-word; }
-.hero p{ margin: 0 0 22px 0; font-size: 16px; opacity:.88; overflow-wrap:anywhere; }
-.heroActions{ display:flex; gap:10px; flex-wrap:wrap; }
+.hero p{ margin: 0 0 28px 0; font-size: 16px; opacity:.88; overflow-wrap:anywhere; }
+.heroActions{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 2px; }
 /* HERO slider (2+ images) */
 .heroSliderBar{
   position:absolute;
@@ -1098,6 +1098,46 @@ body.theme-modern .navToggle{
       opacity var(--motion-dur) var(--motion-ease),
       transform var(--motion-dur) var(--motion-ease),
       visibility 0s;
+  }
+}
+
+/* Tablet: gdy wymuszony hamburger, użyj układu dropdown (jak na mobile) */
+@media (max-width: 980px){
+  .siteHeader.forceHamburger .nav{
+    display:block;
+    position:absolute;
+    left:0; right:0;
+    top: 100%;
+    width: auto;
+    max-width: none;
+    transform: translateY(-6px);
+    background: var(--nav-bg-open);
+    border: var(--border-w) solid var(--line-soft);
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+    padding: 10px 14px 14px;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+    visibility: visible;
+    transition:
+      max-height var(--motion-dur) var(--motion-ease),
+      opacity var(--motion-dur) var(--motion-ease),
+      transform var(--motion-dur) var(--motion-ease);
+  }
+  .siteHeader.forceHamburger .nav a{
+    display:block;
+    white-space: normal;
+    padding: 10px 10px;
+    border-radius: 12px;
+  }
+  .siteHeader.forceHamburger.menuOpen .nav{
+    max-height: 70vh;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
   }
 }
 

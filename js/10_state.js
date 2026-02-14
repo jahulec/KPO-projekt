@@ -667,7 +667,7 @@ function hasSnapshot() {
 function updateSnapshotPill() {
   const list = _getSnapshotList();
   const btnLoad = $("btnLoadSnapshot");
-  if (btnLoad) btnLoad.disabled = !list.length;
+  if (btnLoad) btnLoad.disabled = false;
   if (!list.length) {
     setSnapshotStatus("Snapshoty: 0");
     return;
