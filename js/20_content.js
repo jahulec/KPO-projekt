@@ -246,6 +246,9 @@ function parseYouTube(input) {
       const h = (uEmbed.hostname || "").toLowerCase();
       const p = uEmbed.pathname || "";
       if ((h.endsWith("youtube.com") || h.endsWith("youtube-nocookie.com")) && p.startsWith("/embed/")) {
+        if (h.endsWith("youtube.com") && !h.endsWith("youtube-nocookie.com")) {
+          uEmbed.hostname = "www.youtube-nocookie.com";
+        }
         // derive openUrl when possible
         const id = (p.split("/")[2] || "").trim();
         const safeId = (x) => String(x || "").match(/^[a-zA-Z0-9_-]{6,}$/) ? String(x) : "";
@@ -273,6 +276,9 @@ function parseYouTube(input) {
 
   // If user pasted a direct embed URL, keep it as-is (more reliable than rebuilding).
   if ((host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com")) && path.startsWith("/embed/")) {
+    if (host.endsWith("youtube.com") && !host.endsWith("youtube-nocookie.com")) {
+      u.hostname = "www.youtube-nocookie.com";
+    }
     const id = (path.split("/")[2] || "").trim();
     const safeId = (x) => String(x || "").match(/^[a-zA-Z0-9_-]{6,}$/) ? String(x) : "";
     const vid = safeId(id);
@@ -321,14 +327,14 @@ function parseYouTube(input) {
 
   if (kind === "playlist" && safeList) {
     const openUrl = `https://www.youtube.com/playlist?list=${safeList}`;
-    let embedUrl = `https://www.youtube.com/embed/videoseries?list=${safeList}`;
+    let embedUrl = `https://www.youtube-nocookie.com/embed/videoseries?list=${safeList}`;
     if (start > 0) embedUrl += `&start=${start}`;
     return { embedUrl, openUrl, kind: "playlist" };
   }
 
   if (videoId) {
     const openUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    let embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    let embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
     const qs = [];
     if (safeList) qs.push(`list=${safeList}`);
     if (start > 0) qs.push(`start=${start}`);
