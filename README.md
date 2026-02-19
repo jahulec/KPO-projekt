@@ -31,10 +31,20 @@ Projekt pozwala na stworzenie statycznej strony internetowej w oparciu o wybrany
 - Możliwość hostowania strony na GitHub Pages lub innym serwerze.
 
 ## YouTube (osadzanie)
-Osadzenia YouTube dzia?aj? tylko wtedy, gdy w ustawieniach filmu jest w??czone **Zezwalaj na osadzanie**. W przeciwnym razie pojawi si? b??d odtwarzacza (np. 153).
+Osadzenia YouTube działają tylko wtedy, gdy w ustawieniach filmu jest włączone **Zezwalaj na osadzanie**. W przeciwnym razie pojawi się błąd odtwarzacza (np. 153).
 
 ## Offline (bez CDN)
 Ta wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
 
+## Instrukcja PDF (aktualizacja)
+Aby wygenerować aktualną instrukcję i zapisać identyczny plik w:
+- `docs/instrukcja.pdf`
+- `instrukcja.pdf`
+
+uruchom:
+
+```powershell
+python scripts\generate_instrukcja_pdf.py
+```
 
 

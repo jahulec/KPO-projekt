@@ -1283,7 +1283,7 @@ function bindEditorHandlers(host, blockId) {
         const imgs = enforceMediaBudget(imgsRaw, 'press');
         if (!imgs.length) { renderBlockEditor(); return; }
         await persistImageItems(imgs, "press");
-        assets.pressPhotos.push(...imgs);
+        assets.epkPressPhotos.push(...imgs);
         renderBlockEditor();
         saveDraft();
         requestPreviewRebuild('structure');

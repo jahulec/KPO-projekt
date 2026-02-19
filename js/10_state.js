@@ -1501,6 +1501,11 @@ function classifyIssueLevel(text){
   if (t.startsWith("Ustawienia: brak nazwy strony")) return "error";
   if (t.startsWith("Zasoby: przekroczony limit projektu")) return "error";
   if (t.startsWith("HERO:") && (t.includes("brak linku") || t.includes("błędny"))) return "error";
+  if (t.startsWith("Analityka: GTM włączone, ale banner cookies wyłączony.")) return "error";
+  if (t.startsWith("Analityka: brak linku do polityki.")) return "error";
+  if (t.startsWith("Analityka: link do polityki ma zły format.")) return "error";
+  if (t.startsWith("Polityka: dodaj blok Kontakt i podaj email.")) return "error";
+  if (t.startsWith("Polityka: uzupełnij email w bloku Kontakt.")) return "error";
   return "warn";
 }
 
