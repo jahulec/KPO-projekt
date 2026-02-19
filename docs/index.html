@@ -1,87 +1,114 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Generator stron dla artystów — dokumentacja</title>
+  <title>Generator stron dla artystow - start</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="wrap">
-    <div class="brand">
-      <h1>Generator stron dla artystów</h1>
-      <p class="lead">Darmowe narzędzie do tworzenia statycznych stron internetowych (HTML/CSS/JS) dla twórców.</p>
-      <div class="actions">
-        <a class="btn primary" href="../index.html">Uruchom generator</a>
-        <a class="btn" href="instrukcja.pdf">Instrukcja PDF</a>
-        <a class="btn" href="#" id="releasesLink">Releases (ZIP)</a>
-        <a class="btn" href="#" id="tutorialsLink">Wideotutoriale</a>
-      </div>
-      
+  <header class="hero wrap">
+    <p class="eyebrow">Start dla klienta / artysty</p>
+    <h1>Stworz i opublikuj swoja strone WWW bez kodowania</h1>
+    <p class="lead">
+      To narzedzie pomaga szybko zrobic estetyczna strone artysty: BIO, multimedia,
+      wydarzenia, social media i kontakt.
+    </p>
+
+    <div class="actions">
+      <a class="btn primary" href="../index.html">Uruchom generator</a>
+      <a class="btn" href="instrukcja.pdf">Instrukcja PDF</a>
+      <a class="btn" href="#" id="releasesLink">Pobierz paczke (Releases)</a>
+      <a class="btn" href="#" id="tutorialsLink">Wideotutoriale</a>
     </div>
+
+    <p class="hint">Najlepiej korzystac na komputerze (Chrome, Edge, Firefox).</p>
   </header>
 
   <main class="wrap grid">
     <section class="card">
-      <h2>Jak zacząć</h2>
+      <h2>Co zrobisz tutaj</h2>
+      <ul>
+        <li>Stworzysz strone pod swoj styl i profil tworczy.</li>
+        <li>Dodasz BIO, galerie, YouTube/Spotify, wydarzenia i linki social.</li>
+        <li>Wyeksportujesz gotowe pliki do publikacji.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Co przygotowac przed startem</h2>
+      <ul>
+        <li>Nazwa artystyczna i krotkie BIO.</li>
+        <li>Zdjecia (JPG/PNG/WebP) i podstawowe linki.</li>
+        <li>Dane kontaktowe i informacje o wydarzeniach.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Jak zaczac (3 kroki)</h2>
       <ol>
-        <li>Otwórz <strong>index.html</strong> w przeglądarce.</li>
-        <li>Wybierz profil i sekcje, uzupełnij treści.</li>
-        <li>Wybierz styl (Flagowe lub Basic).</li>
-        <li>Wyeksportuj stronę do ZIP.</li>
+        <li>Uruchom generator i wybierz profil strony.</li>
+        <li>Uzupelnij tresci, ustaw styl i sprawdz podglad.</li>
+        <li>Kliknij <strong>Pobierz</strong> i opublikuj strone.</li>
       </ol>
     </section>
 
     <section class="card">
-      <h2>Publikacja strony</h2>
+      <h2>YouTube - wazna informacja</h2>
       <p>
-        Najprościej: GitHub Pages. Wgraj wyeksportowane pliki do repozytorium i włącz Pages
-        (Deploy from branch: <strong>main</strong>, folder <strong>/</strong>).
+        W podgladzie lokalnym embed YouTube moze czasem pokazac blad (np. 153).
+        To nie musi oznaczac zlego linku.
       </p>
       <p class="small">
-        Generator to osobny projekt. Wyeksportowana strona to gotowa paczka do hostingu (GitHub Pages / Netlify / dowolny serwer).
+        Finalnie sprawdz dzialanie embedow po publikacji na hostingu HTTPS
+        (np. GitHub Pages).
       </p>
     </section>
 
     <section class="card wide">
+      <h2>Publikacja strony (GitHub Pages)</h2>
+      <ol>
+        <li>Wrzuc wyeksportowane pliki do repozytorium na GitHub.</li>
+        <li>Wlacz <strong>Settings -> Pages</strong> i wybierz branch <strong>main</strong>, folder <strong>/(root)</strong>.</li>
+        <li>Po otrzymaniu URL sprawdz linki, embedy i widok mobile.</li>
+      </ol>
+    </section>
+
+    <section class="card wide kpoCard">
       <h2>Finansowanie (KPO / NextGenerationEU)</h2>
-      <img class="kpo" src="../assets/kpo/kpo_rp_ngeu_poziom_rgb.png" alt="Zestawienie znaków: KPO + barwy RP + NextGenerationEU">
+      <img class="kpo" src="../assets/kpo/kpo_rp_ngeu_poziom_rgb_whitebg.png" alt="Zestawienie znakow: KPO + barwy RP + NextGenerationEU" />
+      <p><strong>Sfinansowane przez Unie Europejska NextGenerationEU.</strong></p>
       <p>
-        Przedsięwzięcie jest realizowane dzięki wsparciu z Krajowego Planu Odbudowy i Zwiększania Odporności
-        oraz finansowane przez Unię Europejską w ramach NextGenerationEU.
+        Przedsiewziecie jest realizowane dzieki wsparciu z Krajowego Planu Odbudowy
+        i Zwiekszania Odpornosci oraz finansowane przez Unie Europejska w ramach NextGenerationEU.
       </p>
-      <p class="small">
-        Szczegóły w pliku <a href="../kpo.html">kpo.html</a>.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Licencja</h2>
-      <p>
-        Kod projektu jest udostępniony jako open source. Szczegóły: plik <code>LICENSE</code> w repozytorium.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Zgłaszanie problemów</h2>
-      <p>
-        Jeśli generator działa nieprawidłowo, zgłoś problem w zakładce <strong>Issues</strong> w repozytorium.
-      </p>
+      <p class="small">Szczegoly: <a href="../kpo.html">kpo.html</a></p>
     </section>
   </main>
 
   <footer class="wrap footer">
-    <span>Dokumentacja — Generator stron dla artystów</span>
+    <span>Generator stron dla artystow - strona startowa</span>
   </footer>
 
-  <!-- CONFIG: podmień linki na właściwe -->
   <script>
     const CONFIG = {
       releasesUrl: "https://github.com/jahulec/KPO-projekt/releases/tag/KPO",
       tutorialsUrl: "https://www.youtube.com/playlist?list=<PLAYLIST_ID>"
     };
-    document.getElementById("releasesLink").href = CONFIG.releasesUrl;
-    document.getElementById("tutorialsLink").href = CONFIG.tutorialsUrl;
+
+    const releasesLink = document.getElementById("releasesLink");
+    const tutorialsLink = document.getElementById("tutorialsLink");
+
+    releasesLink.href = CONFIG.releasesUrl;
+
+    if (CONFIG.tutorialsUrl.includes("<PLAYLIST_ID>")) {
+      tutorialsLink.href = "#";
+      tutorialsLink.classList.add("disabled");
+      tutorialsLink.textContent = "Wideotutoriale (w przygotowaniu)";
+      tutorialsLink.setAttribute("aria-disabled", "true");
+    } else {
+      tutorialsLink.href = CONFIG.tutorialsUrl;
+    }
   </script>
 </body>
 </html>
