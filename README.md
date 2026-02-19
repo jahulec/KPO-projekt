@@ -1,43 +1,78 @@
-# Generator stron dla artystów
+﻿# Generator stron dla artystow
 
 ## Finansowanie (KPO / NextGenerationEU)
 
-![Zestawienie znaków: KPO + barwy RP + NextGenerationEU](assets/kpo/kpo_rp_ngeu_poziom_rgb.png)
+<p>
+  <img src="assets/kpo/kpo_rp_ngeu_poziom_rgb_whitebg.png" alt="Zestawienie znakow: KPO + barwy RP + NextGenerationEU" width="980">
+</p>
 
-Przedsięwzięcie jest realizowane dzięki wsparciu z Krajowego Planu Odbudowy i Zwiększania Odporności oraz finansowane przez Unię Europejską w ramach NextGenerationEU.
+**Sfinansowane przez Unie Europejska NextGenerationEU.**
 
-- **Tytuł:** Szablon strony internetowej i pomoc medialna dla artystów z ograniczonymi zasobami – bezpłatne wsparcie w budowaniu obecności w sieci, dostępne dla każdego
-- **Cel:** zwiększenie obecności online wykluczonych cyfrowo artystów
-- **Grupa docelowa:** artyści (muzycy, graficy i inni twórcy)
-- **Wartość przedsięwzięcia:** 36 000 zł brutto
-- **Dofinansowanie z UE (KPO/NGEU):** 36 000 zł brutto
+Przedsiewziecie jest realizowane dzieki wsparciu z Krajowego Planu Odbudowy i Zwiekszania Odpornosci oraz finansowane przez Unie Europejska w ramach NextGenerationEU.
+
+- **Tytul:** Szablon strony internetowej i pomoc medialna dla artystow z ograniczonymi zasobami - bezplatne wsparcie w budowaniu obecnosci w sieci, dostepne dla kazdego
+- **Cel:** zwiekszenie obecnosci online wykluczonych cyfrowo artystow
+- **Grupa docelowa:** artysci (muzycy, graficy i inni tworcy)
+- **Wartosc przedsiewziecia:** 36 000 zl brutto
+- **Dofinansowanie z UE (KPO/NGEU):** 36 000 zl brutto
 - **Termin realizacji:** do 28.02.2026
 
-Szczegóły: `kpo.html`
+Szczegoly: `kpo.html`
 
+## Dla kogo jest to narzedzie
+Generator jest dla artystow i tworcow, ktorzy chca szybko zrobic estetyczna strone WWW bez pisania kodu.
 
-## Opis
-Projekt pozwala na stworzenie statycznej strony internetowej w oparciu o wybrany profil, zestaw sekcji oraz styl. Generator buduje podgląd HTML i umożliwia eksport gotowych plików.
+Najczestsze zastosowania:
+- strona muzyka / zespolu,
+- portfolio grafika,
+- strona performera,
+- prosty landing z bio, mediami i kontaktem.
 
-## Jak używać
-1. Wybierz profil strony z listy.
-2. Zaznacz sekcje, które mają zostać wygenerowane.
-3. Wybierz styl.
-4. Uruchom podgląd.
-5. Wyeksportuj wygenerowane pliki.
+## Jak pobrac i uruchomic (3 min)
+1. Wejdz na release: `https://github.com/jahulec/KPO-projekt/releases/tag/KPO`.
+2. W sekcji **Assets** pobierz paczke projektu (lub `Source code (zip)`).
+3. Rozpakuj ZIP na komputerze.
+4. Otworz plik `index.html` w przegladarce (Chrome, Edge albo Firefox).
 
-## Wymagania
-- JavaScript włączony w przeglądarce.
-- Możliwość hostowania strony na GitHub Pages lub innym serwerze.
+## Szybki start (10-15 min)
+1. Wybierz profil strony i tryb eksportu (`Single` lub `ZIP`).
+2. Ustaw styl i podstawowe kolory/typografie.
+3. Uzupelnij BIO, kontakt, social media i multimedia.
+4. Dodaj SEO (tytul i opis strony).
+5. Kliknij `Problemy` i popraw bledy blokujace eksport.
+6. Kliknij `Pobierz` i wygeneruj gotowe pliki.
 
-## YouTube (osadzanie)
-Osadzenia YouTube działają tylko wtedy, gdy w ustawieniach filmu jest włączone **Zezwalaj na osadzanie**. W przeciwnym razie pojawi się błąd odtwarzacza (np. 153).
+## YouTube (wazne)
+W podgladzie lokalnym (plik otwierany z dysku) embed YouTube moze pokazac blad odtwarzacza, np. `153`.
 
-## Offline (bez CDN)
-Ta wersja nie wymaga internetu do generowania ZIP. Biblioteka JSZip jest dołączona lokalnie w `vendor/jszip.min.js`.
+To nie musi oznaczac, ze link jest zly. Jesli:
+- film ma wlaczone **Zezwalaj na osadzanie**,
+- link/iframe jest poprawny,
 
-## Instrukcja PDF (aktualizacja)
-Aby wygenerować aktualną instrukcję i zapisać identyczny plik w:
+to osadzenie zwykle dziala poprawnie po publikacji strony na hostingu HTTPS (np. GitHub Pages).
+
+Dobra praktyka: obok embedu podaj tez zwykly link do filmu.
+
+## Eksport i publikacja
+- `Single`: jedna strona (wizytowka).
+- `ZIP`: pelna paczka (strona + podstrony + assets) - najczesciej najlepszy wybor.
+
+Publikacja na GitHub Pages:
+1. Wrzuc wyeksportowane pliki do repozytorium.
+2. W `Settings -> Pages` ustaw: `Deploy from a branch`, branch `main`, folder `/(root)`.
+3. Po otrzymaniu URL sprawdz linki, embedy i widok mobile.
+
+## Dokumentacja
+- Instrukcja dla uzytkownikow: `docs/instrukcja.pdf` (tozsama kopia: `instrukcja.pdf`)
+- Informacje KPO/NGEU: `kpo.html`
+- Strona dokumentacyjna: `docs/index.html`
+
+## Wersja offline (bez CDN)
+Generator nie wymaga internetu do wygenerowania ZIP.
+Biblioteka JSZip jest dolaczona lokalnie: `vendor/jszip.min.js`.
+
+## Aktualizacja instrukcji PDF (dla maintainera)
+Aby wygenerowac aktualna instrukcje i zapisac identyczny plik w:
 - `docs/instrukcja.pdf`
 - `instrukcja.pdf`
 
@@ -46,5 +81,3 @@ uruchom:
 ```powershell
 python scripts\generate_instrukcja_pdf.py
 ```
-
-
