@@ -1,5 +1,5 @@
 ﻿:root{
-  --bg:#f4f6fb;
+  --bg:#ffffff;
   --bg2:#ffffff;
   --text:#121a27;
   --muted:#4f6077;
@@ -15,7 +15,7 @@ body{
   margin:0;
   font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   color:var(--text);
-  background:radial-gradient(1200px 480px at 20% -10%, #dce8ff 0, transparent 60%), var(--bg);
+  background:var(--bg);
 }
 
 .wrap{max-width:1040px;margin:0 auto;padding:22px}
@@ -24,7 +24,7 @@ body{
   margin-top:10px;
   border:1px solid var(--line);
   border-radius:18px;
-  background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+  background:#ffffff;
 }
 
 .eyebrow{
@@ -90,14 +90,20 @@ h1{margin:0 0 10px;font-size:clamp(28px,4vw,42px);line-height:1.15}
 .small{font-size:14px;color:var(--muted)}
 
 .kpoCard{background:#fff}
+.kpoWrap{
+  background:#ffffff;
+  border:1px solid #e4e9f2;
+  border-radius:12px;
+  padding:10px;
+}
 .kpo{
   width:100%;
   max-width:840px;
   height:auto;
   display:block;
-  margin:10px 0 10px;
-  border-radius:10px;
-  border:1px solid #e8ecf3;
+  margin:0;
+  border-radius:8px;
+  border:0;
 }
 
 .footer{
@@ -110,3 +116,4 @@ h1{margin:0 0 10px;font-size:clamp(28px,4vw,42px);line-height:1.15}
 
 a{color:#0b56d8}
 a:hover{color:#083a90}
+
