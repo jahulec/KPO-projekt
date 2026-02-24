@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Generator stron dla artystow - start</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -79,10 +80,10 @@
       <div class="kpoWrap">
         <img class="kpo" src="../assets/kpo/kpo_rp_ngeu_poziom_rgb_whitebg.png" alt="Zestawienie znakow: KPO + barwy RP + NextGenerationEU" />
       </div>
-      <p><strong>Sfinansowane przez Unie Europejska NextGenerationEU.</strong></p>
+      <p><strong>Sfinansowane przez Unię Europejską NextGenerationEU.</strong></p>
       <p>
-        Przedsiewziecie jest realizowane dzieki wsparciu z Krajowego Planu Odbudowy
-        i Zwiekszania Odpornosci oraz finansowane przez Unie Europejska w ramach NextGenerationEU.
+        Przedsięwzięcie jest realizowane dzięki wsparciu z Krajowego Planu Odbudowy
+        i Zwiększania Odporności oraz finansowane przez Unię Europejską w ramach NextGenerationEU.
       </p>
       <p class="small">Szczegoly: <a href="../kpo.html">kpo.html</a></p>
     </section>
@@ -95,22 +96,14 @@
   <script>
     const CONFIG = {
       releasesUrl: "https://github.com/jahulec/KPO-projekt/releases/tag/KPO",
-      tutorialsUrl: "https://www.youtube.com/playlist?list=<PLAYLIST_ID>"
+      tutorialsUrl: "https://www.youtube.com/watch?v=x0YcjpBOoog&list=PLNccvOmEj0KvjPlXRlkSPGIZKNueHh9bo&index=4"
     };
 
     const releasesLink = document.getElementById("releasesLink");
     const tutorialsLink = document.getElementById("tutorialsLink");
 
     releasesLink.href = CONFIG.releasesUrl;
-
-    if (CONFIG.tutorialsUrl.includes("<PLAYLIST_ID>")) {
-      tutorialsLink.href = "#";
-      tutorialsLink.classList.add("disabled");
-      tutorialsLink.textContent = "Wideotutoriale (w przygotowaniu)";
-      tutorialsLink.setAttribute("aria-disabled", "true");
-    } else {
-      tutorialsLink.href = CONFIG.tutorialsUrl;
-    }
+    tutorialsLink.href = CONFIG.tutorialsUrl;
   </script>
 </body>
 </html>

@@ -6,9 +6,9 @@
   <img src="assets/kpo/kpo_rp_ngeu_poziom_rgb_whitebg.png" alt="Zestawienie znakow: KPO + barwy RP + NextGenerationEU" width="980">
 </p>
 
-**Sfinansowane przez Unie Europejska NextGenerationEU.**
+**Sfinansowane przez Unię Europejską NextGenerationEU.**
 
-Przedsiewziecie jest realizowane dzieki wsparciu z Krajowego Planu Odbudowy i Zwiekszania Odpornosci oraz finansowane przez Unie Europejska w ramach NextGenerationEU.
+Przedsięwzięcie jest realizowane dzięki wsparciu z Krajowego Planu Odbudowy i Zwiększania Odporności oraz finansowane przez Unię Europejską w ramach NextGenerationEU.
 
 - **Tytul:** Szablon strony internetowej i pomoc medialna dla artystow z ograniczonymi zasobami - bezplatne wsparcie w budowaniu obecnosci w sieci, dostepne dla kazdego
 - **Cel:** zwiekszenie obecnosci online wykluczonych cyfrowo artystow
@@ -53,6 +53,9 @@ to osadzenie zwykle dziala poprawnie po publikacji strony na hostingu HTTPS (np.
 
 Dobra praktyka: obok embedu podaj tez zwykly link do filmu.
 
+Aktualna playlista tutoriali:
+`https://www.youtube.com/watch?v=x0YcjpBOoog&list=PLNccvOmEj0KvjPlXRlkSPGIZKNueHh9bo&index=4`
+
 ## Eksport i publikacja
 - `Single`: jedna strona (wizytowka).
 - `ZIP`: pelna paczka (strona + podstrony + assets) - najczesciej najlepszy wybor.
@@ -64,6 +67,7 @@ Publikacja na GitHub Pages:
 
 ## Dokumentacja
 - Instrukcja dla uzytkownikow: `docs/instrukcja.pdf` (tozsama kopia: `instrukcja.pdf`)
+- Wideotutoriale: `https://www.youtube.com/watch?v=x0YcjpBOoog&list=PLNccvOmEj0KvjPlXRlkSPGIZKNueHh9bo&index=4`
 - Informacje KPO/NGEU: `kpo.html`
 - Strona dokumentacyjna: `docs/index.html`
 

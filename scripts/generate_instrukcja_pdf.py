@@ -25,9 +25,10 @@ from reportlab.platypus import (
 
 
 PROJECT_NAME = "Generator stron dla artystow"
-VERSION = "v1.5"
+VERSION = "v1.6"
 TODAY = date.today().strftime("%d.%m.%Y")
 RELEASE_URL = "https://github.com/jahulec/KPO-projekt/releases/tag/KPO"
+TUTORIALS_URL = "https://www.youtube.com/watch?v=x0YcjpBOoog&list=PLNccvOmEj0KvjPlXRlkSPGIZKNueHh9bo&index=4"
 KPO_LOGO = Path("assets/kpo/kpo_rp_ngeu_poziom_rgb_whitebg.png")
 KPO_FORMULA_SHORT = "Sfinansowane przez Unię Europejską NextGenerationEU."
 KPO_FORMULA_LONG = (
@@ -158,6 +159,7 @@ def build_story(styles: dict[str, ParagraphStyle]) -> list:
             styles["note"],
         )
     )
+    st.append(p(f"Wideotutoriale: {TUTORIALS_URL}", styles["body"]))
 
     st.append(p("3. Szybki start (okolo 10-15 minut)", styles["h2"]))
     st.append(
@@ -360,7 +362,8 @@ def build_story(styles: dict[str, ParagraphStyle]) -> list:
     st.append(
         p(
             "Dodatkowe informacje o finansowaniu: kpo.html. "
-            "Wersja online generatora i dokumentacji: docs/index.html.",
+            "Wersja online generatora i dokumentacji: docs/index.html. "
+            f"Wideotutoriale: {TUTORIALS_URL}",
             styles["body"],
         )
     )
