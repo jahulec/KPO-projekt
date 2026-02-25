@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Generator stron dla artystĂłw</title>
+  <title>Generator stron dla artystów</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <script>
     (function(){
@@ -15,7 +15,7 @@
         var sc = (p.uiScale || "");
         // Migracja: stary tryb "compact" -> 0.9
         if (!sc && p.uiSize === "compact") sc = 0.9;
-        // DomyĹ›lnie: 80% (bez wpĹ‚ywu na podglÄ…d strony).
+        // Domyślnie: 80% (bez wpływu na podgląd strony).
         if (!sc) sc = 0.8;
         if (t) document.documentElement.dataset.uiTheme = t;
         if (sc) document.documentElement.dataset.uiScale = String(sc);
@@ -28,8 +28,8 @@
   <div class="app" id="appRoot">
     <div class="desktopOnlyNotice" role="status" aria-live="polite">
       <div class="desktopOnlyNotice__card">
-        <strong>Generator dziaĹ‚a na komputerze</strong>
-        <span>Na telefonie edycja jest wyĹ‚Ä…czona. OtwĂłrz projekt na desktopie lub laptopie.</span>
+        <strong>Generator działa na komputerze</strong>
+        <span>Na telefonie edycja jest wyłączona. Otwórz projekt na desktopie lub laptopie.</span>
       </div>
     </div>
     <div class="mobileBar" id="mobileBar" aria-label="Widok mobilny">
@@ -42,16 +42,16 @@
       <div class="panel__head">
         <div class="brandRow">
           <div>
-            <h1>Generator stron dla artystĂłw</h1>
-            <p>Dane projektu zapisywane lokalnie w przeglÄ…darce.</p>
+            <h1>Generator stron dla artystów</h1>
+            <p>Dane projektu zapisywane lokalnie w przeglądarce.</p>
           </div>
 
           <button
             id="btnTogglePanel"
             class="iconBtn panelToggle"
             type="button"
-            aria-label="ZwiĹ„ / rozwiĹ„ panel"
-            title="ZwiĹ„ / rozwiĹ„"
+            aria-label="Zwiń / rozwiń panel"
+            title="Zwiń / rozwiń"
           >
             <!-- Ikona jest nadpisywana przez JS (ON/OFF), ale startowo dajemy ten sam rozmiar. -->
             <svg class="qi qi--toggle" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -61,18 +61,18 @@
         </div>
       </div>
 
-      <!-- Szybkie akcje w trybie zwiniÄ™tym (odpala istniejÄ…ce przyciski z sekcji "Akcje") -->
+      <!-- Szybkie akcje w trybie zwiniętym (odpala istniejące przyciski z sekcji "Akcje") -->
       <div id="quickDock" class="quickDock" aria-label="Szybkie akcje">
         <div class="quickDock__stack" aria-label="Akcje">
           <button type="button" class="iconBtn quickDock__btn" data-fire="btnSaveSnapshot" title="Snapshot: zapisz" aria-label="Snapshot: zapisz">
             <svg class="qi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 21v-8H7v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 3v5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
 
-          <button type="button" class="iconBtn quickDock__btn" data-fire="btnLoadSnapshot" title="Snapshoty: otwĂłrz" aria-label="Snapshoty: otwĂłrz">
+          <button type="button" class="iconBtn quickDock__btn" data-fire="btnLoadSnapshot" title="Snapshoty: otwórz" aria-label="Snapshoty: otwórz">
             <svg class="qi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 10h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
 
-          <button type="button" class="iconBtn quickDock__btn" data-fire="btnManualRefresh" title="OdĹ›wieĹĽ" aria-label="OdĹ›wieĹĽ">
+          <button type="button" class="iconBtn quickDock__btn" data-fire="btnManualRefresh" title="Odśwież" aria-label="Odśwież">
             <svg class="qi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-2.64-6.36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 3v6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
 
@@ -85,7 +85,7 @@
           </button>
         </div>
 
-        <button type="button" class="iconBtn quickDock__btn quickDock__btnMore" id="btnQuickMore" title="WiÄ™cej" aria-label="WiÄ™cej">
+        <button type="button" class="iconBtn quickDock__btn quickDock__btnMore" id="btnQuickMore" title="Więcej" aria-label="Więcej">
           <!-- 3 paski, minimalistycznie (zamiast kropek) -->
           <svg class="qi" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -110,10 +110,10 @@
           <label class="field">
             <span>Profil strony</span>
             <select id="role">
-              <option value="musician" selected>Muzyk / zespĂłĹ‚ (multimedia)</option>
+              <option value="musician" selected>Muzyk / zespół (multimedia)</option>
               <option value="dj">DJ / producent (multimedia)</option>
               <option value="photographer">Fotografia (portfolio)</option>
-              <option value="visual">Sztuki wizualne (galeria + wyrĂłĹĽnienia)</option>
+              <option value="visual">Sztuki wizualne (galeria + wyróżnienia)</option>
               <option value="designer">Projektant / realizacje</option>
               <option value="filmmaker">Film / wideo</option>
               <option value="writer">Autor / publikacje</option>
@@ -125,13 +125,13 @@
         <div class="grid2">
           <label class="field">
             <span>Nazwa profilu</span>
-            <input id="siteName" type="text" placeholder="WprowadĹş nazwÄ™" value="Nazwa artysty / zespoĹ‚u" />
+            <input id="siteName" type="text" placeholder="Wprowadź nazwę" value="Nazwa artysty / zespołu" />
           </label>
         </div>
 
         <div class="grid2" style="margin-top:10px;">
           <label class="field span2">
-            <span>NagĹ‚Ăłwek</span>
+            <span>Nagłówek</span>
             <div class="toggleRow" style="margin-top:0;">
               <input id="useLogoInHeader" type="checkbox" />
               <div class="toggleText">Logo zamiast nazwy</div>
@@ -150,7 +150,7 @@
             <div id="logoEmpty" class="seoFileEmpty">Brak pliku</div>
             <div id="logoRow" class="seoFileRow" hidden>
               <div class="seoFileRow__name" id="logoName"></div>
-              <button type="button" class="btnSmall btn--ghost" id="logoRemove">UsuĹ„</button>
+              <button type="button" class="btnSmall btn--ghost" id="logoRemove">Usuń</button>
             </div>
           </label>
         </div>
@@ -161,7 +161,7 @@
         <summary>Styl</summary>
 
         <div class="styleRow">
-          <div class="seg" role="group" aria-label="Kolekcja stylĂłw">
+          <div class="seg" role="group" aria-label="Kolekcja stylów">
             <button id="btnCollectionFlagship" type="button" class="segBtn">Flagowe</button>
             <button id="btnCollectionBasic" type="button" class="segBtn">Basic</button>
           </div>
@@ -192,8 +192,8 @@
           <button type="button" class="colorDot" data-accent="#6d28d9" aria-label="Fiolet"></button>
           <button type="button" class="colorDot" data-accent="#2563eb" aria-label="Niebieski"></button>
           <button type="button" class="colorDot" data-accent="#16a34a" aria-label="Zielony"></button>
-          <button type="button" class="colorDot" data-accent="#ea580c" aria-label="PomaraĹ„czowy"></button>
-          <button type="button" class="colorDot" data-accent="#e11d48" aria-label="RĂłĹĽ"></button>
+          <button type="button" class="colorDot" data-accent="#ea580c" aria-label="Pomarańczowy"></button>
+          <button type="button" class="colorDot" data-accent="#e11d48" aria-label="Róż"></button>
           <button type="button" class="colorDot" data-accent="#0f172a" aria-label="Grafit"></button>
         </div>
 
@@ -201,17 +201,17 @@
         <div id="bgColorControls" class="isHiddenControl">
           <div class="grid2">
             <label class="field">
-              <span>TĹ‚o: kolor</span>
+              <span>Tło: kolor</span>
               <input id="bgColor" type="color" value="#fef3c7" />
             </label>
             <div></div>
           </div>
 
-          <div class="quickColors" aria-label="Szybkie kolory tĹ‚a">
+          <div class="quickColors" aria-label="Szybkie kolory tła">
             <button type="button" class="colorDot" data-bg="#fef3c7" aria-label="Krem"></button>
-            <button type="button" class="colorDot" data-bg="#fee2e2" aria-label="RĂłĹĽ pastel"></button>
-            <button type="button" class="colorDot" data-bg="#dbeafe" aria-label="BĹ‚Ä™kit pastel"></button>
-            <button type="button" class="colorDot" data-bg="#dcfce7" aria-label="MiÄ™ta pastel"></button>
+            <button type="button" class="colorDot" data-bg="#fee2e2" aria-label="Róż pastel"></button>
+            <button type="button" class="colorDot" data-bg="#dbeafe" aria-label="Błękit pastel"></button>
+            <button type="button" class="colorDot" data-bg="#dcfce7" aria-label="Mięta pastel"></button>
             <button type="button" class="colorDot" data-bg="#ede9fe" aria-label="Lawenda"></button>
             <button type="button" class="colorDot" data-bg="#ffedd5" aria-label="Brzoskwinia"></button>
           </div>
@@ -230,13 +230,13 @@
                 <option value="inter" selected>Inter (czytelna)</option>
                 <option value="space">Manrope (design)</option>
                 <option value="plex">IBM Plex Sans (klasyczna)</option>
-                <option value="system">System (domyĹ›lna)</option>
-                <option value="editorial">Editorial (serif nagĹ‚Ăłwki)</option>
+                <option value="system">System (domyślna)</option>
+                <option value="editorial">Editorial (serif nagłówki)</option>
               </select>
             </label>
 
             <label class="field">
-              <span>GÄ™stoĹ›Ä‡</span>
+              <span>Gęstość</span>
               <select id="density">
                 <option value="comfortable">Komfort</option>
                 <option value="normal" selected>Normal</option>
@@ -254,11 +254,11 @@
             </label>
 
             <label class="field">
-              <span>ZaokrÄ…glenia</span>
+              <span>Zaokrąglenia</span>
               <select id="radius">
                 <option value="0">0</option>
-                <option value="md" selected>Ĺšrednie</option>
-                <option value="lg">DuĹĽe</option>
+                <option value="md" selected>Średnie</option>
+                <option value="lg">Duże</option>
               </select>
             </label>
 
@@ -299,7 +299,7 @@
             </label>
 
             <label class="field">
-              <span>UkĹ‚ad nagĹ‚Ăłwka</span>
+              <span>Układ nagłówka</span>
               <select id="headerLayout">
                 <option value="left" selected>Lewy</option>
                 <option value="center">Wycentrowany</option>
@@ -307,34 +307,34 @@
             </label>
 
             <label class="field">
-              <span>TĹ‚o nagĹ‚Ăłwka</span>
+              <span>Tło nagłówka</span>
               <select id="headerBg">
                 <option value="solid" selected>Standard</option>
-                <option value="pill">Pill (pĹ‚ywajÄ…cy)</option>
-                <option value="transparent">Przezroczysty (nakĹ‚adka)</option>
+                <option value="pill">Pill (pływający)</option>
+                <option value="transparent">Przezroczysty (nakładka)</option>
               </select>
             </label>
 
             <label class="field">
-              <span>SzerokoĹ›Ä‡ headera</span>
+              <span>Szerokość headera</span>
               <select id="headerWidth">
                 <option value="normal" selected>Normal</option>
                 <option value="wide">Szeroki</option>
-                <option value="full">PeĹ‚na szerokoĹ›Ä‡</option>
+                <option value="full">Pełna szerokość</option>
               </select>
             </label>
 
             <label class="field">
-              <span>SzerokoĹ›Ä‡ HERO</span>
+              <span>Szerokość HERO</span>
               <select id="heroWidth">
                 <option value="normal" selected>Normal</option>
                 <option value="wide">Szeroki</option>
-                <option value="full">PeĹ‚na szerokoĹ›Ä‡</option>
+                <option value="full">Pełna szerokość</option>
               </select>
             </label>
 
             <label class="field">
-              <span>SzerokoĹ›Ä‡ treĹ›ci</span>
+              <span>Szerokość treści</span>
               <select id="contentWidth">
                 <option value="normal" selected>Normal</option>
                 <option value="wide">Szeroki</option>
@@ -342,10 +342,10 @@
             </label>
 
             <label class="field">
-              <span>UkĹ‚ad treĹ›ci</span>
+              <span>Układ treści</span>
               <select id="sectionTitleAlign">
                 <option value="left" selected>Z lewej</option>
-                <option value="center">Ĺšrodek</option>
+                <option value="center">Środek</option>
               </select>
             </label>
 
@@ -362,21 +362,21 @@
       </details>
 
       <details id="secSeo" class="panel__section">
-        <summary>SEO / podglÄ…d linku</summary>
+        <summary>SEO / podgląd linku</summary>
 
         <label class="field">
-          <span>TytuĹ‚ (karta przeglÄ…darki)</span>
-          <input id="metaTitle" type="text" placeholder="WprowadĹş tytuĹ‚" />
+          <span>Tytuł (karta przeglądarki)</span>
+          <input id="metaTitle" type="text" placeholder="Wprowadź tytuł" />
         </label>
 
         <label class="field">
           <span>Opis (meta description)</span>
-          <textarea id="metaDescription" rows="3" placeholder="WprowadĹş opis"></textarea>
+          <textarea id="metaDescription" rows="3" placeholder="Wprowadź opis"></textarea>
         </label>
 
         <label class="field">
-          <span>SĹ‚owa kluczowe (opcjonalnie)</span>
-          <input id="metaKeywords" type="text" placeholder="WprowadĹş sĹ‚owa kluczowe (oddziel przecinkami)" />
+          <span>Słowa kluczowe (opcjonalnie)</span>
+          <input id="metaKeywords" type="text" placeholder="Wprowadź słowa kluczowe (oddziel przecinkami)" />
                   </label>
 
         <label class="field">
@@ -395,11 +395,11 @@
             <div id="faviconEmpty" class="seoFileEmpty">Brak pliku</div>
             <div id="faviconRow" class="seoFileRow" hidden>
               <div class="seoFileRow__name" id="faviconName"></div>
-              <button type="button" class="btnSmall btn--ghost" id="faviconRemove">UsuĹ„</button>
+              <button type="button" class="btnSmall btn--ghost" id="faviconRemove">Usuń</button>
             </div>
           </label>
           <label class="field">
-            <span>OG image (podglÄ…d linku)</span>
+            <span>OG image (podgląd linku)</span>
             <div class="dropZone" data-drop="ogImageUpload">
               <div class="dropZone__title">Dodaj plik</div>
               <div class="dropZone__sub">Wybierz plik</div>
@@ -408,7 +408,7 @@
             <div id="ogImageEmpty" class="seoFileEmpty">Brak pliku</div>
             <div id="ogImageRow" class="seoFileRow" hidden>
               <div class="seoFileRow__name" id="ogImageName"></div>
-              <button type="button" class="btnSmall btn--ghost" id="ogImageRemove">UsuĹ„</button>
+              <button type="button" class="btnSmall btn--ghost" id="ogImageRemove">Usuń</button>
             </div>
           </label>
         </div>
@@ -428,16 +428,16 @@
         </div>
 
         <label class="field" style="margin-top:10px;">
-          <span>Polityka prywatnoĹ›ci</span>
+          <span>Polityka prywatności</span>
           <select id="privacyMode">
             <option value="auto">Gotowa (generuj automatycznie)</option>
-            <option value="custom">WĹ‚asna (link)</option>
+            <option value="custom">Własna (link)</option>
           </select>
         </label>
 
         <label class="field" id="privacyUrlWrap" style="margin-top:10px; display:none;">
           <span>Link do polityki</span>
-          <input id="privacyUrl" type="text" placeholder="WprowadĹş URL" />
+          <input id="privacyUrl" type="text" placeholder="Wprowadź URL" />
         </label>
 
       </details>
@@ -460,44 +460,44 @@
       <details id="secEditor" class="panel__section">
         <summary>Edycja bloku</summary>
         <div id="blockEditor" class="blockEditor">
-          <div class="emptyEditor">Wybierz blok z listy powyĹĽej.</div>
+          <div class="emptyEditor">Wybierz blok z listy powyżej.</div>
         </div>
       </details>
 
       <details id="secActions" class="panel__section">
         <summary>Akcje</summary>
         <div class="panel__actions panel__actions--pills">
-          <button class="btnSmall" id="issuesPill" type="button" title="PokaĹĽ listÄ™ problemĂłw / ostrzeĹĽeĹ„">Problemy: 0</button>
-          <button class="btnSmall" id="liveStatus" type="button" title="WĹ‚Ä…cz / wyĹ‚Ä…cz podglÄ…d LIVE">LIVE: ON</button>
+          <button class="btnSmall" id="issuesPill" type="button" title="Pokaż listę problemów / ostrzeżeń">Problemy: 0</button>
+          <button class="btnSmall" id="liveStatus" type="button" title="Włącz / wyłącz podgląd LIVE">LIVE: ON</button>
         </div>
         <div class="panel__actions">
           <button id="btnSaveSnapshot" class="btn" type="button">Snapshot: zapisz</button>
-          <button id="btnLoadSnapshot" class="btn" type="button">Snapshoty: otwĂłrz</button>
+          <button id="btnLoadSnapshot" class="btn" type="button">Snapshoty: otwórz</button>
         </div>
         <div class="panel__actions">
-          <button id="btnManualRefresh" class="btn" type="button">OdĹ›wieĹĽ</button>
+          <button id="btnManualRefresh" class="btn" type="button">Odśwież</button>
           <button id="btnReset" class="btn btn--danger" type="button">Reset szkicu</button>
         </div>
         <div class="panel__actions">
-          <button id="btnSampleData" class="btn" type="button">Dane przykĹ‚adowe</button>
+          <button id="btnSampleData" class="btn" type="button">Dane przykładowe</button>
           <button id="btnDownload" class="btn btn--primary" type="button">Pobierz</button>
         </div>
       </details>
 
-      <!-- KPO / NGEU â€“ staĹ‚a stopka panelu (widoczna bez szukania po zakĹ‚adkach) -->
+      <!-- KPO / NGEU – stała stopka panelu (widoczna bez szukania po zakładkach) -->
       <div class="panel__foot" aria-label="Informacja o finansowaniu KPO">
         <div class="kpoMarksBox"><picture class="kpoMarks">
           <source media="(max-width: 420px)" srcset="assets/kpo/kpo_rp_ngeu_pion_rgb_whitebg.png" />
           <img
             src="assets/kpo/kpo_rp_ngeu_poziom_rgb_whitebg.png"
-            alt="Zestawienie znakĂłw: Krajowy Plan Odbudowy, barwy Rzeczypospolitej Polskiej, NextGenerationEU"
+            alt="Zestawienie znaków: Krajowy Plan Odbudowy, barwy Rzeczypospolitej Polskiej, NextGenerationEU"
             loading="lazy"
           />
         </picture></div>
 
         <div class="kpoMiniText">
-          <div class="kpoLine">PrzedsiÄ™wziÄ™cie finansowane przez UniÄ™ EuropejskÄ… â€“ NextGenerationEU (KPO).</div>
-          <a class="kpoBtn" href="kpo.html" target="_blank" rel="noopener">SzczegĂłĹ‚y</a>
+          <div class="kpoLine">Przedsięwzięcie finansowane przez Unię Europejską – NextGenerationEU (KPO).</div>
+          <a class="kpoBtn" href="kpo.html" target="_blank" rel="noopener">Szczegóły</a>
         </div>
       </div>
     </aside>
@@ -505,23 +505,23 @@
     <main class="preview">
       <div class="preview__bar">
         <div class="preview__title">
-          <strong>PodglÄ…d</strong>
+          <strong>Podgląd</strong>
           <span id="previewPageLabel" class="pill" style="margin-left:10px;">index.html</span>
         </div>
 
-        <div class="preview__controls" aria-label="Kontrolki podglÄ…du">
-          <div class="seg" role="group" aria-label="PodglÄ…d urzÄ…dzeĹ„">
+        <div class="preview__controls" aria-label="Kontrolki podglądu">
+          <div class="seg" role="group" aria-label="Podgląd urządzeń">
             <button type="button" class="segBtn" data-device="desktop" title="Desktop">Desktop</button>
             <button type="button" class="segBtn" data-device="tablet" title="Tablet">Tablet</button>
             <button type="button" class="segBtn" data-device="mobile" title="Mobile">Mobile</button>
           </div>
-          <div class="seg" role="group" aria-label="Cofnij / ponĂłw">
-            <button type="button" class="segBtn" id="btnUndo" title="Cofnij (Ctrl+Z)">â†¶</button>
-            <button type="button" class="segBtn" id="btnRedo" title="PonĂłw (Ctrl+Y)">â†·</button>
+          <div class="seg" role="group" aria-label="Cofnij / ponów">
+            <button type="button" class="segBtn" id="btnUndo" title="Cofnij (Ctrl+Z)">↶</button>
+            <button type="button" class="segBtn" id="btnRedo" title="Ponów (Ctrl+Y)">↷</button>
           </div>
           <div class="seg" role="group" aria-label="Ustawienia interfejsu">
             <button type="button" class="segBtn" id="btnUiSettings" title="Ustawienia interfejsu" aria-label="Ustawienia interfejsu">
-              <!-- Prosty, czytelny â€žzÄ™batyâ€ť symbol ustawieĹ„ (bez dziwnych proporcji) -->
+              <!-- Prosty, czytelny „zębaty” symbol ustawień (bez dziwnych proporcji) -->
               <svg class="qi" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7.3 7.3 0 0 0-1.7-1l-.4-2.7H9.6l-.4 2.7a7.3 7.3 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5A7 7 0 0 0 5 12c0 .34.03.67.1 1l-2 1.5 2 3.5 2.4-1c.52.42 1.09.77 1.7 1l.4 2.7h4.8l.4-2.7c.61-.23 1.18-.58 1.7-1l2.4 1 2-3.5-2-1.5c.07-.33.1-.66.1-1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -534,14 +534,14 @@
       <div class="preview__frameWrap">
         <iframe
           id="previewFrame"
-          title="PodglÄ…d strony"
+          title="Podgląd strony"
           sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-presentation"
         ></iframe>
       </div>
     </main>
   </div>
 
-  <!-- Menu "WiÄ™cej" dla szybkich akcji (pozycjonowane przez JS jako overlay) -->
+  <!-- Menu "Więcej" dla szybkich akcji (pozycjonowane przez JS jako overlay) -->
   <div id="quickMoreMenu" class="quickMoreMenu" role="menu" hidden>
     <button type="button" class="quickMoreMenu__item" data-fire="issuesPill" role="menuitem">
       <svg class="qmi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10.3 4.3a2 2 0 0 1 3.4 0l8.1 14.2A2 2 0 0 1 20.1 21H3.9a2 2 0 0 1-1.7-2.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 9v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 17h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -550,7 +550,7 @@
     <div class="quickMoreMenu__sep" aria-hidden="true"></div>
     <button type="button" class="quickMoreMenu__item" data-fire="btnSampleData" role="menuitem">
       <svg class="qmi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 2v6l-5.5 9.5A3 3 0 0 0 7.1 22h9.8a3 3 0 0 0 2.6-4.5L14 8V2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 2h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 16h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Dane przykĹ‚adowe
+      Dane przykładowe
     </button>
     <button type="button" class="quickMoreMenu__item quickMoreMenu__danger" data-fire="btnReset" role="menuitem">
       <svg class="qmi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -605,12 +605,12 @@
   <div id="toastHost" aria-live="polite" aria-atomic="true"></div>
   <div id="zipProgress" class="zipProgress" hidden>
     <div class="zipProgress__card modalCard" role="dialog" aria-modal="true" aria-label="Generowanie ZIP">
-      <div class="zipProgress__title" id="zipProgressTitle">GenerujÄ™ ZIPâ€¦</div>
+      <div class="zipProgress__title" id="zipProgressTitle">Generuję ZIP…</div>
       <div class="zipProgress__bar"><div class="zipProgress__fill" id="zipProgressFill" style="width:0%"></div></div>
       <div class="zipProgress__meta">
         <span id="zipProgressPct">0%</span>
-        <span class="zipProgress__sep">Â·</span>
-        <span id="zipProgressMsg">Przygotowanieâ€¦</span>
+        <span class="zipProgress__sep">·</span>
+        <span id="zipProgressMsg">Przygotowanie…</span>
       </div>
     </div>
   </div>
